@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iostream>
+#include <iterator>
 
 #include <arpa/inet.h>
 #include <errno.h>
@@ -18,19 +19,20 @@
 #include <raw_socket.h>
 
 #define UDP_HEADER_LENGTH 42
-#define MAX_UDP_PAYLOAD 1024 
+#define MAX_UDP_PAYLOAD 1024
 
 RawSocket::RawSocket(
         const std::string & _interface,
         const std::string & recv_a,
         const std::string & send_a,
         int recv_p,
-        int send_p) :
+        int send_p,
+        const std::string & local_mac,
+        const std::string & remote_mac) :
     Ethernet(_interface, recv_a, send_a, recv_p, send_p),
-    dst_mac("68:05:CA:19:50:C2"),
-    src_mac("68:05:CA:19:50:C3"),
+    dst_mac(remote_mac),
+    src_mac(local_mac),
     protocol(0x0800)
-    //protocol(IPPROTO_RAW),
 {
 }
 
@@ -39,7 +41,6 @@ RawSocket::~RawSocket() {
 }
 
 int RawSocket::Open(const std::string & if_name) {
-
 	interface = std::string(if_name);
 
 	// Open raw packet socket
@@ -83,27 +84,12 @@ int RawSocket::Open(const std::string & if_name) {
 }
 
 int RawSocket::Open() {
-	return Open(interface);	
-}
-
-int RawSocket::Close(bool force) {
-    if (force) {
-        std::cout << "Calling shutdown" << std::endl;
-        shutdown(fd, SHUT_RDWR);
-    }
-	return(Close());
+	return Open(interface);
 }
 
 int RawSocket::Close() {
     is_open = false;
 	return close(fd);
-}
-
-
-
-int RawSocket::send_packet(const std::vector<uint8_t> & packet) {
-    ssize_t err_or_size = ::send(fd, &(packet[0]), packet.size(), 0);
-	return err_or_size;
 }
 
 char buf[ETH_FRAME_LEN];
@@ -155,103 +141,6 @@ int RawSocket::recv(std::vector<char> & data) {
     }
 }
 
-
-//int RawSocket::recv(std::vector<char> & data) {
-//    struct sockaddr_in remote_addr;
-//    socklen_t address_len = sizeof(remote_addr);
-
-
-//    ssize_t err_or_size = ::recvfrom(fd,
-//                                     buf,
-//                                     sizeof(buf),
-//                                     MSG_TRUNC | MSG_DONTWAIT,
-//                                     (struct sockaddr*)&remote_addr,
-//                                     &address_len);
-
-//    if ((err_or_size < 0) && (errno != EAGAIN)) {
-//        errno = 0;   // clear the error
-//        return(ETH_ERR_RX);
-//    } else if((err_or_size == 0) || (errno == EAGAIN)) {  // no data
-//        errno = 0;   // clear the error
-//        return(ETH_NO_ERR);
-//    } else if (err_or_size < UDP_HEADER_LENGTH) {
-//        return(ETH_NO_ERR);
-//    } else if (buf[23] != (char) 0x11) {
-//        return(ETH_NO_ERR);
-//    } else if (buf[UDP_HEADER_LENGTH - 5] == (char) 53) {
-//        return(ETH_NO_ERR);
-//    } else if (buf[UDP_HEADER_LENGTH - 7] == (char) 53) {
-//        return(ETH_NO_ERR);
-//    } else {
-//        data.insert(
-//                data.end(),
-//                buf + UDP_HEADER_LENGTH,
-//                buf + UDP_HEADER_LENGTH + err_or_size);
-//        return(ETH_NO_ERR);
-//	}
-//}
-
-int RawSocket::receive_packet(std::vector<uint8_t> & packet) {
-    struct sockaddr_in remote_addr;
-    socklen_t address_len = sizeof(remote_addr);
-
-    char buf[ETH_FRAME_LEN];
-
-    ssize_t err_or_size = ::recvfrom(fd,
-                                     buf,
-                                     sizeof(buf),
-                                     MSG_TRUNC | MSG_DONTWAIT,
-                                     (struct sockaddr*)&remote_addr,
-                                     &address_len);
-
-    if( (err_or_size < 0) && (errno != EAGAIN)) {
-        errno = 0;   // clear the error
-        return(ETH_ERR_RX);
-    } else if( (err_or_size == 0) | (errno == EAGAIN)) {  // no data
-        errno = 0;   // clear the error
-        return(ETH_NO_ERR);
-    } else {
-        packet.assign(buf,buf+err_or_size);
-        return(ETH_NO_ERR);
-	}
-}
-
-int RawSocket::recv(std::vector<uint8_t> & data) {
-    int status = receive_packet(data);
-    if (status != ETH_NO_ERR) {
-        return(status);
-    } else {
-        // Verify Header then strip header
-        if (data.size() < UDP_HEADER_LENGTH) {
-            data = std::vector<uint8_t>();
-            return(ETH_NO_ERR);
-        } else if (data.at(23) != 0x11) {
-            data = std::vector<uint8_t>();
-            return(ETH_NO_ERR);
-        } else if (data.at(UDP_HEADER_LENGTH - 5) == 53) {
-            data = std::vector<uint8_t>();
-            return(ETH_NO_ERR);
-        } else if (data.at(UDP_HEADER_LENGTH - 7) == 53) {
-            data = std::vector<uint8_t>();
-            return(ETH_NO_ERR);
-        } else {// Strip off header and return data
-            data.assign(data.begin()+UDP_HEADER_LENGTH,data.end());
-            return(ETH_NO_ERR);
-        }
-    }
-}
-
-//int RawSocket::recv(std::vector<char> & data) {
-//    std::vector<uint8_t> temp_data;
-//    int status = recv(temp_data);
-//    if (status != ETH_NO_ERR) {
-//        return(status);
-//    } else {
-//        data = std::vector<char>(temp_data.begin(),temp_data.end());
-//        return ETH_NO_ERR;
-//    }
-//}
-
 int RawSocket::set_receive_timeout(double seconds) {
 	if (seconds < 0) return(-1);
 
@@ -275,14 +164,14 @@ int RawSocket::set_receive_timeout(double seconds) {
 std::vector<uint8_t> RawSocket::GenerateUDPHeader(std::vector<uint8_t> src_port, std::vector<uint8_t> dst_port) {
 	std::vector<uint8_t> hdr;
 	hdr.reserve(8);
-	
+
 	for (std::vector<uint8_t>::iterator it=src_port.begin(); it!=src_port.end(); it++) hdr.push_back(*it);
 	for (std::vector<uint8_t>::iterator it=dst_port.begin(); it!=dst_port.end(); it++) hdr.push_back(*it);
 	hdr.push_back(0x00); // Length to be modified later
 	hdr.push_back(0x08); // ^ (8 is min length)
 	hdr.push_back(0x00); // Checksum (optional)
 	hdr.push_back(0x00); // ^
-	
+
 	return hdr;
 }
 
@@ -320,7 +209,7 @@ std::vector<uint8_t> RawSocket::GenerateIPHeader(std::vector<uint8_t> src_ip, st
 
 	for (std::vector<uint8_t>::iterator it=src_ip.begin(); it!=src_ip.end(); it++) hdr.push_back(*it);
 	for (std::vector<uint8_t>::iterator it=dst_ip.begin(); it!=dst_ip.end(); it++) hdr.push_back(*it);
-	
+
 	return hdr;
 
 }
@@ -338,8 +227,8 @@ std::vector<uint8_t> RawSocket::GenerateEthernetHeader(std::vector<uint8_t> dst_
 }
 
 void RawSocket::SetIPHeaderLength(
-		std::vector<uint8_t> & ip_hdr, 
-		std::vector<uint8_t> & udp_hdr, 
+		std::vector<uint8_t> & ip_hdr,
+		std::vector<uint8_t> & udp_hdr,
 		std::vector<uint8_t> data)
 {
 	int16_t size = (uint16_t) (ip_hdr.size()+udp_hdr.size()+data.size());
@@ -354,8 +243,8 @@ void RawSocket::SetUDPHeaderLength(std::vector<uint8_t> & udp_hdr, std::vector<u
 }
 
 void RawSocket::CalculateLengthsAndChecksums(
-		std::vector<uint8_t> & ip_hdr, 
-		std::vector<uint8_t> & udp_hdr, 
+		std::vector<uint8_t> & ip_hdr,
+		std::vector<uint8_t> & udp_hdr,
 		std::vector<uint8_t> data)
 {
 	SetIPHeaderLength(ip_hdr,udp_hdr,data);
@@ -398,15 +287,30 @@ std::vector<uint8_t> RawSocket::PortNumberToVector(int port) {
 }
 
 std::vector<uint8_t> RawSocket::GeneratePacket(std::vector<uint8_t> data) {
-    return GeneratePacket(data,dst_mac,src_mac,recv_address,send_address,recv_port,send_port);
+    return(GeneratePacket(data,
+                          dst_mac,
+                          src_mac,
+                          recv_address,
+                          send_address,
+                          recv_port,
+                          send_port));
 }
 
-std::vector<uint8_t> RawSocket::GeneratePacket(std::vector<uint8_t> data,std::string dst_mac,std::string src_mac,
-									std::string src_ip, std::string dst_ip, int src_port, int dst_port) 
+std::vector<uint8_t> RawSocket::GeneratePacket(
+    std::vector<uint8_t> data,
+    std::string dst_mac,
+    std::string src_mac,
+    std::string src_ip,
+    std::string dst_ip,
+    int src_port,
+    int dst_port)
 {
-	std::vector<uint8_t> eth_hdr = GenerateEthernetHeader(MACStringToVector(dst_mac),MACStringToVector(src_mac));
-	std::vector<uint8_t> ip_hdr = GenerateIPHeader(IPStringToVector(src_ip),IPStringToVector(dst_ip));
-	std::vector<uint8_t> udp_hdr = GenerateUDPHeader(PortNumberToVector(src_port),PortNumberToVector(dst_port));
+	std::vector<uint8_t> eth_hdr = GenerateEthernetHeader(
+            MACStringToVector(dst_mac),MACStringToVector(src_mac));
+	std::vector<uint8_t> ip_hdr = GenerateIPHeader(
+            IPStringToVector(src_ip),IPStringToVector(dst_ip));
+	std::vector<uint8_t> udp_hdr = GenerateUDPHeader(
+            PortNumberToVector(src_port),PortNumberToVector(dst_port));
 
 	CalculateLengthsAndChecksums(ip_hdr, udp_hdr, data);
 
@@ -419,23 +323,6 @@ std::vector<uint8_t> RawSocket::GeneratePacket(std::vector<uint8_t> data,std::st
 	for (std::vector<uint8_t>::iterator it=data.begin(); it!=data.end(); it++) packet.push_back(*it);
 
 	return packet;
-}
-
-int RawSocket::send(const std::vector<uint8_t> & data) {
-    size_t start = 0;
-    size_t end = MAX_UDP_PAYLOAD-1;
-    while (end < data.size()) {
-        // Send packet with the a payload of MAX_UDP_PAYLOAD created as a sub vector from data
-        send_packet(GeneratePacket(std::vector<uint8_t>(data.begin()+start,data.begin()+end)));
-        start += MAX_UDP_PAYLOAD;
-        end += MAX_UDP_PAYLOAD;
-    }
-    return send_packet(GeneratePacket(std::vector<uint8_t>(data.begin()+start,data.end())));
-}
-
-int RawSocket::send(const std::vector<char> &data) {
-	std::vector<uint8_t> temp_data(data.begin(),data.end());
-    return send(temp_data);
 }
 
 void RawSocket::set_ethernet(std::string dst_mac,std::string src_mac) {
@@ -453,7 +340,7 @@ void RawSocket::set_udp(int src_port, int dst_port) {
     send_port = dst_port;
 }
 
-/* \brief Return a list of all of the available interfaces on the machine
+/*! \brief Return a list of all of the available interfaces on the machine
  *
  * The function polls the system to find the available interfaces that can be used
  * for communication
@@ -493,4 +380,87 @@ bool RawSocket::list(std::vector<std::string> & list) {
 	}
 	return true;
 
+}
+
+namespace {
+void UpdateIPHeaderLength(
+        std::vector<char> & packet,
+        uint16_t size)
+{
+    // Take off Ethernet header length
+    size -= 14;
+	packet[16] = (char) (uint8_t)(0x00FF & (size >> 8) );
+	packet[17] = (char) (uint8_t)(0x00FF & (size ) );
+}
+
+void UpdateUDPHeaderLength(
+        std::vector<char> & udp_hdr,
+        uint16_t size)
+{
+    // Take off Ethernet and IP header length
+    size -= 20 + 14;
+	udp_hdr[38] = (uint8_t)(0x00FF & (size >> 8) );
+	udp_hdr[39] = (uint8_t)(0x00FF & (size ) );
+}
+
+void UpdateIPHeaderChecksum(std::vector<char> & hdr) {
+    // Zero out the checksum first
+    hdr[24] = 0;
+    hdr[25] = 0;
+    // Calculate the checksum, really should just skip checksum section
+	int16_t checksum = 0;
+    for (int i = 0; i < 10; i++) {
+        int16_t word = ((uint16_t) (uint8_t) hdr[14 + i*2 + 0] << 8) |
+            ((uint16_t) (uint8_t) hdr[14 + i*2 + 1] );
+        int16_t overflow = ((checksum >> 15) & 1) & ( (word >> 15) & 1);
+        checksum = checksum + word + overflow;
+    }
+    checksum = ~checksum;
+
+    // Put it back into the vector
+    hdr[24] = (uint8_t)(0x00FF & (checksum >> 8) );
+    hdr[25] = (uint8_t)(0x00FF & checksum );
+}
+
+std::vector<uint8_t> generic_vector_uint8_t;
+std::vector<char> generic_vector;
+bool generic_vector_generated(false);
+}
+
+int RawSocket::send(const std::vector<char> & packet) {
+    return(send(packet.begin(), packet.end()));
+}
+
+int RawSocket::send(
+        std::vector<char>::const_iterator start,
+        std::vector<char>::const_iterator stop)
+{
+    if (!generic_vector_generated) {
+        generic_vector_uint8_t =
+                GeneratePacket(std::vector<uint8_t>(MAX_UDP_PAYLOAD, 0));
+        generic_vector.assign(
+                generic_vector_uint8_t.begin(),
+                generic_vector_uint8_t.end());
+        generic_vector_generated = true;
+    }
+    int bytes_sent(0);
+    size_t packet_size(std::distance(start,stop));
+    for (size_t ii = 0; ii < packet_size; ii++) {
+        size_t ii_local = ii % MAX_UDP_PAYLOAD;
+        generic_vector[ii_local + UDP_HEADER_LENGTH] = *(start + ii);
+        if ((ii == (packet_size - 1)) || (ii_local == (MAX_UDP_PAYLOAD - 1))) {
+            size_t local_packet_size = UDP_HEADER_LENGTH + ii_local + 1;
+            UpdateIPHeaderLength(generic_vector, local_packet_size);
+            UpdateUDPHeaderLength(generic_vector, local_packet_size);
+            UpdateIPHeaderChecksum(generic_vector);
+            int err_or_size = ::send(fd, &(generic_vector[0]),
+                                     local_packet_size, 0);
+            if (err_or_size < 0) {
+                return(err_or_size);
+            } else {
+                bytes_sent += err_or_size - UDP_HEADER_LENGTH;
+            }
+        }
+    }
+    return(bytes_sent);
 }

@@ -11,27 +11,23 @@ class RawSocket : public Ethernet {
                  const std::string & recv_a = "192.168.1.1",
                  const std::string & send_a = "192.168.1.2",
                  int recv_p = 21844,
-                 int send_p = 21845);
+                 int send_p = 21845,
+                 const std::string & local_mac = "68:05:CA:19:50:C3",
+                 const std::string & remote_mac = "68:05:CA:19:50:C2");
         ~RawSocket();
 
-		int send_packet(const std::vector<uint8_t> & packet);
-        int receive_packet(std::vector<uint8_t> & packet);
-
 		int set_receive_timeout(double seconds);
-
-        int recv(std::vector<uint8_t> & data);
         int recv(std::vector<char> & data);
-
-        int send(const std::vector<uint8_t> & data);
         int send(const std::vector<char> & data);
-		void set_ethernet(std::string dst_mac,std::string src_mac);
+        int send(std::vector<char>::const_iterator start,
+                 std::vector<char>::const_iterator stop);
+		void set_ethernet(std::string dst_mac, std::string src_mac);
 		void set_ip(std::string src_ip, std::string dst_ip);
 		void set_udp(int src_port, int dst_port);
 
 		int Open(const std::string & if_name);
 		int Open();
         int Close();
-        int Close(bool force);
 		bool list(std::vector<std::string> & list);
 
 
@@ -47,15 +43,15 @@ class RawSocket : public Ethernet {
                 std::vector<uint8_t> dst_mac,
                 std::vector<uint8_t> src_mac);
 		void SetIPHeaderLength(
-				std::vector<uint8_t> & ip_hdr, 
-				std::vector<uint8_t> & udp_hdr, 
+				std::vector<uint8_t> & ip_hdr,
+				std::vector<uint8_t> & udp_hdr,
 				std::vector<uint8_t> data);
         void SetUDPHeaderLength(
                 std::vector<uint8_t> & udp_hdr,
                 std::vector<uint8_t> data);
 		void CalculateLengthsAndChecksums(
-				std::vector<uint8_t> & ip_hdr, 
-				std::vector<uint8_t> & udp_hdr, 
+				std::vector<uint8_t> & ip_hdr,
+				std::vector<uint8_t> & udp_hdr,
 				std::vector<uint8_t> data);
 		std::vector<uint8_t> IPStringToVector(std::string ip);
 		std::vector<uint8_t> MACStringToVector(std::string mac);
