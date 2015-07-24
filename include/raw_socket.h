@@ -8,12 +8,12 @@
 class RawSocket : public Ethernet {
 public:
     RawSocket(const std::string & _interface = "eth1",
-             const std::string & recv_a = "192.168.1.1",
-             const std::string & send_a = "192.168.1.2",
-             int recv_p = 21844,
-             int send_p = 21845,
-             const std::string & local_mac = "68:05:CA:19:50:C3",
-             const std::string & remote_mac = "68:05:CA:19:50:C2");
+              const std::string & recv_a = "192.168.1.1",
+              const std::string & send_a = "192.168.1.2",
+              int recv_p = 21844,
+              int send_p = 21845,
+              const std::string & local_mac = "68:05:CA:19:50:C3",
+              const std::string & remote_mac = "68:05:CA:19:50:C2");
     ~RawSocket();
 
     int recv(std::vector<char> & data);
