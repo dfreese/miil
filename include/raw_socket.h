@@ -1,5 +1,5 @@
-#ifndef SOCKET_H
-#define SOCKET_H
+#ifndef RAW_SOCKET_H
+#define RAW_SOCKET_H
 
 #include <ethernet.h>
 #include <stdint.h>
@@ -39,5 +39,4 @@ private:
     int timeout_ms;
 };
 
-
-#endif /* SOCKET_H */
+#endif /* RAW_SOCKET_H */

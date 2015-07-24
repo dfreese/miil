@@ -1,7 +1,5 @@
 #include "standard_socket.h"
 #include <errno.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
 
 StandardSocket::StandardSocket(
         const std::string & _interface,
@@ -12,6 +10,7 @@ StandardSocket::StandardSocket(
     Ethernet(_interface, recv_a, send_a, recv_p, send_p)
 {
 }
+
 StandardSocket::StandardSocket(
 	const std::string & send_a,
         int recv_p) :
@@ -53,18 +52,16 @@ int StandardSocket::Open(const std::string & if_name) {
     setsockopt(socket_descriptor, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
     int flags = fcntl(socket_descriptor, F_GETFL);
     if (fcntl(socket_descriptor, F_SETFL, O_NONBLOCK | flags) < 0) {
-        std::cout << "Non-blocking socket setup failed" << std::endl;
         return(ETH_ERR_BLOCK);
     }
-    int return_val = bind(socket_descriptor,(struct sockaddr *)&serv_addr,sizeof(serv_addr));
-    if ( return_val < 0 ) {
-        std::cout << "Socket did not bind, probably in use: " << return_val << std::endl;
-        std::cout << "Errno: " << errno << " - " << strerror(errno) << std::endl;
+    int return_val = bind(socket_descriptor,
+                          (struct sockaddr *)&serv_addr,
+                          sizeof(serv_addr));
+    if (return_val < 0) {
         return(ETH_ERR_BIND);
     }
     is_open = true;
     return(ETH_NO_ERR);
-    //}
 }
 
 int StandardSocket::Open() {
@@ -121,9 +118,9 @@ int StandardSocket::recv(std::deque<char> & data)
     socklen_t address_len = sizeof(remote_addr);
 
     ssize_t recv_rc;
-    char buf[DATALENGTH]; //Datalength is currently 1024, but UDP max should be 576
-    //recv_rc = recvfrom(socket_descriptor, buf, sizeof(buf), 0, (struct sockaddr*)&serv_addr, (socklen_t *)&len);
-    recv_rc = recvfrom(socket_descriptor, buf, sizeof(buf), 0, (struct sockaddr*)&remote_addr, &address_len);
+    char buf[DATALENGTH];
+    recv_rc = recvfrom(socket_descriptor, buf, sizeof(buf), 0,
+                       (struct sockaddr*)&remote_addr, &address_len);
 
     if(recv_rc == -1 && errno != EAGAIN) {
         return ETH_ERR_RX; //receive error
@@ -165,46 +162,4 @@ int StandardSocket::recv(std::vector<char> & data)
     }
 
     return(ETH_NO_ERR);
-}
-
-/* \brief Return a list of all of the available interfaces on the machine
- *
- * The function polls the system to find the available interfaces that can be used
- * for communication
- *
- * \param A vector in which the strings of the interface names are placed
- *
- * \return A bool indicating whether the list retrieval was successful
- */
-bool StandardSocket::list(std::vector<std::string> & list) {
-    char          buf[1024];
-    struct ifconf ifc;
-    struct ifreq *ifr;
-    int           sck;
-    int           nInterfaces;
-
-    sck = socket(AF_INET, SOCK_DGRAM, 0);
-    if(sck < 0) {
-        // Error Opening Socket
-        //return(std::vector<std::string>());
-        return(false);
-    }
-
-    /* Query available interfaces. */
-    ifc.ifc_len = sizeof(buf);
-    ifc.ifc_buf = buf;
-    if(ioctl(sck, SIOCGIFCONF, &ifc) < 0) {
-        // Error Querying the Interfaces
-        //return(std::vector<std::string>());
-        return(false);
-    }
-
-    ifr         = ifc.ifc_req;
-    nInterfaces = ifc.ifc_len / sizeof(struct ifreq);
-    for(int i = 0; i < nInterfaces; i++) {
-        struct ifreq *item = &ifr[i];
-        list.push_back(std::string(item->ifr_name));
-        interface_list[item->ifr_name] = (struct sockaddr_in *) &(item->ifr_addr);
-	}
-	return true;
 }

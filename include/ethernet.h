@@ -1,7 +1,6 @@
 #ifndef ETHERNET_H
 #define ETHERNET_H
 
-#include <iostream>
 #include <vector>
 #include <deque>
 #include <string.h>
@@ -40,7 +39,7 @@ public:
     virtual int Open() = 0;
     virtual int Close() = 0;
     bool isOpen(){return(is_open);}
-    virtual bool list(std::vector<std::string> & list) = 0;
+    bool list(std::vector<std::string> & list);
     void setRecvAddress(const std::string & address) {recv_address = address;}
     void setSendAddress(const std::string & address) {send_address = address;}
     void setRecvPort(int port) {recv_port = port;}
@@ -54,6 +53,7 @@ protected:
     int send_port;
 
     bool is_open;
+    std::map <std::string, struct sockaddr_in * > interface_list;
 };
 
 #endif // ETHERNET_H
