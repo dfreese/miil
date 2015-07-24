@@ -411,16 +411,6 @@ void RawSocket::set_ethernet(std::string dst_mac,std::string src_mac) {
     this->src_mac = src_mac;
 }
 
-void RawSocket::set_ip(std::string src_ip, std::string dst_ip) {
-    recv_address = src_ip;
-    send_address = dst_ip;
-}
-
-void RawSocket::set_udp(int src_port, int dst_port) {
-    recv_port = src_port;
-    send_port = dst_port;
-}
-
 /*! \brief Return a list of all of the available interfaces on the machine
  *
  * The function polls the system to find the available interfaces that can be used

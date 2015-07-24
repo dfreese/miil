@@ -29,23 +29,6 @@ StandardSocket::~StandardSocket()
 }
 
 int StandardSocket::Open(const std::string & if_name) {
-    /*
-    if (is_open) {
-        if (if_name == interface) {
-            return(ETH_NO_ERR);
-        } else {
-            Close();
-        }
-    }
-
-    std::vector<std::string> unused_vector;
-    list(unused_vector);
-    std::map <std::string, struct sockaddr_in * >::iterator it = 
-        interface_list.find(if_name);
-    if (it == interface_list.end()) {
-        return(ETH_ERR_INTERFACE);
-    } else {
-    */
     if (is_open) {
         int status = Close();
         if (status != ETH_NO_ERR) {
@@ -93,8 +76,6 @@ int StandardSocket::Close() {
         ssize_t close_rc;
         close_rc = close(socket_descriptor);
         if(close_rc == -1) {
-            //std::cerr<<"Error: close call failed"<<std::endl;
-            //return ETH_ERR_CLOSE;
             return(ETH_ERR_CLOSE);
         }
         is_open = false;
@@ -102,7 +83,10 @@ int StandardSocket::Close() {
     return(ETH_NO_ERR);
 }
 
-int StandardSocket::send(const std::string & send_address, int port, const std::vector<char> & data)
+int StandardSocket::send(
+        const std::string & send_address,
+        int port,
+        const std::vector<char> & data)
 {
 	int socket_descriptor;
 	struct sockaddr_in address;
@@ -115,7 +99,7 @@ int StandardSocket::send(const std::string & send_address, int port, const std::
     int val(1);
     setsockopt(socket_descriptor, SOL_SOCKET, SO_BROADCAST, &val, sizeof(val));
 
-	int err_or_size = sendto(socket_descriptor, 
+	int err_or_size = sendto(socket_descriptor,
                              (char *)(&data[0]),
                              data.size(),
                              0,
@@ -136,14 +120,14 @@ int StandardSocket::recv(std::deque<char> & data)
     struct sockaddr_in remote_addr;
     socklen_t address_len = sizeof(remote_addr);
 
-    ssize_t recv_rc; 
+    ssize_t recv_rc;
     char buf[DATALENGTH]; //Datalength is currently 1024, but UDP max should be 576
     //recv_rc = recvfrom(socket_descriptor, buf, sizeof(buf), 0, (struct sockaddr*)&serv_addr, (socklen_t *)&len);
     recv_rc = recvfrom(socket_descriptor, buf, sizeof(buf), 0, (struct sockaddr*)&remote_addr, &address_len);
 
-    if(recv_rc == -1 && errno != EAGAIN) { 
+    if(recv_rc == -1 && errno != EAGAIN) {
         return ETH_ERR_RX; //receive error
-    } 
+    }
     else if( (recv_rc == 0) | (errno == EAGAIN)) {  // no data
         errno = 0;   // clear the error
     }
@@ -162,14 +146,14 @@ int StandardSocket::recv(std::vector<char> & data)
     struct sockaddr_in remote_addr;
     socklen_t address_len = sizeof(remote_addr);
 
-    ssize_t recv_rc; 
+    ssize_t recv_rc;
     char buf[DATALENGTH]; //Datalength is currently 1024, but UDP max should be 576
     //recv_rc = recvfrom(socket_descriptor, buf, sizeof(buf), 0, (struct sockaddr*)&serv_addr, (socklen_t *)&len);
     recv_rc = recvfrom(socket_descriptor, buf, sizeof(buf), 0, (struct sockaddr*)&remote_addr, &address_len);
 
-    if(recv_rc == -1 && errno != EAGAIN) { 
+    if(recv_rc == -1 && errno != EAGAIN) {
         return ETH_ERR_RX; //receive error
-    } 
+    }
     else if( (recv_rc == 0) | (errno == EAGAIN)) {  // no data
         errno = 0;   // clear the error
     }

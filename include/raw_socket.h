@@ -21,8 +21,6 @@ public:
     int send(std::vector<char>::const_iterator start,
              std::vector<char>::const_iterator stop);
     void set_ethernet(std::string dst_mac, std::string src_mac);
-    void set_ip(std::string src_ip, std::string dst_ip);
-    void set_udp(int src_port, int dst_port);
 
     int Open(const std::string & if_name);
     int Open();
