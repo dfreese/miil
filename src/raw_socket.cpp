@@ -32,12 +32,16 @@ RawSocket::RawSocket(
     Ethernet(_interface, recv_a, send_a, recv_p, send_p),
     dst_mac(remote_mac),
     src_mac(local_mac),
-    protocol(0x0800)
+    timeout_ms(150)
 {
 }
 
 RawSocket::~RawSocket() {
 	Close();
+}
+
+namespace {
+uint16_t protocol(0x0800);
 }
 
 int RawSocket::Open(const std::string & if_name) {
@@ -93,7 +97,6 @@ int RawSocket::Close() {
 }
 
 char buf[ETH_FRAME_LEN];
-int timeout(150);
 
 int RawSocket::recv(std::vector<char> & data) {
     struct sockaddr_in remote_addr;
@@ -101,7 +104,7 @@ int RawSocket::recv(std::vector<char> & data) {
 
     ssize_t err_or_size(0);
 
-    if (poll(&fds, 1, timeout) > 0) {
+    if (poll(&fds, 1, timeout_ms) > 0) {
         if (fds.revents & (POLLIN)) {
             err_or_size = ::recvfrom(fd,
                     buf,
@@ -141,23 +144,8 @@ int RawSocket::recv(std::vector<char> & data) {
     }
 }
 
-int RawSocket::set_receive_timeout(double seconds) {
-	if (seconds < 0) return(-1);
-
-	// Extract the time components of the requested timeout
-	timeval tv;
-	tv.tv_sec  = floor(seconds);
-	tv.tv_usec = floor((seconds - tv.tv_sec) / 1e-6);
-
-	// If the requested timeout is non-zero, ensure that the set timeout is
-	// also non-zero.
-	if (seconds > 0 && tv.tv_sec == 0 && tv.tv_usec == 0) {
-		tv.tv_usec = 1;
-	}
-
-	// Set the socket timeout
-	int err = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-	return err;
+void RawSocket::set_receive_timeout(int milliseconds) {
+    timeout_ms = milliseconds;
 }
 
 
