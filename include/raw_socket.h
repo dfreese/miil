@@ -31,39 +31,6 @@ public:
     void set_receive_timeout(int milliseconds);
 
 private:
-    std::vector<uint8_t> GenerateUDPHeader(
-            std::vector<uint8_t> src_port,
-            std::vector<uint8_t> dst_port);
-    void CalculateIPHeaderChecksum(std::vector<uint8_t> & hdr);
-    std::vector<uint8_t> GenerateIPHeader(
-            std::vector<uint8_t> src_ip,
-            std::vector<uint8_t> dst_ip);
-    std::vector<uint8_t> GenerateEthernetHeader(
-            std::vector<uint8_t> dst_mac,
-            std::vector<uint8_t> src_mac);
-    void SetIPHeaderLength(
-            std::vector<uint8_t> & ip_hdr,
-            std::vector<uint8_t> & udp_hdr,
-            std::vector<uint8_t> data);
-    void SetUDPHeaderLength(
-            std::vector<uint8_t> & udp_hdr,
-            std::vector<uint8_t> data);
-    void CalculateLengthsAndChecksums(
-            std::vector<uint8_t> & ip_hdr,
-            std::vector<uint8_t> & udp_hdr,
-            std::vector<uint8_t> data);
-    std::vector<uint8_t> IPStringToVector(std::string ip);
-    std::vector<uint8_t> MACStringToVector(std::string mac);
-    std::vector<uint8_t> PortNumberToVector(int port);
-    std::vector<uint8_t> GeneratePacket(
-            std::vector<uint8_t> data,
-            std::string dst_mac,
-            std::string src_mac,
-            std::string src_ip,
-            std::string dst_ip,
-            int src_port,
-            int dst_port);
-
     std::vector<uint8_t> GeneratePacket(std::vector<uint8_t> data);
 
     std::string dst_mac;
