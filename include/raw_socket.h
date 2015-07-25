@@ -26,7 +26,6 @@ public:
     int Open();
     int Close();
     bool list(std::vector<std::string> & list);
-    void set_receive_timeout(int milliseconds);
 
 private:
     std::vector<uint8_t> GeneratePacket(std::vector<uint8_t> data);
@@ -34,9 +33,7 @@ private:
     std::string dst_mac;
     std::string src_mac;
 
-    int fd;
     struct pollfd fds;
-    int timeout_ms;
 };
 
 #endif /* RAW_SOCKET_H */

@@ -59,3 +59,7 @@ bool Ethernet::list(std::vector<std::string> & list) {
 	}
 	return true;
 }
+
+void Ethernet::setReceiveTimeout(int milliseconds) {
+    timeout_ms = milliseconds;
+}

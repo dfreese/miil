@@ -44,17 +44,17 @@ int StandardSocket::Open(const std::string & if_name) {
     serv_addr.sin_port = htons(recv_port);
     receive_address_compare = inet_addr(send_address.c_str());
 
-    socket_descriptor = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if (socket_descriptor == -1) {
+    fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (fd == -1) {
         return(ETH_ERR_SOCK);
     }
     int val = 1;
-    setsockopt(socket_descriptor, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
-    int flags = fcntl(socket_descriptor, F_GETFL);
-    if (fcntl(socket_descriptor, F_SETFL, O_NONBLOCK | flags) < 0) {
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+    int flags = fcntl(fd, F_GETFL);
+    if (fcntl(fd, F_SETFL, O_NONBLOCK | flags) < 0) {
         return(ETH_ERR_BLOCK);
     }
-    int return_val = bind(socket_descriptor,
+    int return_val = bind(fd,
                           (struct sockaddr *)&serv_addr,
                           sizeof(serv_addr));
     if (return_val < 0) {
@@ -71,7 +71,7 @@ int StandardSocket::Open() {
 int StandardSocket::Close() {
     if (is_open) {
         ssize_t close_rc;
-        close_rc = close(socket_descriptor);
+        close_rc = close(fd);
         if(close_rc == -1) {
             return(ETH_ERR_CLOSE);
         }
@@ -85,23 +85,23 @@ int StandardSocket::send(
         int port,
         const std::vector<char> & data)
 {
-	int socket_descriptor;
+	int send_fd;
 	struct sockaddr_in address;
 
 	memset(&address,0, sizeof(address));
 	address.sin_family = AF_INET;
 	address.sin_addr.s_addr = inet_addr(send_address.c_str());
 	address.sin_port = htons(port);
-	socket_descriptor = socket(AF_INET, SOCK_DGRAM, 0);
+	send_fd = socket(AF_INET, SOCK_DGRAM, 0);
     int val(1);
-    setsockopt(socket_descriptor, SOL_SOCKET, SO_BROADCAST, &val, sizeof(val));
+    setsockopt(send_fd, SOL_SOCKET, SO_BROADCAST, &val, sizeof(val));
 
-	int err_or_size = sendto(socket_descriptor,
+	int err_or_size = sendto(send_fd,
                              (char *)(&data[0]),
                              data.size(),
                              0,
                              (struct sockaddr*)&address, sizeof(address));
-	close(socket_descriptor);
+	close(send_fd);
     // Maintain compatability with previous ethernet, though it's probably not
     // necessary as no send command checks for a return value.
 	return(err_or_size);
@@ -112,50 +112,26 @@ int StandardSocket::send(const std::vector<char> & data) {
     return(send(send_address, send_port, data));
 }
 
-int StandardSocket::recv(std::deque<char> & data)
-{
+int StandardSocket::recv(std::vector<char> & data) {
     struct sockaddr_in remote_addr;
     socklen_t address_len = sizeof(remote_addr);
 
     ssize_t recv_rc;
     char buf[DATALENGTH];
-    recv_rc = recvfrom(socket_descriptor, buf, sizeof(buf), 0,
+    recv_rc = recvfrom(fd, buf, sizeof(buf), 0,
                        (struct sockaddr*)&remote_addr, &address_len);
 
-    if(recv_rc == -1 && errno != EAGAIN) {
-        return ETH_ERR_RX; //receive error
-    }
-    else if( (recv_rc == 0) | (errno == EAGAIN)) {  // no data
-        errno = 0;   // clear the error
-    }
-    else {
-        errno = 0;	// clear the error //necessary?
-        if (remote_addr.sin_addr.s_addr == receive_address_compare) {
-            data.insert(data.end(),buf,buf+recv_rc);
+    if (recv_rc < 0) {
+        if (errno == EAGAIN) {
+            errno = 0;
+            return(ETH_NO_ERR);
+        } else {
+            errno = 0;
+            return(ETH_ERR_RX);
         }
-    }
-
-    return(ETH_NO_ERR);
-}
-
-int StandardSocket::recv(std::vector<char> & data)
-{
-    struct sockaddr_in remote_addr;
-    socklen_t address_len = sizeof(remote_addr);
-
-    ssize_t recv_rc;
-    char buf[DATALENGTH]; //Datalength is currently 1024, but UDP max should be 576
-    //recv_rc = recvfrom(socket_descriptor, buf, sizeof(buf), 0, (struct sockaddr*)&serv_addr, (socklen_t *)&len);
-    recv_rc = recvfrom(socket_descriptor, buf, sizeof(buf), 0, (struct sockaddr*)&remote_addr, &address_len);
-
-    if(recv_rc == -1 && errno != EAGAIN) {
-        return ETH_ERR_RX; //receive error
-    }
-    else if( (recv_rc == 0) | (errno == EAGAIN)) {  // no data
-        errno = 0;   // clear the error
-    }
-    else {
-        errno = 0;	// clear the error //necessary?
+    } else if (recv_rc == 0) {
+        return(ETH_NO_ERR);
+    } else {
         if (remote_addr.sin_addr.s_addr == receive_address_compare) {
             data.assign(buf,buf+recv_rc);
         }

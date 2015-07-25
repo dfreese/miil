@@ -44,6 +44,7 @@ public:
     void setSendAddress(const std::string & address) {send_address = address;}
     void setRecvPort(int port) {recv_port = port;}
     void setSendPort(int port) {send_port = port;}
+    void setReceiveTimeout(int milliseconds);
 
 protected:
     std::string interface;
@@ -52,8 +53,10 @@ protected:
     int recv_port;
     int send_port;
 
+    int fd;
     bool is_open;
     std::map <std::string, struct sockaddr_in * > interface_list;
+    int timeout_ms;
 };
 
 #endif // ETHERNET_H

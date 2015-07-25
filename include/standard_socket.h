@@ -21,14 +21,12 @@ public:
              int port,
              const std::vector<char> & data);
     int send(const std::vector<char> & data);
-    int recv(std::deque<char> & data);
     int recv(std::vector<char> & data);
     int Open(const std::string & if_name);
     int Open();
     int Close();
 
 private:
-    int socket_descriptor;
     socklen_t socklen;
     struct sockaddr_in serv_addr;
     in_addr_t receive_address_compare;

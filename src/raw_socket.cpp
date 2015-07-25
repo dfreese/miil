@@ -106,13 +106,9 @@ int RawSocket::recv(std::vector<char> & data) {
 
     if (poll(&fds, 1, timeout_ms) > 0) {
         if (fds.revents & (POLLIN)) {
-            err_or_size = ::recvfrom(fd,
-                    buf,
-                    sizeof(buf),
-                    //MSG_TRUNC | MSG_DONTWAIT,
-                    MSG_TRUNC,
-                    (struct sockaddr*)&remote_addr,
-                    &address_len);
+            err_or_size = ::recvfrom(fd, buf, sizeof(buf), MSG_TRUNC,
+                                     (struct sockaddr*)&remote_addr,
+                                     &address_len);
         }
     } else {
         return(ETH_NO_ERR);
@@ -142,10 +138,6 @@ int RawSocket::recv(std::vector<char> & data) {
             return(ETH_NO_ERR);
         }
     }
-}
-
-void RawSocket::set_receive_timeout(int milliseconds) {
-    timeout_ms = milliseconds;
 }
 
 // Start of anonymous namespace to limit functions to local file
