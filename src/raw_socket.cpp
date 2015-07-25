@@ -31,8 +31,7 @@ RawSocket::RawSocket(
         const std::string & remote_mac) :
     Ethernet(_interface, recv_a, send_a, recv_p, send_p),
     dst_mac(remote_mac),
-    src_mac(local_mac),
-    timeout_ms(150)
+    src_mac(local_mac)
 {
 }
 

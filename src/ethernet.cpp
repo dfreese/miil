@@ -13,7 +13,8 @@ Ethernet::Ethernet(
     send_address(send_a),
     recv_port(recv_p),
     send_port(send_p),
-    is_open(false)
+    is_open(false),
+    timeout_ms(150)
 {
 }
 

@@ -61,6 +61,11 @@ int StandardSocket::Open(const std::string & if_name) {
         return(ETH_ERR_BIND);
     }
     is_open = true;
+
+    memset(&fds, 0, sizeof(fds));
+    fds.fd = fd;
+    fds.events = POLLIN;
+
     return(ETH_NO_ERR);
 }
 
@@ -116,10 +121,17 @@ int StandardSocket::recv(std::vector<char> & data) {
     struct sockaddr_in remote_addr;
     socklen_t address_len = sizeof(remote_addr);
 
-    ssize_t recv_rc;
     char buf[DATALENGTH];
-    recv_rc = recvfrom(fd, buf, sizeof(buf), 0,
-                       (struct sockaddr*)&remote_addr, &address_len);
+    ssize_t recv_rc(0);
+
+    if (poll(&fds, 1, timeout_ms) > 0) {
+        if (fds.revents & (POLLIN)) {
+            recv_rc = recvfrom(fd, buf, sizeof(buf), 0,
+                               (struct sockaddr*)&remote_addr, &address_len);
+       }
+    } else {
+        return(ETH_NO_ERR);
+    }
 
     if (recv_rc < 0) {
         if (errno == EAGAIN) {

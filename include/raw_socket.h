@@ -3,7 +3,6 @@
 
 #include <ethernet.h>
 #include <stdint.h>
-#include <poll.h>
 
 class RawSocket : public Ethernet {
 public:
@@ -32,8 +31,6 @@ private:
 
     std::string dst_mac;
     std::string src_mac;
-
-    struct pollfd fds;
 };
 
 #endif /* RAW_SOCKET_H */

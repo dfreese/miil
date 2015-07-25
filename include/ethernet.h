@@ -11,6 +11,7 @@
 #include <string>
 #include <map>
 #include <mutex>
+#include <poll.h>
 
 #define DATALENGTH 1024
 
@@ -54,6 +55,7 @@ protected:
     int send_port;
 
     int fd;
+    struct pollfd fds;
     bool is_open;
     std::map <std::string, struct sockaddr_in * > interface_list;
     int timeout_ms;
