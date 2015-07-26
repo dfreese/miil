@@ -1,5 +1,5 @@
 TEMPLATE = lib
-CONFIG += staticlib dll
+CONFIG += staticlib
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra -pedantic
 
