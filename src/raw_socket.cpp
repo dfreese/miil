@@ -397,7 +397,10 @@ std::vector<uint8_t> RawSocket::GeneratePacket(std::vector<uint8_t> data) {
                            send_port));
 }
 
-void RawSocket::set_ethernet(std::string dst_mac,std::string src_mac) {
+void RawSocket::setDstMac(const std::string & dst_mac) {
     this->dst_mac = dst_mac;
+}
+
+void RawSocket::setSrcMac(const std::string & src_mac) {
     this->src_mac = src_mac;
 }

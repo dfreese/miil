@@ -19,7 +19,8 @@ public:
     int send(const std::vector<char> & data);
     int send(std::vector<char>::const_iterator start,
              std::vector<char>::const_iterator stop);
-    void set_ethernet(std::string dst_mac, std::string src_mac);
+    void setDstMac(const std::string & dst_mac);
+    void setSrcMac(const std::string & dst_mac);
 
     int Open(const std::string & if_name);
     int Open();
