@@ -17,9 +17,15 @@ DESTDIR = $$OUT_PWD/lib
 HEADERS += \
     include/ethernet.h \
     include/raw_socket.h \
-    include/standard_socket.h
+    include/standard_socket.h \
+    include/usbport.h \
+    include/usbport1.h \
+    include/usbport2.h
 
 SOURCES += \
     src/ethernet.cpp \
     src/raw_socket.cpp \
-    src/standard_socket.cpp
+    src/standard_socket.cpp \
+    src/usbport.cpp \
+    src/usbport1.cpp \
+    src/usbport2.cpp \
