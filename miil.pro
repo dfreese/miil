@@ -20,7 +20,8 @@ HEADERS += \
     include/standard_socket.h \
     include/usbport.h \
     include/usbport1.h \
-    include/usbport2.h
+    include/usbport2.h \
+    include/util.h
 
 SOURCES += \
     src/ethernet.cpp \
@@ -29,3 +30,4 @@ SOURCES += \
     src/usbport.cpp \
     src/usbport1.cpp \
     src/usbport2.cpp \
+    src/util.cpp

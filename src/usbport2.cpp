@@ -3,43 +3,16 @@
 #include <string.h>
 #include <iostream>
 #include "WinTypes.h"
+#include <util.h>
 
-namespace {
-void msleep(long millisec) {
-    struct timespec req = {0, 0};
-    time_t sec = (int)(millisec / 1000);
-    millisec = millisec - (sec * 1000);
-    req.tv_sec = sec;
-    req.tv_nsec = millisec * 1000000L;
-    while(nanosleep(&req, &req) == -1) {
-         continue;
-    }
+USBPort2::USBPort2() {
 }
 
-void nsleep (long nsec) {
-    struct timespec req={0, 0};
-    time_t sec = (int)(nsec / 1e9);
-    nsec = nsec-(sec*1e9);
-    req.tv_sec=sec;
-    req.tv_nsec=nsec;
-    while(nanosleep(&req,&req)==-1) {
-         continue;
-    }
-}
-
-}
-
-USBPort2::USBPort2()
-{
-}
-
-USBPort2::USBPort2(const int &portNumber)
-{
+USBPort2::USBPort2(const int &portNumber) {
     openPort(portNumber);
 }
 
-USBPort2::~USBPort2()
-{
+USBPort2::~USBPort2() {
 }
 
 bool USBPort2::getDeviceList(std::vector<std::string> &list) {
@@ -263,7 +236,7 @@ int USBPort2::recv(std::vector<char> &rxv, char endchar, float timeout_s) {
 }
 
 int USBPort2::recv(std::vector<char> & response, long waitns) {
-    nsleep(waitns);
+    Util::sleep_ns(waitns);
     return recv(response);
 }
 
