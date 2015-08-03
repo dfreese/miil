@@ -16,7 +16,6 @@ USBPort2::~USBPort2() {
 }
 
 bool USBPort2::getDeviceList(std::vector<std::string> &list) {
-    list.clear();
     DWORD numDevs(0);
     FT_STATUS ftStatus;
     ftStatus = FT_CreateDeviceInfoList(&numDevs);
@@ -31,6 +30,7 @@ bool USBPort2::getDeviceList(std::vector<std::string> &list) {
         delete[] devInfo;
         return(false);
     }
+    list.clear();
     for (int ii = 0; ii < (int)numDevs; ii++) {
         std::string description(devInfo[ii].Description);
         list.push_back(description);
@@ -43,9 +43,8 @@ int USBPort2::getQueSize() {
     DWORD bytesAvailable(0);
     if (FT_GetQueueStatus(ftHandle, &bytesAvailable) != FT_OK) {
         return(-1);
-    } else {
-        return(bytesAvailable);
     }
+    return(bytesAvailable);
 }
 
 bool USBPort2::openPort(const int &portNumber) {
@@ -58,23 +57,23 @@ bool USBPort2::openPort(const int &portNumber, const int baud) {
         std::cerr << "FT_Open failed." << std::endl;
         portState = false;
         return(false);
-    } else {
-        ftStatus = FT_OK;
-        ftStatus += FT_SetBaudRate(ftHandle, baud);
-        ftStatus += FT_SetFlowControl(ftHandle, FT_FLOW_NONE, 0x00, 0x00);
-        ftStatus += FT_SetDataCharacteristics(ftHandle, FT_BITS_8,
-                                              FT_STOP_BITS_1, FT_PARITY_NONE);
-        ftStatus += FT_Purge(ftHandle, FT_PURGE_TX | FT_PURGE_RX);
-        ftStatus += FT_SetTimeouts(ftHandle, 50, 50);
-        if (ftStatus != FT_OK) {
-            std::cerr << "Port settings failed." << std::endl;
-            portState = false;
-            return(false);
-        } else {
-            portState = true;
-            return(true);
-        }
     }
+
+    ftStatus = FT_OK;
+    ftStatus += FT_SetBaudRate(ftHandle, baud);
+    ftStatus += FT_SetFlowControl(ftHandle, FT_FLOW_NONE, 0x00, 0x00);
+    ftStatus += FT_SetDataCharacteristics(ftHandle, FT_BITS_8,
+                                          FT_STOP_BITS_1, FT_PARITY_NONE);
+    ftStatus += FT_Purge(ftHandle, FT_PURGE_TX | FT_PURGE_RX);
+    ftStatus += FT_SetTimeouts(ftHandle, 50, 50);
+    if (ftStatus != FT_OK) {
+        std::cerr << "Port settings failed." << std::endl;
+        portState = false;
+        return(false);
+    }
+
+    portState = true;
+    return(true);
 }
 
 bool USBPort2::Open() {
@@ -91,34 +90,31 @@ bool USBPort2::Open(const std::string & name, int baud) {
     interfacename = name;
     baudrate = baud;
 
-    if(isOpen()) {
+    if (isOpen()) {
         return(true);
-    } else {
-        std::vector<std::string> list;
-        getDeviceList(list);
-        int usbDev(-1);
-        for (int ii=0; ii<(int)list.size(); ii++) {
-            if(strcmp(list[ii].c_str(),interfacename.c_str())==0) {
-                usbDev = ii;
-            }
-        }
+    }
 
-        if(usbDev<0) {
-            // Handle Device Not Found
-            std::cerr << "Error: Device not found: "
-                      << interfacename << std::endl;
-            return(false);
-        } else {
-            if(openPort(usbDev,baud)) {
-                purge(true, true);
-                return(true);
-            } else {
-                std::cerr << "Error: Cannot open port: "
-                          << interfacename << std::endl;
-                return(false);
-            }
+    std::vector<std::string> list;
+    getDeviceList(list);
+    int usbDev(-1);
+    for (size_t ii = 0; ii < list.size(); ii++) {
+        if(strcmp(list[ii].c_str(), interfacename.c_str()) == 0) {
+            usbDev = ii;
         }
     }
+
+    if (usbDev < 0) {
+        // Handle Device Not Found
+        std::cerr << "Error: Device not found: " << interfacename << std::endl;
+        return(false);
+    }
+
+    if (!openPort(usbDev, baud)) {
+        std::cerr << "Error: Cannot open port: " << interfacename << std::endl;
+        return(false);
+    }
+    purge(true, true);
+    return(true);
 }
 
 
@@ -281,12 +277,11 @@ bool USBPort2::purge(bool rxBuff, bool txBuff) {
     if (ftStatus != FT_OK) {
         std::cout << "Warning! FT_Purge is unsuccessful." << std::endl;
         return(false);
-    } else {
-        return(true);
     }
+    return(true);
 }
 
-void USBPort2::set(const std::string &_interfacename, const int _baudrate) {
+void USBPort2::set(const std::string & _interfacename, const int _baudrate) {
     interfacename = _interfacename;
     baudrate = _baudrate;
 }
