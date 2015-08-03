@@ -145,21 +145,15 @@ int USBPort2::send(const std::vector<char> &sendBuff)
     // the communication with the microcontrollers tends to error out with it
     // so that will be something that needs to be investigated.  Problably a
     // timing issue.
-//    if (simulation) {
-//        return(FT_OK);
+//    std::vector<char> writeable(sendBuff);
+//    DWORD bytesWritten;
+//    if (FT_Write(ftHandle, &writeable[0], writeable.size(), &bytesWritten) != FT_OK) {
+//        return(-2);
+//    } else if (bytesWritten != writeable.size()) {
+//        return(-1);
 //    } else {
-//        std::vector<char> writeable(sendBuff);
-//        DWORD bytesWritten;
-//        if (FT_Write(ftHandle, &writeable[0], writeable.size(), &bytesWritten) != FT_OK) {
-//            return(-2);
-//        } else {
-//            if (bytesWritten != writeable.size()) {
-//                return(-1);
-//            } else {
-//                totalSent++;
-//                return(FT_OK);
-//            }
-//        }
+//        totalSent++;
+//        return(FT_OK);
 //    }
 }
 
