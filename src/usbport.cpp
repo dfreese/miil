@@ -1,4 +1,4 @@
-#include <usbport.h>
+#include <miil/usbport.h>
 
 USBPort::USBPort() :
     totalSent(0),

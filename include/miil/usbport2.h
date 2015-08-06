@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include <usbport.h>
+#include <miil/usbport.h>
 #include <ftd2xx.h>
 
 class USBPort2 : public USBPort {

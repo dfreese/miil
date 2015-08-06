@@ -1,4 +1,4 @@
-#include <ethernet.h>
+#include <miil/ethernet.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
 

@@ -1,8 +1,8 @@
-#include <usbport2.h>
+#include <miil/usbport2.h>
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
-#include <util.h>
+#include <miil/util.h>
 
 USBPort2::USBPort2() {
 }

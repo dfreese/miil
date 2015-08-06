@@ -1,7 +1,7 @@
 #ifndef RAW_SOCKET_H
 #define RAW_SOCKET_H
 
-#include <ethernet.h>
+#include <miil/ethernet.h>
 #include <stdint.h>
 
 class RawSocket : public Ethernet {

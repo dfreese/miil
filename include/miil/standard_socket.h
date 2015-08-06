@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string.h>
-#include <ethernet.h>
+#include <miil/ethernet.h>
 
 class StandardSocket : public Ethernet {
 public:

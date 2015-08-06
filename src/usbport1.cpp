@@ -10,7 +10,7 @@
  *  \bug       N/A
  *  \warning
  */
-#include <usbport1.h>
+#include <miil/usbport1.h>
 
 using namespace std;
 

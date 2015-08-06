@@ -1,13 +1,13 @@
 TEMPLATE = lib
-CONFIG += staticlib
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra -pedantic
+LIBS += -lftd2xx
 
-DEPENDPATH += . \
+DEPENDPATH += \
         src \
-        include
+        include \
 
-INCLUDEPATH += . \
+INCLUDEPATH += \
      include \
      src
 
@@ -15,13 +15,13 @@ OBJECTS_DIR = $$OUT_PWD/build
 DESTDIR = $$OUT_PWD/lib
 
 HEADERS += \
-    include/ethernet.h \
-    include/raw_socket.h \
-    include/standard_socket.h \
-    include/usbport.h \
-    include/usbport1.h \
-    include/usbport2.h \
-    include/util.h
+    include/miil/ethernet.h \
+    include/miil/raw_socket.h \
+    include/miil/standard_socket.h \
+    include/miil/usbport.h \
+    include/miil/usbport1.h \
+    include/miil/usbport2.h \
+    include/miil/util.h
 
 SOURCES += \
     src/ethernet.cpp \

@@ -1,7 +1,7 @@
 #ifndef USBPORT1_H
 #define USBPORT1_H
 
-#include <usbport.h>
+#include <miil/usbport.h>
 #include <fcntl.h>
 #include <termios.h>
 #include <iostream>
