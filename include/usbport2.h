@@ -3,8 +3,8 @@
 
 #include <string>
 #include <vector>
-#include "usbport.h"
-#include "ftd2xx.h"
+#include <usbport.h>
+#include <ftd2xx.h>
 
 class USBPort2 : public USBPort {
 public:

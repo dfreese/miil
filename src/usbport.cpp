@@ -1,4 +1,4 @@
-#include "usbport.h"
+#include <usbport.h>
 
 USBPort::USBPort() :
     totalSent(0),

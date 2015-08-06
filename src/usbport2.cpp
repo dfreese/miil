@@ -1,8 +1,7 @@
-#include "usbport2.h"
+#include <usbport2.h>
 #include <stdlib.h>
 #include <string.h>
 #include <iostream>
-#include "WinTypes.h"
 #include <util.h>
 
 USBPort2::USBPort2() {

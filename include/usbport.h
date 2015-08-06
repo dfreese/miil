@@ -7,7 +7,7 @@
 class USBPort {
 public:
     USBPort();
-    virtual ~USBPort();
+    virtual ~USBPort() {}
     virtual bool openPort(const int &portNumber = 0) {
         return(false);
     }
