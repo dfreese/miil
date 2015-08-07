@@ -2,6 +2,7 @@
 #include <fstream>
 #include <algorithm>
 #include <sys/time.h>
+#include <unistd.h>
 
 /*! \brief Turns a string into a boolean value
  *

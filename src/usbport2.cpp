@@ -3,6 +3,7 @@
 #include <string.h>
 #include <iostream>
 #include <miil/util.h>
+#include <unistd.h>
 
 USBPort2::USBPort2() {
 }
