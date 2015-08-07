@@ -23,6 +23,8 @@ public:
 
     virtual int send(const std::vector<char> &sendBuff) = 0;
     virtual int send(const char &c) = 0;
+    virtual int send(const std::string & str) = 0;
+    
     virtual int recv(std::vector<char> &recvBuff) = 0;
     virtual int recv(char &c) = 0;
     virtual int recv(char *buffer, int numBytes) = 0;

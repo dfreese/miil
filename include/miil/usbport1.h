@@ -21,6 +21,7 @@ public:
     void closePort();
     int send(const std::vector<char> &sendBuff);
     int send(const char &c);
+    int send(const std::string & str);
     int recv(std::vector<char> &recvBuff);
     int recv(char &c);
     int recv(char *buffer, int numBytes);

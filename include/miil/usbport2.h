@@ -19,9 +19,9 @@ public:
     void closePort();
     bool getDeviceList(std::vector<std::string> &list);
     int getQueSize();
-    int send(std::string str);
     int send(const std::vector<char> &sendBuff);
     int send(const char &c);
+    int send(const std::string & str);
     int recv(std::vector<char> & response, long waitns);
     int recv(std::vector<char> &recvBuff);
     int recv(char &c);

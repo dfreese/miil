@@ -117,15 +117,6 @@ bool USBPort2::Open(const std::string & name, int baud) {
     return(true);
 }
 
-
-int USBPort2::send(std::string str) {
-    std::vector<char> sendBuff;
-    for (int ii=0; ii<(int)str.size(); ii++) {
-        sendBuff.push_back(str[ii]);
-    }
-    return send(sendBuff);
-}
-
 int USBPort2::send(const std::vector<char> &sendBuff)
 {
     int status = 0;
@@ -164,6 +155,14 @@ int USBPort2::send(const char &c) {
     }
     totalSent++;
     return(FT_OK);
+}
+
+int USBPort2::send(const std::string & str) {
+    std::vector<char> buffer;
+    for (size_t ii = 0; ii < str.size(); ii++) {
+        buffer.push_back(str[ii]);
+    }
+    return(send(buffer));
 }
 
 int USBPort2::recv(char &c) {

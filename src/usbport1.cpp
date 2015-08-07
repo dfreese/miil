@@ -106,6 +106,14 @@ int USBPort1::send(const char &c) {
     return(1);
 }
 
+int USBPort1::send(const std::string & str) {
+    std::vector<char> buffer;
+    for (size_t ii = 0; ii < str.size(); ii++) {
+        buffer.push_back(str[ii]);
+    }
+    return(send(buffer));
+}
+
 int USBPort1::recv(vector<char> &recvBuff) {
     char tempBuffer[100];
     int numBytes = read(tty_fd, tempBuffer, 100);
