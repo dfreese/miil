@@ -14,10 +14,10 @@ TempRhMonitor::TempRhMonitor(int portid) :
 
 bool TempRhMonitor::Open(int portid) {
     portnumber = portid;
-	stringstream portin;
-	portin << "/dev/ttyUSB" << portid;
-	portname = portin.str();
-    bool stat = port->openPort(portname, true, 5);
+    stringstream portin;
+    portin << "/dev/ttyUSB" << portid;
+    portname = portin.str();
+    bool stat = port->openPort(portname, false, 5);
     port->setBaudRate(B9600);
     return(stat);
 }
@@ -32,34 +32,34 @@ void TempRhMonitor::Close() {
 
 int TempRhMonitor::getTempAndRH(float & temp, float & rh) {
     if (port->send("PA\r\n\0") != 4) {
-		return(-1);
-	}
+        return(-1);
+    }
 
-	sleep(1);
+    sleep(1);
 
-	vector<char> buffer;
+    vector<char> buffer;
     if (port->recv(buffer) < 0) {
-		return(-2);
-	}
+        return(-2);
+    }
 
-	char end_msg_char = '>';
-	vector<char>::iterator end_msg_itr =
-			find(buffer.begin(), buffer.end(), end_msg_char);
+    char end_msg_char = '>';
+    vector<char>::iterator end_msg_itr =
+            find(buffer.begin(), buffer.end(), end_msg_char);
 
-	if (end_msg_itr == buffer.end()) {
-		return(-3);
-	}
+    if (end_msg_itr == buffer.end()) {
+        return(-3);
+    }
 
-	*(end_msg_itr - 2) = 0;
+    *(end_msg_itr - 2) = 0;
 
-	int scanstat = sscanf(&buffer[0],"%f,%f",&rh,&temp);
+    int scanstat = sscanf(&buffer[0],"%f,%f",&rh,&temp);
     if (scanstat != 2) {
         return(-4);
-	}
+    }
 
-	temp -= 32;
-	temp *= (5.0/9.0);
-	temperature = temp;
-	relhumidity = rh;
+    temp -= 32;
+    temp *= (5.0/9.0);
+    temperature = temp;
+    relhumidity = rh;
     return(0);
 }

@@ -9,18 +9,18 @@ class TempRhMonitor {
 
 public:
     TempRhMonitor(int portid);
-	std::string getName();
+    std::string getName();
     bool Open(int portid);
-	bool Open();
-	void Close();
-	int getTempAndRH(float & temp, float & rh);
+    bool Open();
+    void Close();
+    int getTempAndRH(float & temp, float & rh);
 
 private:
     USBPort1 * port;
     int portnumber;
     std::string portname;
-	float temperature;
-	float relhumidity;
+    float temperature;
+    float relhumidity;
 };
 
 #endif /* MONITOR_H */
