@@ -17,6 +17,7 @@ DESTDIR = $$OUT_PWD/lib
 
 HEADERS += \
     include/miil/ethernet.h \
+    include/miil/hvcontroller.h \
     include/miil/log.h \
     include/miil/raw_socket.h \
     include/miil/standard_socket.h \
@@ -28,6 +29,7 @@ HEADERS += \
 
 SOURCES += \
     src/ethernet.cpp \
+    src/hvcontroller.cpp \
     src/log.cpp \
     src/raw_socket.cpp \
     src/standard_socket.cpp \
