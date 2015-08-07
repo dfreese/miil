@@ -10,7 +10,6 @@
 #include <fcntl.h>
 #include <string>
 #include <map>
-#include <mutex>
 #include <poll.h>
 
 #define DATALENGTH 1024
