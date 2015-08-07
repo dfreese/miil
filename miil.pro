@@ -13,11 +13,13 @@ INCLUDEPATH += \
 
 OBJECTS_DIR = $$OUT_PWD/build
 MOC_DIR = $$OBJECTS_DIR
+UI_DIR = $$OBJECTS_DIR
 DESTDIR = $$OUT_PWD/lib
 
 HEADERS += \
     include/miil/ethernet.h \
     include/miil/hvcontroller.h \
+    include/miil/hvcontrolwidget.h \
     include/miil/log.h \
     include/miil/raw_socket.h \
     include/miil/standard_socket.h \
@@ -30,6 +32,7 @@ HEADERS += \
 SOURCES += \
     src/ethernet.cpp \
     src/hvcontroller.cpp \
+    src/hvcontrolwidget.cpp \
     src/log.cpp \
     src/raw_socket.cpp \
     src/standard_socket.cpp \
@@ -38,3 +41,6 @@ SOURCES += \
     src/usbport1.cpp \
     src/usbport2.cpp \
     src/util.cpp
+
+FORMS    += \
+    ui/hvcontrolwidget.ui
