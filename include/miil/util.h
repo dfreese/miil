@@ -20,7 +20,10 @@ namespace Util {
     int binaryString2int(std::string input);
     std::string getExecuatableDirectory();
     int StringToBool(const std::string & str, bool & val);
-    std::vector<int> BuildOrderedVector(int size, bool increasing=true);
+    std::vector<int> BuildOrderedVector(
+            int size,
+            bool increasing=true,
+            int start=0);
     double GetTimeOfDay();
     std::string FormatUnixTime(double time);
     std::string GetFormattedDateAndTime();

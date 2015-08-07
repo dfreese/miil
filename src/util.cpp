@@ -329,20 +329,28 @@ std::string Util::getExecuatableDirectory() {
  *
  * \return Vector of integers counting up from or down to zero
  */
-std::vector<int> Util::BuildOrderedVector(int size, bool increasing) {
-    std::vector<int> ret(size,0);
-    if (!increasing) ret.front() = (int) (ret.size()-1);
-    std::vector<int>::iterator it = ret.begin();
-    do {
-        it++;
-        if (increasing) {
-            *(it) = *(it-1)+1;
-        } else {
-            *(it) = *(it-1)-1;
-        }
-    } while (it != ret.end());
-    return(ret);
-}
+ std::vector<int> Util::BuildOrderedVector(
+         int size,
+         bool increasing,
+         int start)
+{
+     std::vector<int> ret(size,0);
+     if (start != 0) {
+         ret.front() = start;
+     } else if (!increasing) {
+         ret.front() = (int) (ret.size()-1);
+     }
+     std::vector<int>::iterator it = ret.begin();
+     do {
+         it++;
+         if (increasing) {
+             *(it) = *(it-1)+1;
+         } else {
+             *(it) = *(it-1)-1;
+         }
+     } while (it != ret.end());
+     return(ret);
+ }
 
 /*! \brief Returns Unix Time with microsecond precision
  *
