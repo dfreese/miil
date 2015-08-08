@@ -18,6 +18,7 @@ DESTDIR = $$OUT_PWD/lib
 
 HEADERS += \
     include/miil/ethernet.h \
+    include/miil/file_utils.h \
     include/miil/hvcontroller.h \
     include/miil/hvcontrolwidget.h \
     include/miil/instekpowersupply.h \
@@ -33,6 +34,7 @@ HEADERS += \
 
 SOURCES += \
     src/ethernet.cpp \
+    src/file_utils.cpp \
     src/hvcontroller.cpp \
     src/hvcontrolwidget.cpp \
     src/instekpowersupply.cpp \
