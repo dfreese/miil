@@ -121,6 +121,17 @@ namespace Util {
     }
 
     template <class T>
+    int StringToNumber(const std::string &str, T & value) {
+        T element;
+        std::stringstream ss(str);
+        if ((ss >> element).fail()) {
+            return(-1);
+        }
+        value = element;
+        return(0);
+    }
+
+    template <class T>
     std::vector<T> StringVecToNumberVec(const std::vector<std::string> & vec) {
         std::vector<T> ret;
         for (std::vector<std::string>::const_iterator it = vec.begin();
