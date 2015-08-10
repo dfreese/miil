@@ -1,15 +1,7 @@
 /*! \class     HVController
  *  \brief     Interfaces with the ISEG HV module over RS232
  *  \details   Class uses USBPort for opening the interface (USB1)\n
-               Reads currents and voltages
-
-
-
- *  \author    Umit Yoruk
- *  \version   1.0
- *  \date      2012
- *  \bug       N/A
- *  \warning   Local directory references
+ *             Reads currents and voltages
  */
 #include <miil/hvcontroller.h>
 #include <math.h>

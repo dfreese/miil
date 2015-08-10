@@ -1,14 +1,5 @@
 /*! \class     USBPort1
  *  \brief     Set up USB1 communication
- *  \details
-
-
-
- *  \author    Umit Yoruk
- *  \version   1.0
- *  \date      2012
- *  \bug       N/A
- *  \warning
  */
 #include <miil/usbport1.h>
 

@@ -32,12 +32,12 @@ struct TempCalibParams {
         ExtRes(er),RefTemp(rt),Offset(off),RefRes(rr){}
 };
 
-/*! \brief: A Structure with parameters for leakage current calculation */
+/*! \brief A Structure with parameters for leakage current calculation */
 struct LCCalibParams {
 	float VRef; ///< Reference voltage of the OpAmp
 	float OpAmpGain; ///< The gain of the OpAmp specified by the circuitry
     float Res; ///< The resistance leakage current is measured over
-	float Offset; ///< The Y-Offset in the linear fit 
+	float Offset; ///< The Y-Offset in the linear fit
     float Slope; ///< The slope of the linear fit
     LCCalibParams():VRef(),OpAmpGain(),Res(),Offset(),Slope(){}
     LCCalibParams(float vr,float og,float r,float of,float s) :

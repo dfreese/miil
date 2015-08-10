@@ -1,14 +1,5 @@
 /*! \class     HVControlWidget
- *  \brief     GUI for HV interfaces
- *  \details   There are two GUIs for HV interfaces\n
-               not sure about difference between HVControlWidget and HVCompactDockWidget
-
-
- *  \author    Umit Yoruk
- *  \version   1.0
- *  \date      2012
- *  \bug       N/A
- *  \warning   Local directory references
+ *  \brief     GUI interface for NIMs HV Module
  */
 #include <miil/hvcontrolwidget.h>
 #include <miil/hvcontroller.h>
