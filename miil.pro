@@ -25,6 +25,7 @@ HEADERS += \
     include/miil/hvcontrolwidget.h \
     include/miil/instekpowersupply.h \
     include/miil/log.h \
+    include/miil/pid.h \
     include/miil/raw_socket.h \
     include/miil/standard_socket.h \
     include/miil/temprhmonitor.h \
@@ -43,6 +44,7 @@ SOURCES += \
     src/hvcontrolwidget.cpp \
     src/instekpowersupply.cpp \
     src/log.cpp \
+    src/pid.cpp \
     src/raw_socket.cpp \
     src/standard_socket.cpp \
     src/temprhmonitor.cpp \
