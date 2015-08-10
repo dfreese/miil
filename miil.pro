@@ -28,6 +28,7 @@ HEADERS += \
     include/miil/pid.h \
     include/miil/raw_socket.h \
     include/miil/standard_socket.h \
+    include/miil/sorting.h \
     include/miil/temprhmonitor.h \
     include/miil/TimeGraph.h \
     include/miil/usbport.h \
