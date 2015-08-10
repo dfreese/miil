@@ -17,6 +17,7 @@ UI_DIR = $$OBJECTS_DIR
 DESTDIR = $$OUT_PWD/lib
 
 HEADERS += \
+    include/miil/calibration.h \
     include/miil/comm.h \
     include/miil/ethernet.h \
     include/miil/file_utils.h \
@@ -34,6 +35,7 @@ HEADERS += \
     include/miil/util.h
 
 SOURCES += \
+    src/calibration.cpp \
     src/comm.cpp \
     src/ethernet.cpp \
     src/file_utils.cpp \
