@@ -17,6 +17,7 @@ UI_DIR = $$OBJECTS_DIR
 DESTDIR = $$OUT_PWD/lib
 
 HEADERS += \
+    include/miil/comm.h \
     include/miil/ethernet.h \
     include/miil/file_utils.h \
     include/miil/hvcontroller.h \
@@ -33,6 +34,7 @@ HEADERS += \
     include/miil/util.h
 
 SOURCES += \
+    src/comm.cpp \
     src/ethernet.cpp \
     src/file_utils.cpp \
     src/hvcontroller.cpp \
