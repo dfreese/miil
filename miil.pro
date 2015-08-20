@@ -1,7 +1,7 @@
 TEMPLATE = lib
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra -pedantic
-LIBS += -lftd2xx -lqcustomplot
+LIBS += -lftd2xx -lqcustomplot -ljsoncpp
 
 DEPENDPATH += \
         src \
@@ -29,6 +29,7 @@ HEADERS += \
     include/miil/raw_socket.h \
     include/miil/standard_socket.h \
     include/miil/sorting.h \
+    include/miil/SystemConfiguration.h \
     include/miil/temprhmonitor.h \
     include/miil/TimeGraph.h \
     include/miil/usbport.h \
@@ -48,6 +49,7 @@ SOURCES += \
     src/pid.cpp \
     src/raw_socket.cpp \
     src/standard_socket.cpp \
+    src/SystemConfiguration.cpp \
     src/temprhmonitor.cpp \
     src/TimeGraph.cpp \
     src/usbport.cpp \
