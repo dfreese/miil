@@ -133,7 +133,7 @@ void walkModulesSpatials(
                     loc->a_v = current_value++;
                 }
             } else {
-                // If the rena is odd, read out A, B, C, D
+                // If the rena is even, read out A, B, C, D
                 if (settings.spatA.slow_hit_readout) {
                     loc->a = current_value++;
                 }
@@ -556,6 +556,66 @@ void resizePCDRMArray(
                 vect[p][c][d].resize(config->renas_per_daq);
                 for (int r = 0; r < config->renas_per_daq; r++) {
                     vect[p][c][d][r].resize(config->modules_per_rena);
+                }
+            }
+        }
+    }
+}
+
+/*!
+ * \brief Resize a PCDRM array to the proper size
+ *
+ * For arrays indexed Panel, Cartridge, DAQ_Board, Rena, Channel.
+ *
+ * \param config The system configuration to be used as reference
+ * \param vect The vector to be resized.
+ */
+template<class T>
+void resizePCDRCArray(
+        SystemConfiguration const * const config,
+        std::vector<std::vector<std::vector<
+                std::vector<std::vector<T> > > > > & vect)
+{
+    vect.resize(config->panels_per_system);
+    for (int p = 0; p < config->panels_per_system; p++) {
+        vect[p].resize(config->cartridges_per_panel);
+        for (int c = 0; c < config->cartridges_per_panel; c++) {
+            vect[p][c].resize(config->daqs_per_cartridge);
+            for (int d = 0; d < config->daqs_per_cartridge; d++) {
+                vect[p][c][d].resize(config->renas_per_daq);
+                for (int r = 0; r < config->renas_per_daq; r++) {
+                    vect[p][c][d][r].resize(config->channels_per_rena);
+                }
+            }
+        }
+    }
+}
+
+/*!
+ * \brief Resize a PCDRM array to the proper size
+ *
+ * For arrays indexed Panel, Cartridge, DAQ_Board, Rena, Channel.
+ *
+ * \param config The system configuration to be used as reference
+ * \param vect The vector to be resized.
+ */
+template<class T>
+void resizePCDRCArray(
+        SystemConfiguration const * const config,
+        std::vector<std::vector<std::vector<
+                std::vector<std::vector<T> > > > > & vect,
+        T default_value)
+{
+    vect.resize(config->panels_per_system);
+    for (int p = 0; p < config->panels_per_system; p++) {
+        vect[p].resize(config->cartridges_per_panel);
+        for (int c = 0; c < config->cartridges_per_panel; c++) {
+            vect[p][c].resize(config->daqs_per_cartridge);
+            for (int d = 0; d < config->daqs_per_cartridge; d++) {
+                vect[p][c][d].resize(config->renas_per_daq);
+                for (int r = 0; r < config->renas_per_daq; r++) {
+                    vect[p][c][d][r].resize(config->channels_per_rena,
+                                            default_value);
                 }
             }
         }
@@ -1287,7 +1347,8 @@ int loadHvFloatingBoardSettings(
  */
 SystemConfiguration::SystemConfiguration(const std::string & filename) :
         apds_per_module(2),
-        crystals_per_apd(64)
+        crystals_per_apd(64),
+        channels_per_rena(36)
 {
     std::memset(backend_address_panel_lookup, -1,
                 sizeof(backend_address_panel_lookup));
@@ -2088,6 +2149,102 @@ int SystemConfiguration::loadTimeCalibration(const std::string &filename) {
                             read_idx++;
                         }
                     }
+                }
+            }
+        }
+    }
+    return(0);
+}
+
+/*!
+ * \brief Create a default channel map for the system
+ *
+ * Map a channel number on a rena to a particular rena setting structure in the
+ * module_configs PCFM array.  This assumes that channels 0, 1, 34, and 35 on
+ * the rena are unused.  Assumes that on even number renas, commons are listed
+ * first (H0, L0, H1, L1) for each module, then spatials (A, B, C, D) for each
+ * module.  For odd numbered renas, the spatials are listed first (D, C, B, A)
+ * for each module, then the commons (H0, L0, H1, L1) for each module.
+ *
+ * \note This assumes that the configuration is as hardwired. If this needs to
+ *       change, then this function can be overloaded to find a particular file,
+ *       however, the ADC readout function lookup table generation will need to
+ *       change to use the channel map, and the RenaChannelSettings structure
+ *       will need more information to identify it's type.
+ */
+int SystemConfiguration::createChannelMap() {
+    // Initialize the entire array to be pointers to the unused channel since
+    // channels 0, 1, 34, and 35 are not connected to anything.
+    resizePCDRCArray(this, this->channel_map);
+    // Make sure something in software doesn't screw up something that is always
+    // true in hardware.
+    assert((8 * modules_per_rena + 4) == channels_per_rena);
+    int module;
+    int fin;
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int d = 0; d < daqs_per_cartridge; d++) {
+                for (int r = 0; r < renas_per_daq; r++) {
+                    int channel = 0;
+                    channel_map[p][c][d][r][channel++] =
+                            &this->unused_channel_config;
+                    channel_map[p][c][d][r][channel++] =
+                            &this->unused_channel_config;
+                    ModuleConfig * configs =
+                            module_configs[p][c][fin].data();
+                    if (r % 2) {
+                        // For Odd Renas, backward spatials first, then commons
+                        for (int m = 0; m < modules_per_rena; m++) {
+                            convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.spatD;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.spatC;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.spatB;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.spatA;
+                        }
+                        for (int m = 0; m < modules_per_rena; m++) {
+                            convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.comH;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.comL;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.comH;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.comL;
+                        }
+                    } else {
+                        // for even renas, commons first, then spatials.
+                        for (int m = 0; m < modules_per_rena; m++) {
+                            convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.comH;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.comL;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.comH;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.comL;
+                        }
+                        for (int m = 0; m < modules_per_rena; m++) {
+                            convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.spatA;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.spatB;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.spatC;
+                            channel_map[p][c][d][r][channel++] =
+                                    &configs[module].channel_settings.spatD;
+                        }
+                    }
+                    channel_map[p][c][d][r][channel++] =
+                            &this->unused_channel_config;
+                    channel_map[p][c][d][r][channel++] =
+                            &this->unused_channel_config;
                 }
             }
         }

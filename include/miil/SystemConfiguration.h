@@ -279,6 +279,8 @@ public:
             int & rena,
             int & rena_local_module) const;
 
+    int createChannelMap();
+
     //! The number of panels in the system (should always be 2)
     int panels_per_system;
     //! The number of cartridges in each panel of the system
@@ -315,6 +317,8 @@ public:
     int scmicros_per_cartridge;
     //! The number of modules controlled by each chip on the hv bias board.
     int modules_per_dac;
+    //! The number of channels on each rena
+    int channels_per_rena;
 
     //! Array index by panel id holding the panel config information.
     std::vector<PanelConfig> panel_configs;
@@ -364,6 +368,13 @@ public:
     std::vector<std::vector<std::vector<
             std::vector<std::vector<std::vector<
             CrystalCalibration> > > > > > calibration;
+
+    /*!
+     * Array index  Panel, Cartridge, DAQ_Board, Rena, Channel holding pointers
+     * to the appropriate channel settings structure
+     */
+    std::vector<std::vector<std::vector<std::vector<std::vector<
+            RenaChannelConfig *> > > > > channel_map;
 
     //! configuration for the unused channels on the RENA
     RenaChannelConfig unused_channel_config;
