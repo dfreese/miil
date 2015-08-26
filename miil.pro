@@ -20,6 +20,7 @@ DESTDIR = $$OUT_PWD/lib
 HEADERS += \
     include/miil/calibration.h \
     include/miil/comm.h \
+    include/miil/daq_control.h \
     include/miil/ethernet.h \
     include/miil/file_utils.h \
     include/miil/hvcontroller.h \
@@ -41,6 +42,7 @@ HEADERS += \
 SOURCES += \
     src/calibration.cpp \
     src/comm.cpp \
+    src/daq_control.cpp \
     src/ethernet.cpp \
     src/file_utils.cpp \
     src/hvcontroller.cpp \

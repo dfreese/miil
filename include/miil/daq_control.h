@@ -10,10 +10,10 @@ public:
     enum direct_fpga_commands {
         ADD_TO_BUFFER = 0x00,
         EXECUTE_INSTRUCTION = 0x40,
-        RESET_BUFFER = 0x81
+        RESET_BUFFER = 0x81,
         START_PACKET = 0x82,
         END_PACKET = 0x83,
-        RESET_TIMESTAMP = 0x88,
+        RESET_TIMESTAMP = 0x88
     };
 
     enum fpga_instructions {
@@ -23,14 +23,14 @@ public:
         TRIGGERS_NOT_TIMESTAMP = 0x8,
         ENABLE_READOUT = 0x9,
         LOAD_HIT_REGISTERS = 0xA,
-
-    }
+        SET_COINC_LOGIC = 0xD
+    };
 
     enum hit_register_types {
-        TRIGGER_SET = 0x0,
-        SLOW_HIT = 0x1,
-        FAST_HIT = 0x2,
-        UNDEFINED_HIT = 0x3
+        TRIGGER_SET = 0x00,
+        SLOW_HIT = 0x01,
+        FAST_HIT = 0x02,
+        UNDEFINED_HIT = 0x03
     };
 
     static int createRenaSettingsPacket(
