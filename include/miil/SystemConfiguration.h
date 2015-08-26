@@ -121,6 +121,7 @@ struct ADCValueLocation {
  */
 struct RenaChannelConfig {
     int fast_daq_threshold;
+    ///! The channel readout flag is used on the FPGA, not on the Rena
     bool fast_hit_readout;
     bool fast_powerdown;
     bool fast_trig_enable;
@@ -135,6 +136,7 @@ struct RenaChannelConfig {
     bool powerdown;
     int shaping_time;
     int slow_daq_threshold;
+    ///! The channel readout flag is used on the FPGA, not on the Rena
     bool slow_hit_readout;
     bool slow_trig_enable;
     bool test_enable;
