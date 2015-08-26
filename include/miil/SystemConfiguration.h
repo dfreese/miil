@@ -1,3 +1,5 @@
+#ifndef SYSTEM_CONFIGURATION_H
+#define SYSTEM_CONFIGURATION_H
 #include <vector>
 #include <string>
 
@@ -386,3 +388,5 @@ private:
     int backend_address_panel_lookup[32];
     int backend_address_cartridge_lookup[32];
 };
+
+#endif // SYSTEM_CONFIGURATION_H
