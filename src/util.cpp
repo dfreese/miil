@@ -464,7 +464,7 @@ void Util::PrintHexVector(const std::vector<unsigned char> & data) {
     {
         ss << (int) *it << " ";
     }
-    std::cout << ss;
+    std::cout << ss.str();
 }
 
 
