@@ -33,6 +33,8 @@ public:
         UNDEFINED_HIT = 0x03
     };
 
+    static int createResetTimestampPacket(std::vector<char> & packet);
+
     static int createRenaSettingsPacket(
             int backend_address,
             int daq_board,

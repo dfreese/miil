@@ -43,6 +43,10 @@ int createBoolEnablePacket(
 }
 }
 
+int DaqControl::createResetTimestampPacket(std::vector<char> & packet) {
+    packet.push_back(RESET_TIMESTAMP);
+}
+
 int DaqControl::createCoincOverridePacket(
         int backend_address,
         int daq_board,
