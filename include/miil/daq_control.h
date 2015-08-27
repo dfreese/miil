@@ -51,7 +51,7 @@ public:
             int rena,
             int module,
             int register_type,
-            RenaChannelConfig const * const configs,
+            RenaChannelConfig const * const * const configs,
             std::vector<char> & packet);
 
     static int createCoincOverridePacket(

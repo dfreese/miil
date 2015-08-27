@@ -116,10 +116,56 @@ int createFullChannelSettingsBuffer(
     }
     return(0);
 }
+
+int createHitRegisterBuffer(
+        int rena,
+        int module,
+        int register_type,
+        RenaChannelConfig const * const * const configs,
+        std::vector<char> & packet)
+{
+    std::vector<bool> bitstream;
+    for (int ii = 0; ii < 36; ii++) {
+        if (configs[ii]->module == module) {
+            if (register_type == DaqControl::TRIGGER_SET) {
+                bitstream.push_back(true);
+            } else if (register_type == DaqControl::SLOW_HIT) {
+                if (configs[ii]->slow_hit_readout) {
+                    bitstream.push_back(true);
+                } else {
+                    bitstream.push_back(false);
+                }
+            } else if (register_type == DaqControl::FAST_HIT) {
+                if (configs[ii]->fast_hit_readout) {
+                    bitstream.push_back(true);
+                } else {
+                    bitstream.push_back(false);
+                }
+            } else if (register_type == DaqControl::UNDEFINED_HIT) {
+                return(-1);
+            } else {
+                return(-2);
+            }
+        } else {
+            bitstream.push_back(false);
+        }
+    }
+    std::vector<uint8_t> buffer_vals =
+            Util::BoolVec2ByteVec(bitstream, 6, true);
+    for (size_t ii = 0; ii < buffer_vals.size(); ii++) {
+        packet.push_back(DaqControl::ADD_TO_BUFFER | buffer_vals[ii]);
+    }
+    packet.push_back(DaqControl::ADD_TO_BUFFER |
+                     ((rena & 0x01) << 5) |
+                     ((register_type & 0x03) << 3) |
+                     ((module & 0x03) << 0));
+    return(0);
+}
 }
 
 int DaqControl::createResetTimestampPacket(std::vector<char> & packet) {
     packet.push_back(RESET_TIMESTAMP);
+    return(0);
 }
 
 int DaqControl::createRenaSettingsPacket(
@@ -137,6 +183,26 @@ int DaqControl::createRenaSettingsPacket(
     createFullChannelSettingsBuffer(rena, channel, config, packet);
     packet.push_back(createExecuteInstruction(
             DaqControl::LOAD_RENA_SETTINGS, fpga));
+    packet.push_back(DaqControl::END_PACKET);
+    return(0);
+}
+
+int DaqControl::createHitRegisterPacket(
+        int backend_address,
+        int daq_board,
+        int fpga,
+        int rena,
+        int module,
+        int register_type,
+        RenaChannelConfig const * const * const configs,
+        std::vector<char> & packet)
+{
+    packet.push_back(DaqControl::START_PACKET);
+    packet.push_back(createAddress(backend_address, daq_board));
+    packet.push_back(DaqControl::RESET_BUFFER);
+    createHitRegisterBuffer(rena, module, register_type, configs, packet);
+    packet.push_back(createExecuteInstruction(
+            DaqControl::LOAD_HIT_REGISTERS, fpga));
     packet.push_back(DaqControl::END_PACKET);
     return(0);
 }
