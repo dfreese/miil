@@ -979,7 +979,7 @@ int loadChannelSettings(
     }
     if (channel_settings.isMember("Gain")) {
         config.gain =
-                channel_settings["Gain"].asBool();
+                channel_settings["Gain"].asInt();
     } else {
         not_found++;
     }

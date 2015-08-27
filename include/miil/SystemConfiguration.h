@@ -132,7 +132,7 @@ struct RenaChannelConfig {
     bool feedback_type;
     bool fet_size;
     bool follower;
-    bool gain;
+    int gain;
     bool polarity;
     bool pole_zero_enable;
     bool powerdown;
