@@ -121,11 +121,11 @@ int createHitRegisterBuffer(
         int rena,
         int module,
         int register_type,
-        RenaChannelConfig const * const * const configs,
+        const std::vector<RenaChannelConfig *> & configs,
         std::vector<char> & packet)
 {
     std::vector<bool> bitstream;
-    for (int ii = 0; ii < 36; ii++) {
+    for (size_t ii = 0; ii < configs.size(); ii++) {
         if (configs[ii]->module == module) {
             if (register_type == DaqControl::TRIGGER_SET) {
                 bitstream.push_back(true);
@@ -194,7 +194,7 @@ int DaqControl::createHitRegisterPacket(
         int rena,
         int module,
         int register_type,
-        RenaChannelConfig const * const * const configs,
+        const std::vector<RenaChannelConfig *> & configs,
         std::vector<char> & packet)
 {
     packet.push_back(DaqControl::START_PACKET);
