@@ -6,30 +6,70 @@
 
 class DaqControl {
 public:
-
+    /*!
+     * Commands that are given to the FPGAs either full bytes, or ORed with
+     * other information.
+     */
     enum direct_fpga_commands {
+        /*!
+         * ORed with 6 bits (0b00xx xxxx) causing the 6 bits to be added to the
+         * FPGA buffer and the buffer index incremented
+         */
         ADD_TO_BUFFER = 0x00,
+        /*!
+         * ORed with 6 bits (0b00yy zzzz) where yy is a 2 bit FPGA id and zzzz
+         * is a 4 bit instruction from \see fpga_instructions that causes the
+         * instruction to be executed on the FPGA.
+         */
         EXECUTE_INSTRUCTION = 0x40,
+        /*!
+         * Resets the buffer counter on the FPGAs.  Is sent by itself as a byte
+         */
         RESET_BUFFER = 0x81,
+        /*!
+         * Represents the start of a packet to the backend FPGAs.  Is sent by
+         * itself as a byte.  A backend board address is expected to follow.
+         */
         START_PACKET = 0x82,
+        /*!
+         * Represents the end of a packet to the backend FPGAs.  Is sent by
+         * itself as a byte.
+         */
         END_PACKET = 0x83,
+        /*!
+         * Sent by itself as a byte to tell the system to reset the coarse
+         * timestamp on every FPGA.  This should only be sent once to any
+         * ethernet, as the reset logic is global.
+         */
         RESET_TIMESTAMP = 0x88
     };
 
     enum fpga_instructions {
+        ///! Used by \see createRenaSettingsPacket to program a rena
         LOAD_RENA_SETTINGS = 0x5,
+        ///! Used by \see createCoincOverridePacket to program a FPGA
         COINC_OVERRIDE = 0x6,
+        ///! Used by \see createForceTriggerPacket to program a FPGA
         FORCE_TRIGGER = 0x7,
+        ///! Used by \see createTriggerNotTimestampPacket to program a FPGA
         TRIGGERS_NOT_TIMESTAMP = 0x8,
+        ///! Used by \see createReadoutEnablePacket to program a FPGA
         ENABLE_READOUT = 0x9,
+        ///! Used by \see createHitRegisterPacket to program a FPGA
         LOAD_HIT_REGISTERS = 0xA,
+        ///! Used by \see createCoincWindowPacket to program a FPGA
         SET_COINC_LOGIC = 0xD
     };
 
+    ///! The different register types accepted by \see createHitRegisterPacket
     enum hit_register_types {
+        ///! Ties rena channels to a module number for the FPGA
         TRIGGER_SET = 0x00,
+        ///! Tells the rena which energy channels to readout for a module trig
         SLOW_HIT = 0x01,
+        ///! Tells the rena which timing channels to readout for a module trig
         FAST_HIT = 0x02,
+        ///! A bit combination that is not programmed on the FPGA
         UNDEFINED_HIT = 0x03
     };
 
