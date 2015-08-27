@@ -25,7 +25,7 @@ char createAddress(
 /*!
  * \brief Create a byte to execute an instruction on a particular FPGA
  *
- * \param instruction The specific 4 bit instruction, taken from \see
+ * \param instruction The specific 4 bit instruction, taken from
  *        fpga_instructions, to be executed on the specified fpga
  * \param fpga The 2 bit id of the FPGA on the daq board (four-up board).
  *
@@ -128,7 +128,7 @@ int createSettingsBitstream(
 /*!
  * \brief Creates a bit stream with rena, channel address, and settings
  *
- * Creates the 42 bit bitsream needed by \see createFullChannelSettingsBuffer to
+ * Creates the 42 bit bitsream needed by createFullChannelSettingsBuffer to
  * program the rena channel.  The bitstream in order is the rena flag (1 bit),
  * the channel number (6 bits), and the channel settings (35 bits).
  *
@@ -161,7 +161,7 @@ int createFullChannelSettingsBitstream(
  * The LOAD_RENA_SETTINGS instruction requires all 42 bits of the buffer on the
  * FPGA to be filled with the rena in buffer(6)(5), the channel in buffer(6)(4)
  * to buffer(5)(5), and the 35 bit rena settings bitstream in buffer(5)(4) to
- * buffer(0)(0).  Generate an appropriate bitstream with \see
+ * buffer(0)(0).  Generate an appropriate bitstream with
  * createFullChannelSettingsBitstream, then configure that into ADD_TO_BUFFER
  * commands to the FPGA.
  *
@@ -204,7 +204,7 @@ int createFullChannelSettingsBuffer(
  *
  * \param rena Specify the rena the FPGA is dealing with
  * \param module Module on the rena the FPGA is dealing with
- * \param register_type A hit register type from \see hit_register_types
+ * \param register_type A hit register type from hit_register_types
  * \param configs A vector of pointers to RenaChannelConfig representing the
  *        channels of the rena in order of their channel number
  * \param packet The vector of bytes where the buffer bytes should be appended
@@ -277,7 +277,7 @@ int DaqControl::createResetTimestampPacket(std::vector<char> & packet) {
  * \brief Append a command to program a rena channel's settings
  *
  * Appends a packet to the given vector to program a particular channel on the
- * a rena with the given settings.  Uses \see createFullChannelSettingsBuffer to
+ * a rena with the given settings.  Uses createFullChannelSettingsBuffer to
  * generate all of the bytes to put information into the FPGA buffers.
  *
  * \param backend_address The address of the backend board to be addressed
@@ -318,7 +318,7 @@ int DaqControl::createRenaSettingsPacket(
  * Appends a packet to the given vector to program the hit registers of the
  * FPGA.  This tells the FPGA which channels are associated with each module
  * (TRIGGER_SET) and which channels should be readout if it triggers (SLOW_HIT,
- * FAST_HIT).  It uses \see createHitRegisterBuffer to generate all of the bytes
+ * FAST_HIT).  It uses createHitRegisterBuffer to generate all of the bytes
  * to put information into the FPGA buffers.
  *
  * \param backend_address The address of the backend board to be addressed
@@ -326,7 +326,7 @@ int DaqControl::createRenaSettingsPacket(
  * \param fpga The frontend fpga to be programmed
  * \param rena The rena number the fpga is being programmed for
  * \param module The module for which the rena is being programmed
- * \param register_type A hit register type from \see hit_register_types
+ * \param register_type A hit register type from hit_register_types
  * \param configs Vector of channel settings used to program the fpga
  * \param packet vector where the bytes are appended
  *
@@ -361,7 +361,7 @@ int DaqControl::createHitRegisterPacket(
  *
  * Appends a packet to the given vector to set the coincidence override flag of
  * the FPGA.  True for enable disables the coincidence logic, putting the device
- * in singles mode.  False enables the coincidence logic programmed using \see
+ * in singles mode.  False enables the coincidence logic programmed using
  * createCoincWindowPacket.
  *
  * \param backend_address The address of the backend board to be addressed

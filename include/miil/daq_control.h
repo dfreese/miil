@@ -18,7 +18,7 @@ public:
         ADD_TO_BUFFER = 0x00,
         /*!
          * ORed with 6 bits (0b00yy zzzz) where yy is a 2 bit FPGA id and zzzz
-         * is a 4 bit instruction from \see fpga_instructions that causes the
+         * is a 4 bit instruction from fpga_instructions that causes the
          * instruction to be executed on the FPGA.
          */
         EXECUTE_INSTRUCTION = 0x40,
@@ -45,31 +45,31 @@ public:
     };
 
     enum fpga_instructions {
-        ///! Used by \see createRenaSettingsPacket to program a rena
+        /// Used by createRenaSettingsPacket to program a rena
         LOAD_RENA_SETTINGS = 0x5,
-        ///! Used by \see createCoincOverridePacket to program a FPGA
+        /// Used by createCoincOverridePacket to program a FPGA
         COINC_OVERRIDE = 0x6,
-        ///! Used by \see createForceTriggerPacket to program a FPGA
+        /// Used by createForceTriggerPacket to program a FPGA
         FORCE_TRIGGER = 0x7,
-        ///! Used by \see createTriggerNotTimestampPacket to program a FPGA
+        /// Used by createTriggerNotTimestampPacket to program a FPGA
         TRIGGERS_NOT_TIMESTAMP = 0x8,
-        ///! Used by \see createReadoutEnablePacket to program a FPGA
+        /// Used by createReadoutEnablePacket to program a FPGA
         ENABLE_READOUT = 0x9,
-        ///! Used by \see createHitRegisterPacket to program a FPGA
+        /// Used by createHitRegisterPacket to program a FPGA
         LOAD_HIT_REGISTERS = 0xA,
-        ///! Used by \see createCoincWindowPacket to program a FPGA
+        /// Used by createCoincWindowPacket to program a FPGA
         SET_COINC_LOGIC = 0xD
     };
 
-    ///! The different register types accepted by \see createHitRegisterPacket
+    /// The different register types accepted by createHitRegisterPacket
     enum hit_register_types {
-        ///! Ties rena channels to a module number for the FPGA
+        /// Ties rena channels to a module number for the FPGA
         TRIGGER_SET = 0x00,
-        ///! Tells the rena which energy channels to readout for a module trig
+        /// Tells the rena which energy channels to readout for a module trig
         SLOW_HIT = 0x01,
-        ///! Tells the rena which timing channels to readout for a module trig
+        /// Tells the rena which timing channels to readout for a module trig
         FAST_HIT = 0x02,
-        ///! A bit combination that is not programmed on the FPGA
+        /// A bit combination that is not programmed on the FPGA
         UNDEFINED_HIT = 0x03
     };
 
