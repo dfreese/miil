@@ -1,4 +1,5 @@
 #include <miil/daq_control.h>
+#include <miil/util.h>
 
 namespace {
 char createAddress(
@@ -41,10 +42,103 @@ int createBoolEnablePacket(
     packet.push_back(DaqControl::END_PACKET);
     return(0);
 }
+
+/*! \brief Transforms RenaChannelConfig struct to a boolean vector
+ *
+ * This takes the structure of the RenaChannelConfig and transforms it into a
+ * boolean vector of bits that can be sent to the rena after the channel address
+ * is appended.  The order of the bits is placed into the vector is from MSB
+ * to LSB which is the order expected by the Rena.
+ *
+ * \param settings settings for a channel on the rena
+ * \param bitstream return of 35 bit vector for the rena channel settings
+ *
+ * \return 0 on success, less than otherwise.
+ */
+int createSettingsBitstream(
+        const RenaChannelConfig & settings,
+        std::vector<bool> & bitstream)
+{
+    bitstream.push_back(settings.feedback_resistor);
+    bitstream.push_back(settings.test_enable);
+    bitstream.push_back(settings.fast_powerdown);
+    bitstream.push_back(settings.feedback_type);
+    // Add two least significant bits
+    std::vector<bool> add = Util::int2BoolVec(settings.gain, 2);
+    bitstream.insert(bitstream.end(), add.begin(), add.end());
+    bitstream.push_back(settings.powerdown);
+    bitstream.push_back(settings.pole_zero_enable);
+    bitstream.push_back(settings.feedback_cap);
+    bitstream.push_back(settings.vref);
+    // Add four least significant bits
+    add = Util::int2BoolVec(settings.shaping_time, 4);
+    bitstream.insert(bitstream.end(), add.begin(), add.end());
+    bitstream.push_back(settings.fet_size);
+    add = Util::int2BoolVec(settings.fast_daq_threshold, 8);
+    bitstream.insert(bitstream.end(), add.begin(), add.end());
+    bitstream.push_back(settings.polarity);
+    add = Util::int2BoolVec(settings.slow_daq_threshold, 8);
+    bitstream.insert(bitstream.end(), add.begin(), add.end());
+    bitstream.push_back(settings.fast_trig_enable);
+    bitstream.push_back(settings.slow_trig_enable);
+    bitstream.push_back(settings.follower);
+    return(0);
+}
+
+int createFullChannelSettingsBitstream(
+    int rena,
+    int channel,
+    const RenaChannelConfig & settings,
+    std::vector<bool> & bitstream)
+{
+    // Add Rena Select - 1 bit (1 bits total)
+    bitstream.push_back(rena & 0x01);
+    // Add Channel Address - 6 bits (7 bits total)
+    std::vector<bool> channel_bool = Util::int2BoolVec(channel, 6);
+    bitstream.insert(bitstream.end(), channel_bool.begin(), channel_bool.end());
+    // Add Channel Settings - 35 bits (42 bits total)
+    createSettingsBitstream(settings, bitstream);
+    return(0);
+}
+
+int createFullChannelSettingsBuffer(
+    int rena,
+    int channel,
+    const RenaChannelConfig & settings,
+    std::vector<char> & bytestream)
+{
+    std::vector<bool> bitstream;
+    createFullChannelSettingsBitstream(rena, channel, settings, bitstream);
+    std::vector<uint8_t> buffer_vals =
+            Util::BoolVec2ByteVec(bitstream, 6, true);
+    for (size_t ii = 0; ii < buffer_vals.size(); ii++) {
+        bytestream.push_back(DaqControl::ADD_TO_BUFFER | buffer_vals[ii]);
+    }
+    return(0);
+}
 }
 
 int DaqControl::createResetTimestampPacket(std::vector<char> & packet) {
     packet.push_back(RESET_TIMESTAMP);
+}
+
+int DaqControl::createRenaSettingsPacket(
+        int backend_address,
+        int daq_board,
+        int fpga,
+        int rena,
+        int channel,
+        const RenaChannelConfig & config,
+        std::vector<char> & packet)
+{
+    packet.push_back(DaqControl::START_PACKET);
+    packet.push_back(createAddress(backend_address, daq_board));
+    packet.push_back(DaqControl::RESET_BUFFER);
+    createFullChannelSettingsBuffer(rena, channel, config, packet);
+    packet.push_back(createExecuteInstruction(
+            DaqControl::LOAD_RENA_SETTINGS, fpga));
+    packet.push_back(DaqControl::END_PACKET);
+    return(0);
 }
 
 int DaqControl::createCoincOverridePacket(

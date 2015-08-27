@@ -40,6 +40,7 @@ public:
             int daq_board,
             int fpga,
             int rena,
+            int channel,
             const RenaChannelConfig & config,
             std::vector<char> & packet);
 
