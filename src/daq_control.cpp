@@ -15,7 +15,9 @@ char createExecuteInstruction(
         int instruction,
         int fpga)
 {
-    return(DaqControl::EXECUTE_INSTRUCTION | ((fpga & 0x3) << 4) | instruction);
+    return(DaqControl::EXECUTE_INSTRUCTION |
+           ((fpga & 0x3) << 4) |
+           ((instruction & 0x0F) << 0));
 }
 
 int createBoolEnablePacket(
@@ -180,7 +182,9 @@ int DaqControl::createRenaSettingsPacket(
     packet.push_back(DaqControl::START_PACKET);
     packet.push_back(createAddress(backend_address, daq_board));
     packet.push_back(DaqControl::RESET_BUFFER);
-    createFullChannelSettingsBuffer(rena, channel, config, packet);
+    if (createFullChannelSettingsBuffer(rena, channel, config, packet) < 0) {
+        return(-1);
+    }
     packet.push_back(createExecuteInstruction(
             DaqControl::LOAD_RENA_SETTINGS, fpga));
     packet.push_back(DaqControl::END_PACKET);
@@ -200,7 +204,10 @@ int DaqControl::createHitRegisterPacket(
     packet.push_back(DaqControl::START_PACKET);
     packet.push_back(createAddress(backend_address, daq_board));
     packet.push_back(DaqControl::RESET_BUFFER);
-    createHitRegisterBuffer(rena, module, register_type, configs, packet);
+    if (createHitRegisterBuffer(
+                rena, module, register_type, configs, packet) < 0) {
+        return(-1);
+    }
     packet.push_back(createExecuteInstruction(
             DaqControl::LOAD_HIT_REGISTERS, fpga));
     packet.push_back(DaqControl::END_PACKET);
