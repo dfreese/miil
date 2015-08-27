@@ -143,6 +143,8 @@ struct RenaChannelConfig {
     bool slow_trig_enable;
     bool test_enable;
     bool vref;
+    ///! The module number local to the rena the channel is associated with
+    int module;
 };
 
 /*!

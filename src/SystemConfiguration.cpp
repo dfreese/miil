@@ -1683,9 +1683,25 @@ int SystemConfiguration::load(const std::string & filename) {
                         std::cerr << "load failed on P" << p << "C" << c
                                   << "F" << f << "M" << m << std::endl;
                         return(-13);
-                    } else {
-
                     }
+                    // Set the module value for each of the channels in the
+                    // module so that it can be used by the hit register config
+                    int module_rena;
+                    int rena;
+                    int daq;
+                    convertPCFMtoPCDRM(p, c, f, m, daq, rena, module_rena);
+                    module_configs[p][c][f][m].channel_settings.comH.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.comL.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.spatA.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.spatB.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.spatC.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.spatD.module =
+                            module_rena;
                 }
             }
         }
