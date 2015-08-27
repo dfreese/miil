@@ -2179,8 +2179,6 @@ int SystemConfiguration::createChannelMap() {
     // Make sure something in software doesn't screw up something that is always
     // true in hardware.
     assert((8 * modules_per_rena + 4) == channels_per_rena);
-    int module;
-    int fin;
     for (int p = 0; p < panels_per_system; p++) {
         for (int c = 0; c < cartridges_per_panel; c++) {
             for (int d = 0; d < daqs_per_cartridge; d++) {
@@ -2190,12 +2188,14 @@ int SystemConfiguration::createChannelMap() {
                             &this->unused_channel_config;
                     channel_map[p][c][d][r][channel++] =
                             &this->unused_channel_config;
-                    ModuleConfig * configs =
-                            module_configs[p][c][fin].data();
                     if (r % 2) {
                         // For Odd Renas, backward spatials first, then commons
                         for (int m = 0; m < modules_per_rena; m++) {
+                            int module;
+                            int fin;
                             convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
+                            ModuleConfig * configs =
+                                    module_configs[p][c][fin].data();
                             channel_map[p][c][d][r][channel++] =
                                     &configs[module].channel_settings.spatD;
                             channel_map[p][c][d][r][channel++] =
@@ -2206,7 +2206,11 @@ int SystemConfiguration::createChannelMap() {
                                     &configs[module].channel_settings.spatA;
                         }
                         for (int m = 0; m < modules_per_rena; m++) {
+                            int module;
+                            int fin;
                             convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
+                            ModuleConfig * configs =
+                                    module_configs[p][c][fin].data();
                             channel_map[p][c][d][r][channel++] =
                                     &configs[module].channel_settings.comH;
                             channel_map[p][c][d][r][channel++] =
@@ -2219,7 +2223,11 @@ int SystemConfiguration::createChannelMap() {
                     } else {
                         // for even renas, commons first, then spatials.
                         for (int m = 0; m < modules_per_rena; m++) {
+                            int module;
+                            int fin;
                             convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
+                            ModuleConfig * configs =
+                                    module_configs[p][c][fin].data();
                             channel_map[p][c][d][r][channel++] =
                                     &configs[module].channel_settings.comH;
                             channel_map[p][c][d][r][channel++] =
@@ -2230,7 +2238,11 @@ int SystemConfiguration::createChannelMap() {
                                     &configs[module].channel_settings.comL;
                         }
                         for (int m = 0; m < modules_per_rena; m++) {
+                            int module;
+                            int fin;
                             convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
+                            ModuleConfig * configs =
+                                    module_configs[p][c][fin].data();
                             channel_map[p][c][d][r][channel++] =
                                     &configs[module].channel_settings.spatA;
                             channel_map[p][c][d][r][channel++] =
