@@ -592,19 +592,17 @@ void resizePCDRCArray(
 }
 
 /*!
- * \brief Resize a PCDRM array to the proper size
+ * \brief Resize a PCDF array to the proper size
  *
- * For arrays indexed Panel, Cartridge, DAQ_Board, Rena, Channel.
+ * For arrays indexed Panel, Cartridge, DAQ_Board, FPGA.
  *
  * \param config The system configuration to be used as reference
  * \param vect The vector to be resized.
  */
 template<class T>
-void resizePCDRCArray(
+void resizePCDFArray(
         SystemConfiguration const * const config,
-        std::vector<std::vector<std::vector<
-                std::vector<std::vector<T> > > > > & vect,
-        T default_value)
+        std::vector<std::vector<std::vector<std::vector<T> > > > & vect)
 {
     vect.resize(config->panels_per_system);
     for (int p = 0; p < config->panels_per_system; p++) {
@@ -612,11 +610,7 @@ void resizePCDRCArray(
         for (int c = 0; c < config->cartridges_per_panel; c++) {
             vect[p][c].resize(config->daqs_per_cartridge);
             for (int d = 0; d < config->daqs_per_cartridge; d++) {
-                vect[p][c][d].resize(config->renas_per_daq);
-                for (int r = 0; r < config->renas_per_daq; r++) {
-                    vect[p][c][d][r].resize(config->channels_per_rena,
-                                            default_value);
-                }
+                vect[p][c][d].resize(config->fpgas_per_daq);
             }
         }
     }
@@ -1348,7 +1342,8 @@ int loadHvFloatingBoardSettings(
 SystemConfiguration::SystemConfiguration(const std::string & filename) :
         apds_per_module(2),
         crystals_per_apd(64),
-        channels_per_rena(36)
+        channels_per_rena(36),
+        renas_per_fpga(2)
 {
     std::memset(backend_address_panel_lookup, -1,
                 sizeof(backend_address_panel_lookup));
@@ -1588,10 +1583,12 @@ int SystemConfiguration::load(const std::string & filename) {
     if (loadSystemSize(this, root) < 0) {
         return(-2);
     }
+    fpgas_per_daq = renas_per_daq / renas_per_fpga;
     // Configure the arrays given the size
     resizePCFMArray(this, module_configs);
     resizePCArray(this, cartridge_configs);
     resizePCFArray(this, fin_configs);
+    resizePCDFArray(this, fpga_configs);
 
     // Load in the HV Floating Board Settings
     if (loadHvFloatingBoardSettings(this, root) < 0) {
@@ -1722,6 +1719,7 @@ int SystemConfiguration::load(const std::string & filename) {
     }
 
     populateADCLocationLookup(this, this->adc_value_locations);
+
 
     // Verify full round trip conversion on the mapping.  Should be in a test
     // case, but this will do for now.

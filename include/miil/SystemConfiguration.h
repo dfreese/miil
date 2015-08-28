@@ -200,6 +200,20 @@ struct HvFloatingBoardConfig {
 };
 
 /*!
+ * \brief runtime information about the front end FPGAs.
+ */
+struct FrontendFpgaConfig {
+    //! Whether the rena should readout information from its renas
+    bool readout_enable;
+    //! Enabling overrides the coincidence logic between the panels aka singles
+    bool coinc_override;
+    //! Forces the rena to trigger on noise
+    bool force_trigger;
+    //! Debug only, readout the triggers of individual channels not the ct
+    bool read_triggers_not_timestamps;
+};
+
+/*!
  * Configuration information for the backend board that reads out four daq
  * boards.
  */
@@ -325,6 +339,10 @@ public:
     int modules_per_dac;
     //! The number of channels on each rena
     int channels_per_rena;
+    //! The number of renas associated with a given front FPGA (2)
+    int renas_per_fpga;
+    //! The number of front end FPGAs on each daq board
+    int fpgas_per_daq;
 
     //! Array index by panel id holding the panel config information.
     std::vector<PanelConfig> panel_configs;
@@ -381,6 +399,13 @@ public:
      */
     std::vector<std::vector<std::vector<std::vector<std::vector<
             RenaChannelConfig *> > > > > channel_map;
+
+    /*!
+     * Array index  Panel, Cartridge, DAQ_Board, FPGA holding the runtime
+     * information for each front end FPGA
+     */
+    std::vector<std::vector<std::vector<std::vector<
+            FrontendFpgaConfig> > > > fpga_configs;
 
     //! configuration for the unused channels on the RENA
     RenaChannelConfig unused_channel_config;
