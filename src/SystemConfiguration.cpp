@@ -1377,7 +1377,7 @@ SystemConfiguration::SystemConfiguration(const std::string & filename) :
 int SystemConfiguration::lookupPanelCartridge(
     int backend_address,
     int & panel,
-    int & cartridge)
+    int & cartridge) const
 {
     if (backend_address < 0 || backend_address >= 32) {
         return(-1);

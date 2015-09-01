@@ -279,7 +279,10 @@ public:
     int loadCalibration(const std::string & filename);
     int loadTimeCalibration(const std::string & filename);
 
-    int lookupPanelCartridge(int backend_address, int & panel, int & cartridge);
+    int lookupPanelCartridge(
+            int backend_address,
+            int & panel,
+            int & cartridge) const;
 
     int convertPCDRMtoPCFM(
             int panel,
