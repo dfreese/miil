@@ -15,7 +15,6 @@
 #include <sys/types.h>
 #include <math.h>
 #include <cstdio>
-
 #include <miil/raw_socket.h>
 
 #define UDP_HEADER_LENGTH 42
@@ -305,7 +304,7 @@ std::vector<uint8_t> generate_packet(
 }
 
 void UpdateIPHeaderLength(
-        std::vector<char> & packet,
+        char * packet,
         uint16_t size)
 {
     // Take off Ethernet header length
@@ -315,7 +314,7 @@ void UpdateIPHeaderLength(
 }
 
 void UpdateUDPHeaderLength(
-        std::vector<char> & udp_hdr,
+        char * udp_hdr,
         uint16_t size)
 {
     // Take off Ethernet and IP header length
@@ -324,7 +323,7 @@ void UpdateUDPHeaderLength(
     udp_hdr[39] = (uint8_t)(0x00FF & (size ) );
 }
 
-void UpdateIPHeaderChecksum(std::vector<char> & hdr) {
+void UpdateIPHeaderChecksum(char * hdr) {
     // Zero out the checksum first
     hdr[24] = 0;
     hdr[25] = 0;
@@ -343,9 +342,23 @@ void UpdateIPHeaderChecksum(std::vector<char> & hdr) {
     hdr[25] = (uint8_t)(0x00FF & checksum );
 }
 
-std::vector<uint8_t> generic_vector_uint8_t;
-std::vector<char> generic_vector;
-bool generic_vector_generated(false);
+/*!
+ * \brief Thread specific buffer for udp packet header
+ *
+ * A buffer for the header for a packet to be stored so that the header isn't
+ * generated every time the packet needs to be sent.  __thread keyword is a gcc
+ * extension to make the variable specific to every thread instance.
+ */
+__thread char packet_buffer[UDP_HEADER_LENGTH + MAX_UDP_PAYLOAD];
+
+/*!
+ * \brief Thread specific flag indicating udp packet header was generated
+ *
+ * A flag to indicate if the header for a packet has been generated and stored
+ * in packet_buffer.  __thread keyword is a gcc extension to make the variable
+ * specific to every thread instance.
+ */
+__thread bool generic_vector_generated(false);
 // End of anonymous namespace to limit functions to local file
 }
 
@@ -358,25 +371,24 @@ int RawSocket::send(
         std::vector<char>::const_iterator stop)
 {
     if (!generic_vector_generated) {
-        generic_vector_uint8_t =
+        std::vector<uint8_t> generic_vector_uint8_t =
                 GeneratePacket(std::vector<uint8_t>(MAX_UDP_PAYLOAD, 0));
-        generic_vector.assign(
-                generic_vector_uint8_t.begin(),
-                generic_vector_uint8_t.end());
+        std::copy(generic_vector_uint8_t.begin(),
+                  generic_vector_uint8_t.end(),
+                  packet_buffer);
         generic_vector_generated = true;
     }
     int bytes_sent(0);
     size_t packet_size(std::distance(start,stop));
     for (size_t ii = 0; ii < packet_size; ii++) {
         size_t ii_local = ii % MAX_UDP_PAYLOAD;
-        generic_vector[ii_local + UDP_HEADER_LENGTH] = *(start + ii);
+        packet_buffer[ii_local + UDP_HEADER_LENGTH] = *(start + ii);
         if ((ii == (packet_size - 1)) || (ii_local == (MAX_UDP_PAYLOAD - 1))) {
             size_t local_packet_size = UDP_HEADER_LENGTH + ii_local + 1;
-            UpdateIPHeaderLength(generic_vector, local_packet_size);
-            UpdateUDPHeaderLength(generic_vector, local_packet_size);
-            UpdateIPHeaderChecksum(generic_vector);
-            int err_or_size = ::send(fd, &(generic_vector[0]),
-                                     local_packet_size, 0);
+            UpdateIPHeaderLength(packet_buffer, local_packet_size);
+            UpdateUDPHeaderLength(packet_buffer, local_packet_size);
+            UpdateIPHeaderChecksum(packet_buffer);
+            int err_or_size = ::send(fd, packet_buffer, local_packet_size, 0);
             if (err_or_size < 0) {
                 return(err_or_size);
             } else {
