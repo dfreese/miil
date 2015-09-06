@@ -1343,7 +1343,10 @@ SystemConfiguration::SystemConfiguration(const std::string & filename) :
         apds_per_module(2),
         crystals_per_apd(64),
         channels_per_rena(36),
-        renas_per_fpga(2)
+        renas_per_fpga(2),
+        pedestals_loaded_flag(false),
+        calibration_loaded_flag(false),
+        uv_centers_loaded_flag(false)
 {
     std::memset(backend_address_panel_lookup, -1,
                 sizeof(backend_address_panel_lookup));
@@ -1874,9 +1877,9 @@ int SystemConfiguration::loadPedestals(const std::string & filename) {
 
     if (expected_lines != lines) {
         return(-8);
-    } else {
-        return(0);
     }
+    pedestals_loaded_flag = true;
+    return(0);
 }
 
 /*!
@@ -1962,6 +1965,7 @@ int SystemConfiguration::loadUVCenters(const std::string &filename) {
             }
         }
     }
+    uv_centers_loaded_flag = true;
     return(0);
 }
 
@@ -2167,6 +2171,7 @@ int SystemConfiguration::loadTimeCalibration(const std::string &filename) {
             }
         }
     }
+    calibration_loaded_flag = true;
     return(0);
 }
 

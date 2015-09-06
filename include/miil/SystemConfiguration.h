@@ -304,6 +304,33 @@ public:
 
     int createChannelMap();
 
+    /*!
+     * \brief Check if pedestals have been loaded
+     *
+     * \return bool flag indicating if pedestals have been loaded
+     */
+    bool pedestalsLoaded() const {
+        return(pedestals_loaded_flag);
+    }
+
+    /*!
+     * \brief Check if calibration settings have been loaded
+     *
+     * \return bool flag indicating if calibration settings have been loaded
+     */
+    bool calibrationLoaded() const {
+        return(calibration_loaded_flag);
+    }
+
+    /*!
+     * \brief Check if the uv circle centers have been loaded
+     *
+     * \return bool flag indicating if uv circle centers have been loaded
+     */
+    bool uvCentersLoaded() const {
+        return(uv_centers_loaded_flag);
+    }
+
     //! The number of panels in the system (should always be 2)
     int panels_per_system;
     //! The number of cartridges in each panel of the system
@@ -417,6 +444,9 @@ private:
     bool backend_address_valid[32];
     int backend_address_panel_lookup[32];
     int backend_address_cartridge_lookup[32];
+    bool pedestals_loaded_flag;
+    bool calibration_loaded_flag;
+    bool uv_centers_loaded_flag;
 };
 
 #endif // SYSTEM_CONFIGURATION_H
