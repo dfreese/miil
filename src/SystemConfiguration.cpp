@@ -1,6 +1,8 @@
 #include <miil/SystemConfiguration.h>
 #include <fstream>
 #include <iostream>
+#include <algorithm>
+#include <numeric>
 #include <stdexcept>
 #include <sstream>
 #include <cstring>
@@ -2075,7 +2077,11 @@ int SystemConfiguration::loadCalibration(const std::string &filename) {
         for (int c = 0; c < cartridges_per_panel; c++) {
             for (int f = 0; f < fins_per_cartridge; f++) {
                 for (int m = 0; m < modules_per_fin; m++) {
+                    ModuleConfig * module_config = &module_configs[p][c][f][m];
+                    int module_read_idx_start = read_idx;
                     for (int a = 0; a < apds_per_module; a++) {
+                        ApdConfig * apd_config = &module_config->apd_configs[a];
+                        int apd_read_idx_start = read_idx;
                         for (int x = 0; x < crystals_per_apd; x++) {
                             calibration[p][c][f][m][a][x].use =
                                     use_crystal_read[read_idx];
@@ -2093,11 +2099,54 @@ int SystemConfiguration::loadCalibration(const std::string &filename) {
                                     crystal_y_read[read_idx];
                             read_idx++;
                         }
+                        apd_config->gain_comm_avg = std::accumulate(
+                                gain_comm_read.begin() + apd_read_idx_start,
+                                gain_comm_read.begin() + read_idx, 0.0) /
+                                (float) crystals_per_apd;
+                        apd_config->gain_comm_min = *std::min_element(
+                                gain_comm_read.begin() + apd_read_idx_start,
+                                gain_comm_read.begin() + read_idx);
+                        apd_config->gain_comm_min = *std::max_element(
+                                gain_comm_read.begin() + apd_read_idx_start,
+                                gain_comm_read.begin() + read_idx);
+
+                        apd_config->eres_comm_avg = std::accumulate(
+                                eres_comm_read.begin() + apd_read_idx_start,
+                                eres_comm_read.begin() + read_idx, 0.0) /
+                                (float) crystals_per_apd;
+                        apd_config->eres_comm_min = *std::min_element(
+                                eres_comm_read.begin() + apd_read_idx_start,
+                                eres_comm_read.begin() + read_idx);
+                        apd_config->eres_comm_max = *std::max_element(
+                                eres_comm_read.begin() + apd_read_idx_start,
+                                eres_comm_read.begin() + read_idx);
                     }
+                    module_config->gain_spat_avg = std::accumulate(
+                            gain_spat_read.begin() + module_read_idx_start,
+                            gain_spat_read.begin() + read_idx, 0.0) /
+                            (float) (apds_per_module * crystals_per_apd);
+                    module_config->gain_spat_min = *std::min_element(
+                            gain_spat_read.begin() + module_read_idx_start,
+                            gain_spat_read.begin() + read_idx);
+                    module_config->gain_spat_max = *std::max_element(
+                            gain_spat_read.begin() + module_read_idx_start,
+                            gain_spat_read.begin() + read_idx);
+
+                    module_config->eres_spat_avg = std::accumulate(
+                            eres_spat_read.begin() + module_read_idx_start,
+                            eres_spat_read.begin() + read_idx, 0.0) /
+                            (float) (apds_per_module * crystals_per_apd);
+                    module_config->eres_spat_min = *std::min_element(
+                            eres_spat_read.begin() + module_read_idx_start,
+                            eres_spat_read.begin() + read_idx);
+                    module_config->eres_spat_max = *std::max_element(
+                            eres_spat_read.begin() + module_read_idx_start,
+                            eres_spat_read.begin() + read_idx);
                 }
             }
         }
     }
+    calibration_loaded_flag = true;
     return(0);
 }
 
@@ -2171,7 +2220,6 @@ int SystemConfiguration::loadTimeCalibration(const std::string &filename) {
             }
         }
     }
-    calibration_loaded_flag = true;
     return(0);
 }
 

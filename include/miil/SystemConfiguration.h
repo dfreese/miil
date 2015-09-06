@@ -167,6 +167,44 @@ struct ModuleChannelConfig {
 };
 
 /*!
+ * \brief APD Calibration Information
+ *
+ * Contains all of the calibration information about the PSAPD
+ */
+struct ApdConfig {
+    /*!
+     * The average common photopeak position over all of the crystals in the
+     * module.  Calculated in loadCalibration.
+     */
+    float gain_comm_avg;
+    /*!
+     * The minimum common photopeak position over all of the crystals in the
+     * module.  Calculated in loadCalibration.
+     */
+    float gain_comm_min;
+    /*!
+     * The maximum common photopeak position over all of the crystals in the
+     * module.  Calculated in loadCalibration.
+     */
+    float gain_comm_max;
+    /*!
+     * The average common energy resolution over all of the crystals in the
+     * module.  Calculated in loadCalibration.
+     */
+    float eres_comm_avg;
+    /*!
+     * The minimum common energy resolution over all of the crystals in the
+     * module.  Calculated in loadCalibration.
+     */
+    float eres_comm_min;
+    /*!
+     * The maximum common energy resolution over all of the crystals in the
+     * module.  Calculated in loadCalibration.
+     */
+    float eres_comm_max;
+};
+
+/*!
  * Contains all of the information about the individual module and it's testing
  * information.
  */
@@ -181,6 +219,37 @@ struct ModuleConfig {
     float module_test_temperature;
     float module_test_bias_resistor;
     ModuleChannelConfig channel_settings;
+    /*!
+     * The average photopeak position over all of the crystals in the module.
+     * Calculated in loadCalibration.
+     */
+    float gain_spat_avg;
+    /*!
+     * The minimum photopeak position over all of the crystals in the module.
+     * Calculated in loadCalibration.
+     */
+    float gain_spat_min;
+    /*!
+     * The maximum photopeak position over all of the crystals in the module.
+     * Calculated in loadCalibration.
+     */
+    float gain_spat_max;
+    /*!
+     * The average spatial energy resolution over all of the crystals in the
+     * module.  Calculated in loadCalibration.
+     */
+    float eres_spat_avg;
+    /*!
+     * The minimum spatial energy resolution over all of the crystals in the
+     * module.  Calculated in loadCalibration.
+     */
+    float eres_spat_min;
+    /*!
+     * The maximum spatial energy resolution over all of the crystals in the
+     * module.  Calculated in loadCalibration.
+     */
+    float eres_spat_max;
+    ApdConfig apd_configs[2];
 };
 
 /*!
