@@ -400,6 +400,15 @@ public:
         return(uv_centers_loaded_flag);
     }
 
+    /*!
+     * \brief Check if the time offset calibration has been loaded
+     *
+     * \return bool indicating if the time offset calibration has been loaded
+     */
+    bool timeCalibrationLoaded() const {
+        return(time_calibration_loaded_flag);
+    }
+
     //! The number of panels in the system (should always be 2)
     int panels_per_system;
     //! The number of cartridges in each panel of the system
@@ -516,6 +525,7 @@ private:
     bool pedestals_loaded_flag;
     bool calibration_loaded_flag;
     bool uv_centers_loaded_flag;
+    bool time_calibration_loaded_flag;
 };
 
 #endif // SYSTEM_CONFIGURATION_H

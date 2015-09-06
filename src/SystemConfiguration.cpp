@@ -1348,7 +1348,8 @@ SystemConfiguration::SystemConfiguration(const std::string & filename) :
         renas_per_fpga(2),
         pedestals_loaded_flag(false),
         calibration_loaded_flag(false),
-        uv_centers_loaded_flag(false)
+        uv_centers_loaded_flag(false),
+        time_calibration_loaded_flag(false)
 {
     std::memset(backend_address_panel_lookup, -1,
                 sizeof(backend_address_panel_lookup));
@@ -2220,6 +2221,7 @@ int SystemConfiguration::loadTimeCalibration(const std::string &filename) {
             }
         }
     }
+    time_calibration_loaded_flag = true;
     return(0);
 }
 
