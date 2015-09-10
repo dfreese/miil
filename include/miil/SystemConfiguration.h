@@ -526,6 +526,20 @@ public:
     double ct_frequency;
     //! The period calculated as the inverse of ct_frequency in nanoseconds
     double ct_period_ns;
+    /*!
+     * A flag indicating calibrated events should only be sorted on their coarse
+     * timestamps, rather than comparing coarse, then fine timestamps, assuming
+     * they are within abs(ct2-ct1) < compare_on_ft_ct_window.  Loaded from the
+     * "sort_on_ct_only" paramter in the root of the json file.
+     */
+    bool sort_on_ct_only_flag;
+    /*!
+     * The window in ct counts on which to compare events on their fine
+     * timestamps.  If abs(ct2-ct1) < compare_on_ft_ct_window is true, then the
+     * fine timestamps are used.  Loaded from the "compare_on_ft_ct_window"
+     * parameter in the root of the json file.
+     */
+    int compare_on_ft_ct_window;
 
 private:
     bool backend_address_valid[32];
