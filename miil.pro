@@ -22,6 +22,8 @@ HEADERS += \
     include/miil/comm.h \
     include/miil/daq_control.h \
     include/miil/ethernet.h \
+    include/miil/EventCal.h \
+    include/miil/EventRaw.h \
     include/miil/file_utils.h \
     include/miil/hvcontroller.h \
     include/miil/hvcontrolwidget.h \
