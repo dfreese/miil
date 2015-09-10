@@ -49,11 +49,12 @@ int insertion_sort(T & array) {
 template <class T>
 int insertion_sort(
         T & array,
-        bool (*f) (typename T::value_type, typename T::value_type))
+        bool (*f) (const typename T::value_type &,
+                   const typename T::value_type &))
 {
     for (typename T::size_type ii = 1; ii < array.size(); ii++) {
         for (typename T::size_type kk = ii;
-             (0 < kk) && f(array[kk],array[kk-1]);
+             (0 < kk) && f(array[kk], array[kk-1]);
              kk--)
         {
             typename T::value_type temp = array[kk];
@@ -86,8 +87,8 @@ int insertion_sort(
 template <class T, class Arg1, class Arg2, class Arg3>
 int insertion_sort(
         T & array,
-        bool (*f) (typename T::value_type,
-                   typename T::value_type,
+        bool (*f) (const typename T::value_type &,
+                   const typename T::value_type &,
                    Arg1, Arg2, Arg3),
         Arg1 arg1, Arg2 arg2, Arg3 arg3)
 {
