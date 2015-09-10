@@ -520,12 +520,12 @@ public:
 
     //! The frequency of the sine wave used to generate the UV signals
     double uv_frequency;
-    //! The period calculated as the inverse of uv_frequency
-    double uv_period;
+    //! The period calculated as the inverse of uv_frequency in nanoseconds
+    double uv_period_ns;
     //! The frequency of the coarse timestamp clock on the FPGAs
     double ct_frequency;
-    //! The period calculated as the inverse of ct_frequency
-    double ct_period;
+    //! The period calculated as the inverse of ct_frequency in nanoseconds
+    double ct_period_ns;
 
 private:
     bool backend_address_valid[32];

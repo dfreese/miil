@@ -1621,13 +1621,13 @@ int SystemConfiguration::load(const std::string & filename) {
         return(-18);
     }
     this->uv_frequency = root["uv_frequency"].asDouble();
-    this->uv_period = 1.0 / this->uv_frequency;
+    this->uv_period_ns = 1.0 / (this->uv_frequency / 1e9);
 
     if (!root["ct_frequency"].isDouble()) {
         return(-19);
     }
     this->ct_frequency = root["ct_frequency"].asDouble();
-    this->ct_period = 1.0 / this->ct_frequency;
+    this->ct_period_ns = 1.0 / (this->ct_frequency / 1e9);
 
     Json::Value panels = root["panels"];
     if (panels == Json::nullValue) {
