@@ -30,6 +30,7 @@ HEADERS += \
     include/miil/instekpowersupply.h \
     include/miil/log.h \
     include/miil/pid.h \
+    include/miil/processing.h \
     include/miil/raw_socket.h \
     include/miil/standard_socket.h \
     include/miil/sorting.h \
@@ -52,6 +53,7 @@ SOURCES += \
     src/instekpowersupply.cpp \
     src/log.cpp \
     src/pid.cpp \
+    src/processing.cpp \
     src/raw_socket.cpp \
     src/standard_socket.cpp \
     src/SystemConfiguration.cpp \
