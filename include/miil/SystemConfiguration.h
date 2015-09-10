@@ -518,6 +518,15 @@ public:
     //! configuration for the unused channels on the RENA
     RenaChannelConfig unused_channel_config;
 
+    //! The frequency of the sine wave used to generate the UV signals
+    double uv_frequency;
+    //! The period calculated as the inverse of uv_frequency
+    double uv_period;
+    //! The frequency of the coarse timestamp clock on the FPGAs
+    double ct_frequency;
+    //! The period calculated as the inverse of ct_frequency
+    double ct_period;
+
 private:
     bool backend_address_valid[32];
     int backend_address_panel_lookup[32];

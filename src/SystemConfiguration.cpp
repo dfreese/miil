@@ -1573,6 +1573,8 @@ int SystemConfiguration::convertPCFMtoPCDRM(
  *        -15 if loadHvFloatingBoardSettings failed
  *        -16 if loadPanelSettings failed
  *        -17 if loadFinSettings failed
+ *        -18 if uv_frequency was not found
+ *        -19 if uv_frequency was not found
  */
 int SystemConfiguration::load(const std::string & filename) {
     std::ifstream json_in(filename.c_str());
@@ -1614,6 +1616,19 @@ int SystemConfiguration::load(const std::string & filename) {
     {
         return(-3);
     }
+
+    if (!root["uv_frequency"].isDouble()) {
+        return(-18);
+    }
+    this->uv_frequency = root["uv_frequency"].asDouble();
+    this->uv_period = 1.0 / this->uv_frequency;
+
+    if (!root["ct_frequency"].isDouble()) {
+        return(-19);
+    }
+    this->ct_frequency = root["ct_frequency"].asDouble();
+    this->ct_period = 1.0 / this->ct_frequency;
+
     Json::Value panels = root["panels"];
     if (panels == Json::nullValue) {
         return(-4);
