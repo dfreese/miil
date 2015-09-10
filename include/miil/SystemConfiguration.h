@@ -18,14 +18,14 @@ struct ModulePedestals {
     float b;
     float c;
     float d;
+    float com0;
     float com1;
-    float com2;
+    float com0h;
     float com1h;
-    float com2h;
+    float u0h;
+    float v0h;
     float u1h;
     float v1h;
-    float u2h;
-    float v2h;
 };
 
 /*!
@@ -60,18 +60,18 @@ struct CrystalCalibration {
  */
 struct ADCValueLocation {
     bool triggered;
+    int com0;
     int com1;
-    int com2;
+    int com0h;
     int com1h;
-    int com2h;
+    int u0;
+    int v0;
     int u1;
     int v1;
-    int u2;
-    int v2;
+    int u0h;
+    int v0h;
     int u1h;
     int v1h;
-    int u2h;
-    int v2h;
     int a;
     int a_u;
     int a_v;
@@ -90,18 +90,18 @@ struct ADCValueLocation {
      */
     ADCValueLocation() :
             triggered(false),
+            com0(MAX_NO_ADC_VALUES),
             com1(MAX_NO_ADC_VALUES),
-            com2(MAX_NO_ADC_VALUES),
+            com0h(MAX_NO_ADC_VALUES),
             com1h(MAX_NO_ADC_VALUES),
-            com2h(MAX_NO_ADC_VALUES),
+            u0(MAX_NO_ADC_VALUES),
+            v0(MAX_NO_ADC_VALUES),
             u1(MAX_NO_ADC_VALUES),
             v1(MAX_NO_ADC_VALUES),
-            u2(MAX_NO_ADC_VALUES),
-            v2(MAX_NO_ADC_VALUES),
+            u0h(MAX_NO_ADC_VALUES),
+            v0h(MAX_NO_ADC_VALUES),
             u1h(MAX_NO_ADC_VALUES),
             v1h(MAX_NO_ADC_VALUES),
-            u2h(MAX_NO_ADC_VALUES),
-            v2h(MAX_NO_ADC_VALUES),
             a(MAX_NO_ADC_VALUES),
             a_u(MAX_NO_ADC_VALUES),
             a_v(MAX_NO_ADC_VALUES),

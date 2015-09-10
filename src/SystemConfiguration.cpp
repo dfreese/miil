@@ -222,6 +222,20 @@ void walkModulesCommons(
         if (0x01 & (t >> m)) {
             loc->triggered = true;
             if (settings.comH.slow_hit_readout) {
+                loc->com0h = current_value++;
+            }
+            if (settings.comH.fast_hit_readout) {
+                loc->u0h = current_value++;
+                loc->v0h = current_value++;
+            }
+            if (settings.comL.slow_hit_readout) {
+                loc->com0 = current_value++;
+            }
+            if (settings.comL.fast_hit_readout) {
+                loc->u0 = current_value++;
+                loc->v0 = current_value++;
+            }
+            if (settings.comH.slow_hit_readout) {
                 loc->com1h = current_value++;
             }
             if (settings.comH.fast_hit_readout) {
@@ -234,20 +248,6 @@ void walkModulesCommons(
             if (settings.comL.fast_hit_readout) {
                 loc->u1 = current_value++;
                 loc->v1 = current_value++;
-            }
-            if (settings.comH.slow_hit_readout) {
-                loc->com2h = current_value++;
-            }
-            if (settings.comH.fast_hit_readout) {
-                loc->u2h = current_value++;
-                loc->v2h = current_value++;
-            }
-            if (settings.comL.slow_hit_readout) {
-                loc->com2 = current_value++;
-            }
-            if (settings.comL.fast_hit_readout) {
-                loc->u2 = current_value++;
-                loc->v2 = current_value++;
             }
         }
     }
@@ -1866,16 +1866,16 @@ int SystemConfiguration::loadPedestals(const std::string & filename) {
                     pedestals[panel][cartridge][daq][rena][module].d =
                             channel_pedestal_value;
                 } else if (ii == 4) {
-                    pedestals[panel][cartridge][daq][rena][module].com1 =
+                    pedestals[panel][cartridge][daq][rena][module].com0 =
                             channel_pedestal_value;
                 } else if (ii == 5) {
-                    pedestals[panel][cartridge][daq][rena][module].com1h =
+                    pedestals[panel][cartridge][daq][rena][module].com0h =
                             channel_pedestal_value;
                 } else if (ii == 6) {
-                    pedestals[panel][cartridge][daq][rena][module].com2 =
+                    pedestals[panel][cartridge][daq][rena][module].com1 =
                             channel_pedestal_value;
                 } else if (ii == 7) {
-                    pedestals[panel][cartridge][daq][rena][module].com2h =
+                    pedestals[panel][cartridge][daq][rena][module].com1h =
                             channel_pedestal_value;
                 }
             }
@@ -1967,14 +1967,14 @@ int SystemConfiguration::loadUVCenters(const std::string &filename) {
                     convertPCFMtoPCDRM(p, c, f, m, daq, rena, module);
                     for (int a = 0; a < apds_per_module; a++) {
                         if (a == 0) {
+                            pedestals[p][c][daq][rena][module].u0h =
+                                    circles_u_read[read_idx];
+                            pedestals[p][c][daq][rena][module].v0h =
+                                    circles_v_read[read_idx];
+                        } else if (a == 1) {
                             pedestals[p][c][daq][rena][module].u1h =
                                     circles_u_read[read_idx];
                             pedestals[p][c][daq][rena][module].v1h =
-                                    circles_v_read[read_idx];
-                        } else if (a == 1) {
-                            pedestals[p][c][daq][rena][module].u2h =
-                                    circles_u_read[read_idx];
-                            pedestals[p][c][daq][rena][module].v2h =
                                     circles_v_read[read_idx];
                         }
                         read_idx++;
