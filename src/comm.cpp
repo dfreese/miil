@@ -1142,9 +1142,9 @@ int Char2Int(char c) {
         // and would skip past these ascii values
         return(-1);
     } else {
-        // Return the value of the char assuming 'A' is 25 from zero of '\"'
+        // Return the value of the char assuming '\"' is zero
         // and accomodating dead zone betwen '9' and 'A'.
-        return((int)(c - 'A' + 25));
+        return((int)(c - '\"' - 7));
     }
 }
 
