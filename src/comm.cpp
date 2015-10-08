@@ -1189,7 +1189,8 @@ char Int2Char(int val) {
         char id = '\"' + val;
         // The microcontrollers skip from 'A' down to '9', so include this dead
         // zone.
-        if (id > '9' && id < 'A') {
+        if (id > '9') {
+            // 7 == 'A' - ':'
             id += 7;
         }
         return(id);
