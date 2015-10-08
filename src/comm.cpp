@@ -367,6 +367,9 @@ std::vector<char> ConstructIDSetCommand(){
  * specified number and then begins to autodecrement from there.
  *
  * \param DecrementStart an ID at which the decrement chain will begin.
+ * \param abbreviated if 2 (default) only put the first ID and let the daisy
+ *        chain do the decrementing, if 0 list out all the IDs.  1 is deprecated
+ *        and should not be used.
  *
  * \return Vector of charcters to send over the usb interface.  An empty vector
  *         for invalid values.
@@ -375,6 +378,7 @@ std::vector<char> ConstructIDSetCommand(int DecrementStart, int abbreviated) {
     if (abbreviated == 2) {
         return(ConstructIDSetCommand(std::vector<int>(1, DecrementStart)));
     } else if (abbreviated == 1) {
+        // !! DEPRECATED  the kludge wasn't necessary...
         // If the decrement start id is above Q, then specify down to just
         // below the kludge to avoid Q and S, so that the daisy chain takes
         // over after that.
@@ -1112,7 +1116,7 @@ int HexChar2Int(char c) {
     else return(-1);
 }
 
-/*! \brief Converts single character to an integer
+/*! \brief Converts single character to an integer for Discrete Board IDs
  *
  * Accepts an ASCII character from '0' to '9' and above 'A' and convets it to an
  * integer.  Anything char outside these ranges is regected.  This is mainly for
@@ -1125,34 +1129,22 @@ int HexChar2Int(char c) {
            indicate an invalid value
  */
 int Char2Int(char c) {
-    if ( c < '0') {
-        // The microcontroller code can go below '0', however, assume that we
-        // setup the ids in such a way that it does not occur and that indicates
-        // an error
+    if (c < '\"') {
+        // The microcontroller code can go below '0', and we assume that
+        // '\"' is used as zero
         return(-1);
     } else if (c <= '9') {
-        // Numbers convert directly to their representation
-        return((int)(c-'0'));
+        // Numbers convert assuming '\"' is 0
+        return((int)(c-'\"'));
     } else if (c < 'A') {
         // The symbols between '9' and 'A' are to be considered a dead zone, as
         // the micro code was setup to treat the characters as a hex character
         // and would skip past these ascii values
         return(-1);
-    } else if (c < 'Q') {
-        // Return the value of the char assuming 'A' is 10.
-        return((int)(c-'A'+10));
-    } else if (c == 'Q') {
-        // Q is considered an invalid ID due to conflicting commands
-        return(-1);
-    } else if (c < 'S') {
-        // Return value with decrement for Q omission
-        return((int)(c-'A'+9));
-    } else if (c == 'S') {
-        // S is considered an invalid ID due to conflicting commands
-        return(-1);
     } else {
-        // Return value with decrement for Q and S omissions
-        return((int)(c-'A'+8));
+        // Return the value of the char assuming 'A' is 25 from zero of '\"'
+        // and accomodating dead zone betwen '9' and 'A'.
+        return((int)(c - 'A' + 25));
     }
 }
 
@@ -1178,7 +1170,7 @@ char Int2HexChar(int val, bool uppercase) {
 }
 
 
-/*! \brief Converts an integer into an ASCII Character
+/*! \brief Converts an integer into an ASCII Character for Discrete Board IDs
  *
  * Accepts an integer above 0 and converts to an ASCII character within the
  * range that is usable by the slow control microcontrollers. For this range:
@@ -1190,20 +1182,17 @@ char Int2HexChar(int val, bool uppercase) {
            integers out of range.
  */
 char Int2Char(int val) {
+    // Assume now that the quotation character " (0x22) is the 0 value
     if (val < 0) {
         return(-1);
-    } else if (val < 10) {
-        return('0'+val);
     } else {
-        // Ignore Q and S as they can be interpreted as commands
-        char value('A'+val-10);
-        if (value >= 'Q') {
-            value++;
+        char id = '\"' + val;
+        // The microcontrollers skip from 'A' down to '9', so include this dead
+        // zone.
+        if (id > '9' && id < 'A') {
+            id += 7;
         }
-        if (value >= 'S') {
-            value++;
-        }
-        return(value);
+        return(id);
     }
 }
 
