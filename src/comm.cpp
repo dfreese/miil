@@ -368,8 +368,9 @@ std::vector<char> ConstructIDSetCommand(){
  *
  * \param DecrementStart an ID at which the decrement chain will begin.
  * \param abbreviated if 2 (default) only put the first ID and let the daisy
- *        chain do the decrementing, if 0 list out all the IDs.  1 is deprecated
- *        and should not be used.
+ *        chain do the decrementing, if 0 list out all the IDs.  1 lists out all
+ *        of the ids down to 'P' to avoid the conflicts with 'Q' and 'S' and
+ *        then let's the decrement chain on the micros take over.
  *
  * \return Vector of charcters to send over the usb interface.  An empty vector
  *         for invalid values.
@@ -378,7 +379,6 @@ std::vector<char> ConstructIDSetCommand(int DecrementStart, int abbreviated) {
     if (abbreviated == 2) {
         return(ConstructIDSetCommand(std::vector<int>(1, DecrementStart)));
     } else if (abbreviated == 1) {
-        // !! DEPRECATED  the kludge wasn't necessary...
         // If the decrement start id is above Q, then specify down to just
         // below the kludge to avoid Q and S, so that the daisy chain takes
         // over after that.
@@ -1135,16 +1135,31 @@ int Char2Int(char c) {
         return(-1);
     } else if (c <= '9') {
         // Numbers convert assuming '\"' is 0
-        return((int)(c-'\"'));
+        return((int)(c - '\"'));
     } else if (c < 'A') {
         // The symbols between '9' and 'A' are to be considered a dead zone, as
         // the micro code was setup to treat the characters as a hex character
         // and would skip past these ascii values
         return(-1);
-    } else {
+    } else if (c < 'Q') {
         // Return the value of the char assuming '\"' is zero
         // and accomodating dead zone betwen '9' and 'A'.
         return((int)(c - '\"' - 7));
+    } else if (c == 'Q') {
+        // Q is an invalid id because it causes command conflicts
+        return(-1);
+    } else if (c < 'S') {
+        // Return the value of the char assuming '\"' is zero,
+        // accomodating the dead zone betwen '9' and 'A', and 'Q' being invalid.
+        return((int)(c - '\"' - 8));
+    } else if (c == 'S') {
+        // S is an invalid id because it causes command conflicts
+        return(-1);
+    } else {
+        // Return the value of the char assuming '\"' is zero,
+        // accomodating the dead zone betwen '9' and 'A', and 'Q' and 'S' being
+        // invalid.
+        return((int)(c - '\"' - 9));
     }
 }
 
@@ -1192,6 +1207,18 @@ char Int2Char(int val) {
         if (id > '9') {
             // 7 == 'A' - ':'
             id += 7;
+        }
+        // Skip Q to avoid conflicts with commands like <UQ> when making a
+        // command like "<UQT> " which wouldn't read temperature, but start a
+        // query chain
+        if (id >= 'Q') {
+            id += 1;
+        }
+        // Skip S to avoid conflicts with commands like "<UST> " which wouldn't
+        // read temperature, but start mess up all of the ids instead
+        // query chain
+        if (id >= 'S') {
+            id += 1;
         }
         return(id);
     }
