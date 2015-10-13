@@ -978,18 +978,24 @@ int ParseIDSetResponse(
         const std::vector<char> & Command,
         int & SCMicrosSet)
 {
+    std::vector<char> response = rxv;
+    if (!response.empty()) {
+        if (response.back() == '>') {
+            response.push_back(' ');
+        }
+    }
     //Verify Response is valid
-    if (rxv.size() < 6) {
+    if (response.size() < 6) {
         // Not valid response length
         return(PARSE_NO_VALID_MSG);
     }
     // Look at parameters from the beginning of the msg
-    std::vector<char>::const_iterator it = rxv.begin();
+    std::vector<char>::const_iterator it = response.begin();
     if ( ((*it) != '<') || (*(it+1) != 'U') || (*(it+2) != 'S') ) {
         return(PARSE_INVALID_FORMAT);
     }
     // Go to the end of the message and verify characters from there
-    it = rxv.end()-1;
+    it = response.end()-1;
     if ( ((*it) != ' ') || (*(it-1) != '>') ) return(PARSE_INVALID_FORMAT);
 
     std::vector<char> EquivCommand = Command;
@@ -998,33 +1004,29 @@ int ParseIDSetResponse(
     if (Command.size() == 5) {
         EquivCommand.insert(EquivCommand.begin()+3,'F');
     }
-    if (rxv.size() == 6) {
+    if (response.size() == 6) {
         // Single ID number contained in message.  Represents the last id
         // set minus 1. Check to see if any order was specified and if so,
         // how many of those IDs were set
-        SCMicrosSet = (int) (EquivCommand.size()-rxv.size());
+        SCMicrosSet = (int) (EquivCommand.size()-response.size());
         // Check to see how many times the last id given by set command was
         // auto-decremented
-        SCMicrosSet += (int) (*(EquivCommand.end()-3) - *(rxv.end()-3));
-
-        // Account for the gap in the 'F' down to 'A' sequence and '9' down
-        // to '0' and then '/'. as the microcontrollers deal with ascii,
-        // but skip the punctuation characters inbetween these sets.
         char equiv_last_id = *(EquivCommand.end()-3);
-        char recv_last_id = *(rxv.end()-3);
-        if (equiv_last_id >= 'A') {
-            // Assume initially that the received id is in the other range
-            // and account for the gap
-            SCMicrosSet -= 'A'- ':';
+        char recv_last_id = *(response.end()-3);
+
+        int send_id_val = Char2Int(equiv_last_id);
+        int recv_id_val = Char2Int(recv_last_id);
+        if (send_id_val < 0) {
+            return(PARSE_INCORRECT_ID);
         }
-        if (recv_last_id >= 'A') {
-            // If it's in the upper range, then add the gap back in.
-            SCMicrosSet += 'A'- ':';
+        if (recv_id_val < -1) {
+            return(PARSE_INCORRECT_ID);
         }
+        SCMicrosSet += send_id_val - recv_id_val;
     } else {
         // Not every ID specified was set. The number of remaining
         // characters represents the number of IDs not set.
-        SCMicrosSet = (int) (EquivCommand.size()-rxv.size());
+        SCMicrosSet = (int) (EquivCommand.size()-response.size());
     }
     return (PARSE_VALID);
 }
@@ -1129,10 +1131,14 @@ int HexChar2Int(char c) {
            indicate an invalid value
  */
 int Char2Int(char c) {
-    if (c < '\"') {
+    if (c == '!') {
+        // This can be considered a legitimate id, as it is what is passed after
+        // the last id is set.
+        return(-1);
+    } else if (c < '\"') {
         // The microcontroller code can go below '0', and we assume that
         // '\"' is used as zero
-        return(-1);
+        return(-2);
     } else if (c <= '9') {
         // Numbers convert assuming '\"' is 0
         return((int)(c - '\"'));
@@ -1140,21 +1146,21 @@ int Char2Int(char c) {
         // The symbols between '9' and 'A' are to be considered a dead zone, as
         // the micro code was setup to treat the characters as a hex character
         // and would skip past these ascii values
-        return(-1);
+        return(-3);
     } else if (c < 'Q') {
         // Return the value of the char assuming '\"' is zero
         // and accomodating dead zone betwen '9' and 'A'.
         return((int)(c - '\"' - 7));
     } else if (c == 'Q') {
         // Q is an invalid id because it causes command conflicts
-        return(-1);
+        return(-4);
     } else if (c < 'S') {
         // Return the value of the char assuming '\"' is zero,
         // accomodating the dead zone betwen '9' and 'A', and 'Q' being invalid.
         return((int)(c - '\"' - 8));
     } else if (c == 'S') {
         // S is an invalid id because it causes command conflicts
-        return(-1);
+        return(-5);
     } else {
         // Return the value of the char assuming '\"' is zero,
         // accomodating the dead zone betwen '9' and 'A', and 'Q' and 'S' being
