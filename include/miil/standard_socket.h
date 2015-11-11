@@ -8,7 +8,7 @@
 class StandardSocket : public Ethernet {
 public:
     StandardSocket(
-            const std::string & _interface = "eth1",
+            const std::string & if_name = "eth1",
             const std::string & recv_a = "192.168.1.1",
             const std::string & send_a = "192.168.1.2",
             int recv_p = 21844,
@@ -25,11 +25,6 @@ public:
     int Open(const std::string & if_name);
     int Open();
     int Close();
-
-private:
-    socklen_t socklen;
-    struct sockaddr_in serv_addr;
-    in_addr_t receive_address_compare;
 };
 
 #endif // STANDARD_SOCKET_H

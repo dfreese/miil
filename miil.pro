@@ -1,5 +1,5 @@
 TEMPLATE = lib
-VERSION = 1.0.5
+VERSION = 1.1.0
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra -pedantic
 LIBS += -lftd2xx -lqcustomplot -ljsoncpp

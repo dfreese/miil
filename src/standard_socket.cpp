@@ -2,20 +2,19 @@
 #include <errno.h>
 
 StandardSocket::StandardSocket(
-        const std::string & _interface,
+        const std::string & if_name,
         const std::string & recv_a,
         const std::string & send_a,
         int recv_p,
         int send_p) :
-    Ethernet(_interface, recv_a, send_a, recv_p, send_p)
+    Ethernet(if_name, recv_a, send_a, recv_p, send_p)
 {
 }
 
 StandardSocket::StandardSocket(
 	const std::string & send_a,
         int recv_p) :
-    Ethernet("", "", send_a, recv_p, 21845),
-    receive_address_compare(inet_addr(send_a.c_str()))
+    Ethernet("", "", send_a, recv_p, 21845)
 {
 }
 
@@ -35,14 +34,20 @@ int StandardSocket::Open(const std::string & if_name) {
         }
     }
     interface = if_name;
-    //serv_addr = *(it->second);
+
+    // Run the list command to force the class instance to populate the list of
+    // interfaces and then set the send address to this interface's ip address
+    // so that we can bind to it.
+    std::vector<std::string> interface_name_list;
+    list(interface_name_list);
+    recv_address = std::string(inet_ntoa(interface_list[interface]->sin_addr));
+
+
+    struct sockaddr_in serv_addr;
     memset((char *)&serv_addr, 0, sizeof(serv_addr));
-     //long save_file_flags;
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-    //serv_addr.sin_addr.s_addr = inet_addr(recv_address.c_str());
+    serv_addr.sin_addr.s_addr = inet_addr(recv_address.c_str());
     serv_addr.sin_port = htons(recv_port);
-    receive_address_compare = inet_addr(send_address.c_str());
 
     fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if (fd == -1) {
@@ -118,17 +123,13 @@ int StandardSocket::send(const std::vector<char> & data) {
 }
 
 int StandardSocket::recv(std::vector<char> & data) {
-    struct sockaddr_in remote_addr;
-    socklen_t address_len = sizeof(remote_addr);
-
     char buf[DATALENGTH];
     ssize_t recv_rc(0);
 
     if (poll(&fds, 1, timeout_ms) > 0) {
         if (fds.revents & (POLLIN)) {
-            recv_rc = recvfrom(fd, buf, sizeof(buf), 0,
-                               (struct sockaddr*)&remote_addr, &address_len);
-       }
+            recv_rc = ::recv(fd, buf, sizeof(buf), 0);
+        }
     } else {
         return(ETH_NO_ERR);
     }
@@ -144,10 +145,7 @@ int StandardSocket::recv(std::vector<char> & data) {
     } else if (recv_rc == 0) {
         return(ETH_NO_ERR);
     } else {
-        if (remote_addr.sin_addr.s_addr == receive_address_compare) {
-            data.assign(buf,buf+recv_rc);
-        }
+        data.insert(data.end(), buf, buf + recv_rc);
+        return(recv_rc);
     }
-
-    return(ETH_NO_ERR);
 }
