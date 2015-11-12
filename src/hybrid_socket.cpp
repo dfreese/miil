@@ -16,7 +16,7 @@ HybridSocket::HybridSocket(
 }
 
 HybridSocket::HybridSocket(
-    const std::string & send_a,
+        const std::string & send_a,
         int recv_p) :
     Ethernet("", "", send_a, recv_p, 21845)
 {
@@ -67,6 +67,7 @@ int HybridSocket::Open(const std::string & if_name) {
     if (pcap_setfilter((pcap_t*) handle, &fp) == -1) {
         return(-3);
     }
+    is_open = true;
     return(ETH_NO_ERR);
 }
 
@@ -76,13 +77,9 @@ int HybridSocket::Open() {
 
 int HybridSocket::Close() {
     if (is_open) {
-        ssize_t close_rc;
-        close_rc = close(fd);
-        if(close_rc == -1) {
-            return(ETH_ERR_CLOSE);
-        }
-        is_open = false;
+        pcap_close((pcap_t*)handle);
     }
+    is_open = false;
     return(ETH_NO_ERR);
 }
 
