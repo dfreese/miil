@@ -1,8 +1,8 @@
 TEMPLATE = lib
-VERSION = 1.1.0
+VERSION = 1.2.0
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra -pedantic
-LIBS += -lftd2xx -lqcustomplot -ljsoncpp
+LIBS += -lftd2xx -lqcustomplot -ljsoncpp -lpcap
 
 DEPENDPATH += \
         src \
@@ -27,6 +27,7 @@ HEADERS += \
     include/miil/file_utils.h \
     include/miil/hvcontroller.h \
     include/miil/hvcontrolwidget.h \
+    include/miil/hybrid_socket.h \
     include/miil/instekpowersupply.h \
     include/miil/log.h \
     include/miil/pid.h \
@@ -50,6 +51,7 @@ SOURCES += \
     src/file_utils.cpp \
     src/hvcontroller.cpp \
     src/hvcontrolwidget.cpp \
+    src/hybrid_socket.cpp \
     src/instekpowersupply.cpp \
     src/log.cpp \
     src/pid.cpp \
