@@ -24,17 +24,14 @@ bool InEnergyWindow(const EventCal & event, float low, float high);
 float EventCalTimeDiff(
         const EventCal & arg1,
         const EventCal & arg2,
-        int ct_diff,
         float uv_period_ns,
-        float ct_period_ns,
-        bool ct_only);
+        float ct_period_ns);
 
 bool EventCalLessThan(
         const EventCal & arg1,
         const EventCal & arg2,
-        int ct_diff,
         float uv_period_ns,
-        bool ct_only);
+        float ct_period_ns);
 
 bool EventCalLessThanOnlyCt(const EventCal & arg1, const EventCal & arg2);
 
