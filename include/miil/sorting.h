@@ -84,17 +84,17 @@ int insertion_sort(
   * \return 0 on success, less than zero on error.  No error checking is
   *         currently implemented.
   */
-template <class T, class Arg1, class Arg2, class Arg3>
+template <class T, class Arg1, class Arg2>
 int insertion_sort(
         T & array,
         bool (*f) (const typename T::value_type &,
                    const typename T::value_type &,
-                   Arg1, Arg2, Arg3),
-        Arg1 arg1, Arg2 arg2, Arg3 arg3)
+                   Arg1, Arg2),
+        Arg1 arg1, Arg2 arg2)
 {
     for (typename T::size_type ii = 1; ii < array.size(); ii++) {
         for (typename T::size_type kk = ii;
-             (0 < kk) && f(array[kk], array[kk-1], arg1, arg2, arg3);
+             (0 < kk) && f(array[kk], array[kk-1], arg1, arg2);
              kk--)
         {
             typename T::value_type temp = array[kk];
