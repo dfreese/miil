@@ -340,51 +340,43 @@ bool InEnergyWindow(const EventCal & event, float low, float high) {
 }
 
 /*!
- * \brief Calculate the time between two calibrated events
- *
- * Calculate the time difference between two calibrated events.  If ct_only is
- * true, the returned value is simply the difference of the coarse timestamps
- * scaled by the ct_period_ns.  Otherwise, the functions considers both
- * timestamps.  First, if abs(ct1-ct2) < compare_on_ft_ct_window is true, the
- * events are assumed to be within the same period of the uv circle.  Then the
- * difference between the fine timestamps is calculated and wrapped to
- * [-uv_period_ns / 2, uv_period_ns / 2) and returned.
- *
- * \param arg1 The reference event that is subtracted from
- * \param arg2 The event subtracted from the reference
- * \param ct_diff The window on which to assume events are on the same uv circle
- * \param uv_period_ns The period of the uv circle in nanoseconds
- * \param ct_period_ns The period in nanoseconds of each coarse timestamp tick
- * \param ct_only Only compare events on coarse timestamps, not fine.
- *
- * \return The time difference in nanoseconds
- */
+* \brief Calculate the time between two calibrated events
+*
+* Calculate the time difference between two calibrated events.  The ct_period_ns
+* is used to calculate how many full uv periods have transpired between the
+* events.  This is multiplied by uv_period_ns, and added to the difference of
+* the two fine timestamps.  The difference between the fine timestamps is
+* wrapped to (-uv_period_ns, uv_period_ns), to make safe the assumption that the
+* fine timestamps are compared along the same uv circle.
+*
+* \param arg1 The reference event that is subtracted from
+* \param arg2 The event subtracted from the reference
+* \param uv_period_ns The period of the uv circle in nanoseconds
+* \param ct_period_ns The period in nanoseconds of each coarse timestamp tick
+*
+* \return The time difference in nanoseconds
+*/
 float EventCalTimeDiff(
         const EventCal & arg1,
         const EventCal & arg2,
-        int ct_diff,
         float uv_period_ns,
-        float ct_period_ns,
-        bool ct_only)
+        float ct_period_ns)
 {
-    // Assume all events that are within ct_only course timestamps should be
-    // compared on the basis of fine timestamps rather than by course timestamp.
-    // Example: ct_diff = 4 causes a window of 73.5% of the uv_period_ns at
-    // 980kHz uv and a 12MHz ct clock.
-    if ((std::abs(arg1.ct - arg2.ct) > ct_diff) | ct_only) {
-        return((arg1.ct - arg2.ct) * ct_period_ns);
-    }
+    // Assume the fine timestamps should always be compared as if they are in
+    // the same period, so wrap them to +/- this period after comparing.  This
+    // safe guards against the off chance that one ft value is not on
+    // [0, uv_period_ns).
     float difference = arg1.ft - arg2.ft;
-    // At this point we assume that the distribution of fine timestamp
-    // differences should be from two points within one period of each other
-    // however, since we are subtracting, the center of the distribution
-    // should be at 0 +/- uv_period_ns / 2.
-    while (difference >= uv_period_ns / 2) {
+    while (difference > uv_period_ns) {
         difference -= uv_period_ns;
     }
-    while (difference < -uv_period_ns / 2) {
+    while (difference < -uv_period_ns) {
         difference += uv_period_ns;
     }
+    // Add in a number of uv periods that hasn't already been compared with
+    // using the fine timestamps.
+    difference += uv_period_ns *
+            trunc((ct_period_ns * (arg1.ct - arg2.ct)) / uv_period_ns);
     return(difference);
 }
 
@@ -393,35 +385,20 @@ float EventCalTimeDiff(
  *
  * Effectively returns (EventCalTimeDiff(arg1, arg2) < 0)
  *
- * \param arg1 The reference event that is compared
- * \param arg2 The event compared against the reference
- * \param ct_diff The window on which to assume events are on the same uv circle
+ * \param arg1 The reference event that is subtracted from
+ * \param arg2 The event subtracted from the reference
  * \param uv_period_ns The period of the uv circle in nanoseconds
- * \param ct_only Only compare events on coarse timestamps, not fine.
+ * \param ct_period_ns The period in nanoseconds of each coarse timestamp tick
  *
  * \return bool indicating if time(event 1) < time(event 2)
  */
 bool EventCalLessThan(
         const EventCal & arg1,
         const EventCal & arg2,
-        int ct_diff,
         float uv_period_ns,
-        bool ct_only)
+        float ct_period_ns)
 {
-    if ((std::abs(arg1.ct - arg2.ct) > ct_diff) | ct_only) {
-        return(arg1.ct < arg2.ct);
-    }
-    float difference = arg1.ft - arg2.ft;
-    // At this point we assume that the distribution of fine timestamp
-    // differences should be from two points within one period of each other
-    // however, since we are subtracting, the center of the distribution
-    // should be at 0 +/- uv_period_ns / 2.
-    while (difference > uv_period_ns / 2) {
-        difference -= uv_period_ns;
-    }
-    while (difference < -uv_period_ns / 2) {
-        difference += uv_period_ns;
-    }
+    float difference = EventCalTimeDiff(arg1, arg2, uv_period_ns, ct_period_ns);
     return(difference < 0);
 }
 

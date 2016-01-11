@@ -1,5 +1,5 @@
 TEMPLATE = lib
-VERSION = 1.2.1
+VERSION = 2.0.0
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra -pedantic
 LIBS += -lftd2xx -lqcustomplot -ljsoncpp -lpcap
@@ -41,7 +41,7 @@ HEADERS += \
     include/miil/usbport.h \
     include/miil/usbport1.h \
     include/miil/usbport2.h \
-    include/miil/util.h
+    include/mii/util.h
 
 SOURCES += \
     src/calibration.cpp \

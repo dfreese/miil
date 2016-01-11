@@ -1575,8 +1575,6 @@ int SystemConfiguration::convertPCFMtoPCDRM(
  *        -17 if loadFinSettings failed
  *        -18 if uv_frequency was not found or invalid
  *        -19 if ct_frequency was not found or invalid
- *        -20 if sort_on_ct_only was not found or invalid
- *        -21 if compare_on_ft_ct_window was not found or invalid
  */
 int SystemConfiguration::load(const std::string & filename) {
     std::ifstream json_in(filename.c_str());
@@ -1630,16 +1628,6 @@ int SystemConfiguration::load(const std::string & filename) {
     }
     this->ct_frequency = root["ct_frequency"].asDouble();
     this->ct_period_ns = 1.0 / (this->ct_frequency / 1e9);
-
-    if (!root["sort_on_ct_only"].isBool()) {
-        return(-20);
-    }
-    this->sort_on_ct_only_flag = root["sort_on_ct_only"].asBool();
-
-    if (!root["compare_on_ft_ct_window"].isInt()) {
-        return(-21);
-    }
-    this->compare_on_ft_ct_window = root["compare_on_ft_ct_window"].asInt();
 
     Json::Value panels = root["panels"];
     if (panels == Json::nullValue) {
