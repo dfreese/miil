@@ -761,43 +761,53 @@ int loadPanelSettings(
 int loadCartridgeSettings(
     CartridgeConfig & cartridge_config,
     const Json::Value & cartridge_json,
-    bool require_all)
+    bool require_all,
+    bool require_daq_settings,
+    bool require_slow_control_settings)
 {
     int not_found = 0;
+    int not_found_daq = 0;
+    int not_found_slow_control = 0;
     if (cartridge_json.isMember("bias")) {
         cartridge_config.bias_voltage = cartridge_json["bias"].asFloat();
     } else {
         not_found++;
+        not_found_slow_control++;
     }
     if (cartridge_json.isMember("input_delay")) {
         cartridge_config.backend_board_config.input_delay =
                 cartridge_json["input_delay"].asInt();
     } else {
         not_found++;
+        not_found_daq++;
     }
     if (cartridge_json.isMember("output_delay")) {
         cartridge_config.backend_board_config.output_delay =
                 cartridge_json["output_delay"].asInt();
     } else {
         not_found++;
+        not_found_daq++;
     }
     if (cartridge_json.isMember("coinc_window")) {
         cartridge_config.backend_board_config.coinc_window =
                 cartridge_json["coinc_window"].asInt();
     } else {
         not_found++;
+        not_found_daq++;
     }
     if (cartridge_json.isMember("daqboard_id")) {
         cartridge_config.backend_board_config.daqboard_id =
                 cartridge_json["daqboard_id"].asInt();
     } else {
         not_found++;
+        not_found_daq++;
     }
     if (cartridge_json.isMember("ethernet_readout")) {
         cartridge_config.backend_board_config.ethernet_readout =
                 cartridge_json["ethernet_readout"].asBool();
     } else {
         not_found++;
+        not_found_daq++;
     }
     if (cartridge_config.backend_board_config.ethernet_readout) {
         if (cartridge_json.isMember("ethernet_port")) {
@@ -805,6 +815,7 @@ int loadCartridgeSettings(
                     cartridge_json["ethernet_port"].asString();
         } else {
             not_found++;
+            not_found_daq++;
         }
     }
     if (cartridge_json.isMember("lv_power_supply_channel")) {
@@ -812,27 +823,35 @@ int loadCartridgeSettings(
                 cartridge_json["lv_power_supply_channel"].asInt();
     } else {
         not_found++;
+        not_found_slow_control++;
     }
     if (cartridge_json.isMember("hv_power_supply_channel")) {
         cartridge_config.hv_power_supply_channel =
                 cartridge_json["hv_power_supply_channel"].asInt();
     } else {
         not_found++;
+        not_found_slow_control++;
     }
     if (cartridge_json.isMember("hv_floating_board_id")) {
         cartridge_config.hv_floating_board_id =
                 cartridge_json["hv_floating_board_id"].asInt();
     } else {
         not_found++;
+        not_found_slow_control++;
     }
     if (cartridge_json.isMember("hv_floating_board_slot")) {
         cartridge_config.hv_floating_board_slot =
                 cartridge_json["hv_floating_board_slot"].asInt();
     } else {
         not_found++;
+        not_found_slow_control++;
     }
     if (require_all && (not_found > 0)) {
         return(-1);
+    } else if (require_daq_settings && (not_found_daq > 0)) {
+        return(-2);
+    } else if (require_slow_control_settings && (not_found_slow_control > 0)) {
+        return(-3);
     }
     return(0);
 }
@@ -1163,6 +1182,106 @@ bool checkAndLoadChannelSettings(
     if (channel_load_status < 0) {
         return(-2);
     }
+    return(0);
+}
+
+void jsonRecursiveUpdate(Json::Value & a, const Json::Value & b) {
+    if (!a.isObject() || !b.isObject()) {
+        return;
+    }
+    for (const auto& key : b.getMemberNames()) {
+        if (a[key].isObject()) {
+            jsonRecursiveUpdate(a[key], b[key]);
+        } else {
+            a[key] = b[key];
+        }
+    }
+}
+
+int checkAndCopyJsonChannelSettings(
+        const Json::Value & json_parent,
+        Json::Value & json_object)
+{
+    if (json_parent.isMember("channel_settings")) {
+        if (json_object == Json::nullValue) {
+            json_object = json_parent["channel_settings"];
+        } else {
+            jsonRecursiveUpdate(json_object, json_parent["channel_settings"]);
+        }
+    }
+    return(0);
+}
+
+int pullJsonChannelSettings(
+        const Json::Value & ref_object,
+        Json::Value & dest_object)
+{
+    const Json::Value::Members members = ref_object.getMemberNames();
+    for (size_t ii = 0; ii < members.size(); ii++) {
+        const std::string & member = members[ii];
+        bool copy_value = false;
+        if (member.find_first_of("ComH.") == 0) {
+            copy_value = true;
+        } else if (member.find_first_of("ComL.") == 0) {
+            copy_value = true;
+        } else if (member.find_first_of("Spat.") == 0) {
+            copy_value = true;
+        } else if (member.find_first_of("All.") == 0) {
+            copy_value = true;
+        } else if (member == "hit_threshold") {
+            copy_value = true;
+        } else if (member == "double_trigger_threshold") {
+            copy_value = true;
+        }
+        if (copy_value) {
+            dest_object[member] = ref_object[member];
+        }
+    }
+    return(0);
+}
+
+int loadJsonChannelSettings(
+        ModuleChannelConfig & module_config,
+        const Json::Value & ref_object)
+{
+    const Json::Value::Members members = ref_object.getMemberNames();
+
+    Json::Value module_json;
+    Json::Value spat_json;
+    Json::Value comh_json;
+    Json::Value coml_json;
+
+    for (size_t ii = 0; ii < members.size(); ii++) {
+        const std::string & member = members[ii];
+        if (member.find_first_of("ComH.") == 0) {
+            comh_json[std::string(member.begin() + 5, member.end())] =
+                    ref_object[member];
+        } else if (member.find_first_of("ComL.") == 0) {
+            coml_json[std::string(member.begin() + 5, member.end())] =
+                    ref_object[member];
+        } else if (member.find_first_of("Spat.") == 0) {
+            spat_json[std::string(member.begin() + 5, member.end())] =
+                    ref_object[member];
+        } else if (member.find_first_of("All.") == 0) {
+            comh_json[std::string(member.begin() + 4, member.end())] =
+                    ref_object[member];
+            coml_json[std::string(member.begin() + 4, member.end())] =
+                    ref_object[member];
+            spat_json[std::string(member.begin() + 4, member.end())] =
+                    ref_object[member];
+        } else if (member == "hit_threshold") {
+            module_json[member] = ref_object[member];
+        } else if (member == "double_trigger_threshold") {
+            module_json[member] = ref_object[member];
+        }
+    }
+    loadModuleChannelSettings(module_config, module_json);
+    loadChannelSettings(module_config.spatA, spat_json);
+    loadChannelSettings(module_config.spatB, spat_json);
+    loadChannelSettings(module_config.spatC, spat_json);
+    loadChannelSettings(module_config.spatD, spat_json);
+    loadChannelSettings(module_config.comH, comh_json);
+    loadChannelSettings(module_config.comL, coml_json);
     return(0);
 }
 
@@ -1600,7 +1719,7 @@ int SystemConfiguration::load(const std::string & filename) {
 
     // Load in the HV Floating Board Settings
     if (loadHvFloatingBoardSettings(this, root) < 0) {
-        return(-15);
+        std::cout << "HV Floating Board configurations not found" << std::endl;
     }
 
     ModuleChannelConfig system_default_channel_settings;
@@ -1609,6 +1728,7 @@ int SystemConfiguration::load(const std::string & filename) {
     {
         return(-3);
     }
+    std::cout << "hit_threshold: " << system_default_channel_settings.hit_threshold << std::endl;
 
     if (loadChannelSettings(unused_channel_config,
                             root["channel_settings"]["Unused_Channels"],
@@ -1629,79 +1749,152 @@ int SystemConfiguration::load(const std::string & filename) {
     this->ct_frequency = root["ct_frequency"].asDouble();
     this->ct_period_ns = 1.0 / (this->ct_frequency / 1e9);
 
-    Json::Value panels = root["panels"];
-    if (panels == Json::nullValue) {
-        return(-4);
-    }
+
+    // Create json objects for each level so that they can be inhereted
+    // appropriately Panel, Cartridge, DAQ, Fin, Rena, Module
+    // Rena Settings in the Module of PCFM will be overrode by module in PCDRM
+    // First load panel and cartridge settings
+    // Then pull daq board channel settings
+    // Then load fin settings
+    // Then module settings with slow control information
+    // Then rena level channel settings
+    // The module level channel settings
+    // TODO: write function that takes json object with channel settings and
+    // updates a ModuleChannelConfig object
+
+    std::vector<Json::Value> panel_channel_json(panels_per_system);
+    std::vector<std::vector<Json::Value> > cartridge_channel_json(
+        panels_per_system, std::vector<Json::Value>(cartridges_per_panel));
+
 
     for (int p = 0; p < panels_per_system; p++) {
-        Json::Value panel = panels[p];
-        if (panel == Json::nullValue) {
-            return(-5);
+        std::stringstream panel_ss;
+        panel_ss << "P" << p;
+        std::string panel_name = panel_ss.str();
+
+        Json::Value panel_json = root[panel_name];
+        if (panel_json == Json::nullValue) {
+            return(-4);
         }
         PanelConfig panel_config;
-        if (loadPanelSettings(panel_config, panel) < 0) {
+        if (loadPanelSettings(panel_config, panel_json, false) < 0) {
             return(-16);
         }
         panel_configs.push_back(panel_config);
-        ModuleChannelConfig panel_default_channel_settings =
-                system_default_channel_settings;
-        checkAndLoadChannelSettings(panel_default_channel_settings, panel);
-        Json::Value cartridges = panel["cartridges"];
-        if (cartridges == Json::nullValue) {
-            return(-6);
-        }
+
+        Json::Value panel_channel_json;
+        pullJsonChannelSettings(panel_json, panel_channel_json);
+
         for (int c = 0; c < cartridges_per_panel; c++) {
-            Json::Value cartridge = cartridges[c];
-            if (cartridge == Json::nullValue) {
-                return(-7);
+            std::stringstream cartridge_ss;
+            cartridge_ss << "P" << p << "C" << c;
+            std::string cartridge_name = cartridge_ss.str();
+
+            Json::Value cartridge_json = panel_json[cartridge_name];
+            if (cartridge_json == Json::nullValue) {
+                return(-5);
             }
             if (loadCartridgeSettings(cartridge_configs[p][c],
-                                      cartridge, true) < 0)
+                                      cartridge_json,
+                                      false,
+                                      true,
+                                      false) < 0)
             {
-                std::cerr << "P" << p << "C" << c
-                          << " failed to load" << std::endl;
+                std::cerr << cartridge_name << " failed to load" << std::endl;
                 return(-8);
             }
+            Json::Value cartridge_channel_json;
+            pullJsonChannelSettings(cartridge_json, cartridge_channel_json);
 
-            ModuleChannelConfig cartridge_default_channel_settings =
-                    panel_default_channel_settings;
-            checkAndLoadChannelSettings(cartridge_default_channel_settings,
-                                        cartridge);
-            Json::Value fins = cartridge["fins"];
-            if (fins == Json::nullValue) {
-                return(-9);
-            }
+            std::vector<Json::Value> daq_channel_json(daqs_per_cartridge);
+            std::vector<Json::Value> fin_channel_json(
+                    fins_per_cartridge, cartridge_channel_json);
+            std::vector<std::vector<Json::Value> > rena_channel_json(
+                daqs_per_cartridge, std::vector<Json::Value>(renas_per_daq));
+            std::vector<std::vector<Json::Value> > fin_module_channel_json(
+                fins_per_cartridge, std::vector<Json::Value>(modules_per_fin));
+            std::vector<std::vector<std::vector<Json::Value> > >
+                    rena_module_channel_json(
+                            daqs_per_cartridge,
+                            std::vector<std::vector<Json::Value> >(
+                                    renas_per_daq,
+                                    std::vector<Json::Value>(modules_per_rena)));
+
+
+            // grab and channel setting diffs from the PCDRM structure and load
+            // in any slow control module information while we're at it
             for (int f = 0; f < fins_per_cartridge; f++) {
-                Json::Value fin = fins[f];
-                if (fin == Json::nullValue) {
-                    return(-10);
+                std::stringstream fin_ss;
+                fin_ss << "P" << p << "C" << c << "F" << f;
+                std::string fin_name = fin_ss.str();
+                Json::Value fin_json = cartridge_json[fin_name];
+                if (fin_json == Json::nullValue) {
+                    continue;
                 }
-                if (loadFinSettings(fin_configs[p][c][f], fin) < 0) {
-                    return(-17);
-                }
-                ModuleChannelConfig fin_default_channel_settings =
-                        cartridge_default_channel_settings;
-                checkAndLoadChannelSettings(fin_default_channel_settings,
-                                            fin);
+                pullJsonChannelSettings(fin_json, fin_channel_json[f]);
+                loadFinSettings(fin_configs[p][c][f], fin_json);
 
-                Json::Value modules = fin["modules"];
-                if (modules == Json::nullValue) {
-                    return(-11);
-                }
                 for (int m = 0; m < modules_per_fin; m++) {
-                    Json::Value module = modules[m];
-                    if (module == Json::nullValue) {
-                        return(-12);
+                    std::stringstream module_ss;
+                    module_ss << "P" << p << "C" << c << "F" << f << "M" << m;
+                    std::string module_name = module_ss.str();
+                    Json::Value module_json = fin_json[module_name];
+                    if (module_json == Json::nullValue) {
+                        continue;
                     }
-                    if (loadModuleSettings(module_configs[p][c][f][m],
-                                       fin_default_channel_settings,
-                                       module, true) < 0)
-                    {
-                        std::cerr << "load failed on P" << p << "C" << c
-                                  << "F" << f << "M" << m << std::endl;
-                        return(-13);
+                    pullJsonChannelSettings(
+                            module_json, fin_module_channel_json[f][m]);
+
+                    // If they are there, load in the module information for
+                    // Slow control.
+                    loadModuleSettings(
+                            module_configs[p][c][f][m],
+                            system_default_channel_settings,
+                            module_json, false, false);
+                }
+            }
+
+            // grab and channel setting diffs from the PCDRM structure
+            for (int d = 0; d < daqs_per_cartridge; d++) {
+                std::stringstream daq_ss;
+                daq_ss << "P" << p << "C" << c << "D" << d;
+                std::string daq_name = daq_ss.str();
+                Json::Value daq_json = cartridge_json[daq_name];
+                if (daq_json == Json::nullValue) {
+                    continue;
+                }
+                pullJsonChannelSettings(daq_json, daq_channel_json[d]);
+
+                for (int r = 0; r < renas_per_daq; r++) {
+                    std::stringstream rena_ss;
+                    rena_ss << "P" << p << "C" << c << "D" << d << "R" << r;
+                    std::string rena_name = rena_ss.str();
+                    Json::Value rena_json = daq_json[rena_name];
+                    if (rena_json == Json::nullValue) {
+                        continue;
                     }
+                    pullJsonChannelSettings(rena_json, rena_channel_json[d][r]);
+
+                    for (int m = 0; m < modules_per_rena; m++) {
+                        std::stringstream module_ss;
+                        module_ss << "P" << p << "C" << c
+                                  << "D" << d << "R" << r
+                                  << "M" << m;
+                        std::string module_name = module_ss.str();
+                        Json::Value module_json = rena_json[module_name];
+                        if (module_json == Json::nullValue) {
+                            continue;
+                        }
+                        pullJsonChannelSettings(
+                                module_json, rena_module_channel_json[d][r][m]);
+
+                    }
+                }
+            }
+
+            // Put the channel settings in place
+            for (int f = 0; f < fins_per_cartridge; f++) {
+                for (int m = 0; m < modules_per_fin; m++) {
                     // Set the module value for each of the channels in the
                     // module so that it can be used by the hit register config
                     int module_rena;
@@ -1720,6 +1913,39 @@ int SystemConfiguration::load(const std::string & filename) {
                             module_rena;
                     module_configs[p][c][f][m].channel_settings.spatD.module =
                             module_rena;
+
+                    // Start building json file for the module that
+                    // represents a diff from the default.  Do this by
+                    // starting with the cartridge_channel_json for that
+                    // module.
+                    Json::Value module_channel_json = cartridge_channel_json;
+                    pullJsonChannelSettings(
+                            daq_channel_json[daq], module_channel_json);
+
+                    // Add in the next lower layer, which is fin.
+                    // Technically these are complementary mappings, but
+                    // we do this since a fin will represent fewer modules.
+                    pullJsonChannelSettings(
+                            fin_channel_json[f], module_channel_json);
+                    // Then add the next layer down which is the renas
+                    pullJsonChannelSettings(
+                            rena_channel_json[daq][rena], module_channel_json);
+                    // Then any settings that were in the PCFM format
+                    pullJsonChannelSettings(
+                            fin_module_channel_json[f][m],
+                            module_channel_json);
+                    pullJsonChannelSettings(
+                            rena_module_channel_json[daq][rena][module_rena],
+                            module_channel_json);
+
+                    // Set to the default first.
+                    module_configs[p][c][f][m].channel_settings =
+                            system_default_channel_settings;
+                    // Now we take these settings and convert process them
+                    // for the ModuleChannelConfig structure.
+                    loadJsonChannelSettings(
+                            module_configs[p][c][f][m].channel_settings,
+                            module_channel_json);
                 }
             }
         }
