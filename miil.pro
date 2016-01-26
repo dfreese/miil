@@ -41,7 +41,7 @@ HEADERS += \
     include/miil/usbport.h \
     include/miil/usbport1.h \
     include/miil/usbport2.h \
-    include/mii/util.h
+    include/miil/util.h
 
 SOURCES += \
     src/calibration.cpp \
