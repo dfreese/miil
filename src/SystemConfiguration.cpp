@@ -1185,33 +1185,6 @@ bool checkAndLoadChannelSettings(
     return(0);
 }
 
-void jsonRecursiveUpdate(Json::Value & a, const Json::Value & b) {
-    if (!a.isObject() || !b.isObject()) {
-        return;
-    }
-    for (const auto& key : b.getMemberNames()) {
-        if (a[key].isObject()) {
-            jsonRecursiveUpdate(a[key], b[key]);
-        } else {
-            a[key] = b[key];
-        }
-    }
-}
-
-int checkAndCopyJsonChannelSettings(
-        const Json::Value & json_parent,
-        Json::Value & json_object)
-{
-    if (json_parent.isMember("channel_settings")) {
-        if (json_object == Json::nullValue) {
-            json_object = json_parent["channel_settings"];
-        } else {
-            jsonRecursiveUpdate(json_object, json_parent["channel_settings"]);
-        }
-    }
-    return(0);
-}
-
 int pullJsonChannelSettings(
         const Json::Value & ref_object,
         Json::Value & dest_object)
@@ -1220,13 +1193,13 @@ int pullJsonChannelSettings(
     for (size_t ii = 0; ii < members.size(); ii++) {
         const std::string & member = members[ii];
         bool copy_value = false;
-        if (member.find_first_of("ComH.") == 0) {
+        if (member.find("ComH.") == 0) {
             copy_value = true;
-        } else if (member.find_first_of("ComL.") == 0) {
+        } else if (member.find("ComL.") == 0) {
             copy_value = true;
-        } else if (member.find_first_of("Spat.") == 0) {
+        } else if (member.find("Spat.") == 0) {
             copy_value = true;
-        } else if (member.find_first_of("All.") == 0) {
+        } else if (member.find("All.") == 0) {
             copy_value = true;
         } else if (member == "hit_threshold") {
             copy_value = true;
@@ -1253,16 +1226,16 @@ int loadJsonChannelSettings(
 
     for (size_t ii = 0; ii < members.size(); ii++) {
         const std::string & member = members[ii];
-        if (member.find_first_of("ComH.") == 0) {
+        if (member.find("ComH.") == 0) {
             comh_json[std::string(member.begin() + 5, member.end())] =
                     ref_object[member];
-        } else if (member.find_first_of("ComL.") == 0) {
+        } else if (member.find("ComL.") == 0) {
             coml_json[std::string(member.begin() + 5, member.end())] =
                     ref_object[member];
-        } else if (member.find_first_of("Spat.") == 0) {
+        } else if (member.find("Spat.") == 0) {
             spat_json[std::string(member.begin() + 5, member.end())] =
                     ref_object[member];
-        } else if (member.find_first_of("All.") == 0) {
+        } else if (member.find("All.") == 0) {
             comh_json[std::string(member.begin() + 4, member.end())] =
                     ref_object[member];
             coml_json[std::string(member.begin() + 4, member.end())] =
@@ -1807,8 +1780,7 @@ int SystemConfiguration::load(const std::string & filename) {
             pullJsonChannelSettings(cartridge_json, cartridge_channel_json);
 
             std::vector<Json::Value> daq_channel_json(daqs_per_cartridge);
-            std::vector<Json::Value> fin_channel_json(
-                    fins_per_cartridge, cartridge_channel_json);
+            std::vector<Json::Value> fin_channel_json(fins_per_cartridge);
             std::vector<std::vector<Json::Value> > rena_channel_json(
                 daqs_per_cartridge, std::vector<Json::Value>(renas_per_daq));
             std::vector<std::vector<Json::Value> > fin_module_channel_json(
@@ -1916,9 +1888,11 @@ int SystemConfiguration::load(const std::string & filename) {
 
                     // Start building json file for the module that
                     // represents a diff from the default.  Do this by
-                    // starting with the cartridge_channel_json for that
+                    // starting with the panel_channel_json for that
                     // module.
-                    Json::Value module_channel_json = cartridge_channel_json;
+                    Json::Value module_channel_json = panel_channel_json;
+                    pullJsonChannelSettings(
+                            cartridge_channel_json, module_channel_json);
                     pullJsonChannelSettings(
                             daq_channel_json[daq], module_channel_json);
 
