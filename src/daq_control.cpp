@@ -315,6 +315,44 @@ int DaqControl::createRenaSettingsPacket(
 /*!
  * \brief Append a command to program a rena channel's settings
  *
+ * Overloaded createRenaSettingsPacket that takes the channel number from the
+ * RenaChannelConfig structure.
+ *
+ * \param backend_address The address of the backend board to be addressed
+ * \param daq_board The daq board on the backend board to be addressed
+ * \param fpga The frontend fpga to be addressed
+ * \param rena The rena number on the front end fpga to be programmed
+ * \param config The settings with which to program the channel
+ * \param packet vector where the bytes are appended
+ *
+ * \return 0 on success, less than otherwise
+ *         -1 if createFullChannelSettingsBuffer fails
+ */
+int DaqControl::createRenaSettingsPacket(
+        int backend_address,
+        int daq_board,
+        int fpga,
+        int rena,
+        const RenaChannelConfig & config,
+        std::vector<char> & packet)
+{
+    packet.push_back(DaqControl::START_PACKET);
+    packet.push_back(createAddress(backend_address, daq_board));
+    packet.push_back(DaqControl::RESET_BUFFER);
+    int buffer_status = createFullChannelSettingsBuffer(
+            rena, config.channel_number, config, packet);
+    if (buffer_status < 0) {
+        return(-1);
+    }
+    packet.push_back(createExecuteInstruction(
+            DaqControl::LOAD_RENA_SETTINGS, fpga));
+    packet.push_back(DaqControl::END_PACKET);
+    return(0);
+}
+
+/*!
+ * \brief Append a command to program a rena channel's settings
+ *
  * Appends a packet to the given vector to program the hit registers of the
  * FPGA.  This tells the FPGA which channels are associated with each module
  * (TRIGGER_SET) and which channels should be readout if it triggers (SLOW_HIT,

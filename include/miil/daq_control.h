@@ -84,6 +84,14 @@ public:
             const RenaChannelConfig & config,
             std::vector<char> & packet);
 
+    static int createRenaSettingsPacket(
+            int backend_address,
+            int daq_board,
+            int fpga,
+            int rena,
+            const RenaChannelConfig & config,
+            std::vector<char> & packet);
+
     static int createHitRegisterPacket(
             int backend_address,
             int daq_board,
