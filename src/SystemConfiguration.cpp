@@ -221,31 +221,31 @@ void walkModulesCommons(
                 config->module_configs[p][c][f][module].channel_settings;
         if (0x01 & (t >> m)) {
             loc->triggered = true;
-            if (settings.comH.slow_hit_readout) {
+            if (settings.comH0.slow_hit_readout) {
                 loc->com0h = current_value++;
             }
-            if (settings.comH.fast_hit_readout) {
+            if (settings.comH0.fast_hit_readout) {
                 loc->u0h = current_value++;
                 loc->v0h = current_value++;
             }
-            if (settings.comL.slow_hit_readout) {
+            if (settings.comL0.slow_hit_readout) {
                 loc->com0 = current_value++;
             }
-            if (settings.comL.fast_hit_readout) {
+            if (settings.comL0.fast_hit_readout) {
                 loc->u0 = current_value++;
                 loc->v0 = current_value++;
             }
-            if (settings.comH.slow_hit_readout) {
+            if (settings.comH1.slow_hit_readout) {
                 loc->com1h = current_value++;
             }
-            if (settings.comH.fast_hit_readout) {
+            if (settings.comH1.fast_hit_readout) {
                 loc->u1h = current_value++;
                 loc->v1h = current_value++;
             }
-            if (settings.comL.slow_hit_readout) {
+            if (settings.comL1.slow_hit_readout) {
                 loc->com1 = current_value++;
             }
-            if (settings.comL.fast_hit_readout) {
+            if (settings.comL1.fast_hit_readout) {
                 loc->u1 = current_value++;
                 loc->v1 = current_value++;
             }
@@ -372,10 +372,14 @@ int populatePacketSizeLookup(
                                 ModuleChannelConfig module_channel_settings =
                                         config->module_configs[p][c]
                                                 [fin][module].channel_settings;
-                                RenaChannelConfig comH =
-                                        module_channel_settings.comH;
-                                RenaChannelConfig comL =
-                                        module_channel_settings.comL;
+                                RenaChannelConfig comH0 =
+                                        module_channel_settings.comH0;
+                                RenaChannelConfig comH1 =
+                                        module_channel_settings.comH1;
+                                RenaChannelConfig comL0 =
+                                        module_channel_settings.comL0;
+                                RenaChannelConfig comL1 =
+                                        module_channel_settings.comL1;
                                 RenaChannelConfig spatA =
                                         module_channel_settings.spatA;
                                 RenaChannelConfig spatB =
@@ -388,20 +392,30 @@ int populatePacketSizeLookup(
                                 // 2 bytes.  The slow hit readout enables one
                                 // channel to be read out. Fast hit readout
                                 // enables reading out the two timing channels,
-                                // u and v.  The common channel readout enable
-                                // flag enables both apd 0 and 1, doubling the
-                                // number of channels.
-                                if (comH.fast_hit_readout) {
-                                    packet_size[p][c][d][r][t] += 8;
-                                }
-                                if (comH.slow_hit_readout) {
+                                // u and v.
+                                if (comH0.fast_hit_readout) {
                                     packet_size[p][c][d][r][t] += 4;
                                 }
-                                if (comL.fast_hit_readout) {
-                                    packet_size[p][c][d][r][t] += 8;
+                                if (comH0.slow_hit_readout) {
+                                    packet_size[p][c][d][r][t] += 2;
                                 }
-                                if (comL.slow_hit_readout) {
+                                if (comH1.fast_hit_readout) {
                                     packet_size[p][c][d][r][t] += 4;
+                                }
+                                if (comH1.slow_hit_readout) {
+                                    packet_size[p][c][d][r][t] += 2;
+                                }
+                                if (comL0.fast_hit_readout) {
+                                    packet_size[p][c][d][r][t] += 4;
+                                }
+                                if (comL0.slow_hit_readout) {
+                                    packet_size[p][c][d][r][t] += 2;
+                                }
+                                if (comL1.fast_hit_readout) {
+                                    packet_size[p][c][d][r][t] += 4;
+                                }
+                                if (comL1.slow_hit_readout) {
+                                    packet_size[p][c][d][r][t] += 2;
                                 }
                                 if (spatA.fast_hit_readout) {
                                     packet_size[p][c][d][r][t] += 4;
@@ -1104,14 +1118,20 @@ int loadModuleChannelSettings(
         not_found++;
     }
     if (module_channel_settings.isMember("ComH_Channels")) {
-        loadChannelSettings(module_config.comH,
+        loadChannelSettings(module_config.comH0,
+                            module_channel_settings["ComH_Channels"],
+                            require_all);
+        loadChannelSettings(module_config.comH1,
                             module_channel_settings["ComH_Channels"],
                             require_all);
     } else {
         not_found++;
     }
     if (module_channel_settings.isMember("ComL_Channels")) {
-        loadChannelSettings(module_config.comL,
+        loadChannelSettings(module_config.comL0,
+                            module_channel_settings["ComL_Channels"],
+                            require_all);
+        loadChannelSettings(module_config.comL1,
                             module_channel_settings["ComL_Channels"],
                             require_all);
     } else {
@@ -1195,7 +1215,15 @@ int pullJsonChannelSettings(
         bool copy_value = false;
         if (member.find("ComH.") == 0) {
             copy_value = true;
+        } else if (member.find("ComH0.") == 0) {
+            copy_value = true;
+        } else if (member.find("ComH1.") == 0) {
+            copy_value = true;
         } else if (member.find("ComL.") == 0) {
+            copy_value = true;
+        } else if (member.find("ComL0.") == 0) {
+            copy_value = true;
+        } else if (member.find("ComL1.") == 0) {
             copy_value = true;
         } else if (member.find("Spat.") == 0) {
             copy_value = true;
@@ -1222,7 +1250,11 @@ int loadJsonChannelSettings(
     Json::Value module_json;
     Json::Value spat_json;
     Json::Value comh_json;
+    Json::Value comh0_json;
+    Json::Value comh1_json;
     Json::Value coml_json;
+    Json::Value coml0_json;
+    Json::Value coml1_json;
 
     for (size_t ii = 0; ii < members.size(); ii++) {
         const std::string & member = members[ii];
@@ -1231,6 +1263,18 @@ int loadJsonChannelSettings(
                     ref_object[member];
         } else if (member.find("ComL.") == 0) {
             coml_json[std::string(member.begin() + 5, member.end())] =
+                    ref_object[member];
+        } else if (member.find("ComH0.") == 0) {
+            comh0_json[std::string(member.begin() + 6, member.end())] =
+                    ref_object[member];
+        } else if (member.find("ComH1.") == 0) {
+            comh1_json[std::string(member.begin() + 6, member.end())] =
+                    ref_object[member];
+        } else if (member.find("ComL0.") == 0) {
+            coml0_json[std::string(member.begin() + 6, member.end())] =
+                    ref_object[member];
+        } else if (member.find("ComL1.") == 0) {
+            coml1_json[std::string(member.begin() + 6, member.end())] =
                     ref_object[member];
         } else if (member.find("Spat.") == 0) {
             spat_json[std::string(member.begin() + 5, member.end())] =
@@ -1253,8 +1297,14 @@ int loadJsonChannelSettings(
     loadChannelSettings(module_config.spatB, spat_json);
     loadChannelSettings(module_config.spatC, spat_json);
     loadChannelSettings(module_config.spatD, spat_json);
-    loadChannelSettings(module_config.comH, comh_json);
-    loadChannelSettings(module_config.comL, coml_json);
+    loadChannelSettings(module_config.comH0, comh_json);
+    loadChannelSettings(module_config.comH1, comh_json);
+    loadChannelSettings(module_config.comL0, coml_json);
+    loadChannelSettings(module_config.comL1, coml_json);
+    loadChannelSettings(module_config.comH0, comh0_json);
+    loadChannelSettings(module_config.comH1, comh1_json);
+    loadChannelSettings(module_config.comL0, coml0_json);
+    loadChannelSettings(module_config.comL1, coml1_json);
     return(0);
 }
 
@@ -1908,9 +1958,13 @@ int SystemConfiguration::load(const std::string & filename) {
 
                     // Set the module value for each of the channels in the
                     // module so that it can be used by the hit register config
-                    module_configs[p][c][f][m].channel_settings.comH.module =
+                    module_configs[p][c][f][m].channel_settings.comH0.module =
                             module_rena;
-                    module_configs[p][c][f][m].channel_settings.comL.module =
+                    module_configs[p][c][f][m].channel_settings.comH1.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.comL0.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.comL1.module =
                             module_rena;
                     module_configs[p][c][f][m].channel_settings.spatA.module =
                             module_rena;
@@ -2503,13 +2557,13 @@ int SystemConfiguration::createChannelMap() {
                             ModuleConfig * configs =
                                     module_configs[p][c][fin].data();
                             channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comH;
+                                    &configs[module].channel_settings.comH0;
                             channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comL;
+                                    &configs[module].channel_settings.comL0;
                             channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comH;
+                                    &configs[module].channel_settings.comH1;
                             channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comL;
+                                    &configs[module].channel_settings.comL1;
                         }
                     } else {
                         // for even renas, commons first, then spatials.
@@ -2520,13 +2574,13 @@ int SystemConfiguration::createChannelMap() {
                             ModuleConfig * configs =
                                     module_configs[p][c][fin].data();
                             channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comH;
+                                    &configs[module].channel_settings.comH0;
                             channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comL;
+                                    &configs[module].channel_settings.comL0;
                             channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comH;
+                                    &configs[module].channel_settings.comH1;
                             channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comL;
+                                    &configs[module].channel_settings.comL1;
                         }
                         for (int m = 0; m < modules_per_rena; m++) {
                             int module;

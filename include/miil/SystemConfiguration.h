@@ -158,8 +158,10 @@ struct RenaChannelConfig {
 struct ModuleChannelConfig {
     int hit_threshold;
     int double_trigger_threshold;
-    RenaChannelConfig comL;
-    RenaChannelConfig comH;
+    RenaChannelConfig comL0;
+    RenaChannelConfig comL1;
+    RenaChannelConfig comH0;
+    RenaChannelConfig comH1;
     RenaChannelConfig spatA;
     RenaChannelConfig spatB;
     RenaChannelConfig spatC;
