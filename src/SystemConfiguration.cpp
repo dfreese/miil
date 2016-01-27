@@ -2539,31 +2539,31 @@ int SystemConfiguration::createChannelMap() {
                             int module;
                             int fin;
                             convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
-                            ModuleConfig * configs =
-                                    module_configs[p][c][fin].data();
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.spatD;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.spatC;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.spatB;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.spatA;
+                            ModuleChannelConfig & module_config =
+                                    module_configs[p][c][fin]
+                                                  [module].channel_settings;
+                            std::vector<RenaChannelConfig*> & rena_channel_map =
+                                    channel_map[p][c][d][r];
+
+                            rena_channel_map[channel++] = &module_config.spatD;
+                            rena_channel_map[channel++] = &module_config.spatC;
+                            rena_channel_map[channel++] = &module_config.spatB;
+                            rena_channel_map[channel++] = &module_config.spatA;
                         }
                         for (int m = 0; m < modules_per_rena; m++) {
                             int module;
                             int fin;
                             convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
-                            ModuleConfig * configs =
-                                    module_configs[p][c][fin].data();
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comH0;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comL0;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comH1;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comL1;
+                            ModuleChannelConfig & module_config =
+                                    module_configs[p][c][fin]
+                                                  [module].channel_settings;
+                            std::vector<RenaChannelConfig*> & rena_channel_map =
+                                    channel_map[p][c][d][r];
+
+                            rena_channel_map[channel++] = &module_config.comH0;
+                            rena_channel_map[channel++] = &module_config.comL0;
+                            rena_channel_map[channel++] = &module_config.comH1;
+                            rena_channel_map[channel++] = &module_config.comL1;
                         }
                     } else {
                         // for even renas, commons first, then spatials.
@@ -2571,31 +2571,31 @@ int SystemConfiguration::createChannelMap() {
                             int module;
                             int fin;
                             convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
-                            ModuleConfig * configs =
-                                    module_configs[p][c][fin].data();
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comH0;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comL0;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comH1;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.comL1;
+                            ModuleChannelConfig & module_config =
+                                    module_configs[p][c][fin]
+                                                  [module].channel_settings;
+                            std::vector<RenaChannelConfig*> & rena_channel_map =
+                                    channel_map[p][c][d][r];
+
+                            rena_channel_map[channel++] = &module_config.comH0;
+                            rena_channel_map[channel++] = &module_config.comL0;
+                            rena_channel_map[channel++] = &module_config.comH1;
+                            rena_channel_map[channel++] = &module_config.comL1;
                         }
                         for (int m = 0; m < modules_per_rena; m++) {
                             int module;
                             int fin;
                             convertPCDRMtoPCFM(p, c, d, r, m, fin, module);
-                            ModuleConfig * configs =
-                                    module_configs[p][c][fin].data();
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.spatA;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.spatB;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.spatC;
-                            channel_map[p][c][d][r][channel++] =
-                                    &configs[module].channel_settings.spatD;
+                            ModuleChannelConfig & module_config =
+                                    module_configs[p][c][fin]
+                                                  [module].channel_settings;
+                            std::vector<RenaChannelConfig*> & rena_channel_map =
+                                    channel_map[p][c][d][r];
+
+                            rena_channel_map[channel++] = &module_config.spatA;
+                            rena_channel_map[channel++] = &module_config.spatB;
+                            rena_channel_map[channel++] = &module_config.spatC;
+                            rena_channel_map[channel++] = &module_config.spatD;
                         }
                     }
                     channel_map[p][c][d][r][channel++] =
