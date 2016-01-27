@@ -1945,6 +1945,9 @@ int SystemConfiguration::load(const std::string & filename) {
 
     populateADCLocationLookup(this, this->adc_value_locations);
 
+    // Create a default channel map that can be used right away.  This can be
+    // overridden with a custom channel map later on (not implemented).
+    createChannelMap();
 
     // Verify full round trip conversion on the mapping.  Should be in a test
     // case, but this will do for now.
