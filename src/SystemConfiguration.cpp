@@ -1867,25 +1867,10 @@ int SystemConfiguration::load(const std::string & filename) {
             // Put the channel settings in place
             for (int f = 0; f < fins_per_cartridge; f++) {
                 for (int m = 0; m < modules_per_fin; m++) {
-                    // Set the module value for each of the channels in the
-                    // module so that it can be used by the hit register config
                     int module_rena;
                     int rena;
                     int daq;
                     convertPCFMtoPCDRM(p, c, f, m, daq, rena, module_rena);
-                    module_configs[p][c][f][m].channel_settings.comH.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.comL.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.spatA.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.spatB.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.spatC.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.spatD.module =
-                            module_rena;
-
                     // Start building json file for the module that
                     // represents a diff from the default.  Do this by
                     // starting with the panel_channel_json for that
@@ -1920,10 +1905,29 @@ int SystemConfiguration::load(const std::string & filename) {
                     loadJsonChannelSettings(
                             module_configs[p][c][f][m].channel_settings,
                             module_channel_json);
+
+                    // Set the module value for each of the channels in the
+                    // module so that it can be used by the hit register config
+                    module_configs[p][c][f][m].channel_settings.comH.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.comL.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.spatA.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.spatB.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.spatC.module =
+                            module_rena;
+                    module_configs[p][c][f][m].channel_settings.spatD.module =
+                            module_rena;
                 }
             }
         }
     }
+
+    // Set the module number for the unused channel to -1 so that it is ignored
+    // in the hit registers packet creation
+    unused_channel_config.module = -1;
 
     if (populateBackendAddressReverseLookup(
                 this,
