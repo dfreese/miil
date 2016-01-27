@@ -102,6 +102,16 @@ public:
             const std::vector<RenaChannelConfig *> & configs,
             std::vector<char> & packet);
 
+    static int createHitRegisterPacket(
+            int backend_address,
+            int daq_board,
+            int fpga,
+            int rena,
+            int module,
+            int register_type,
+            const ModuleChannelConfig & config,
+            std::vector<char> & packet);
+
     static int createCoincOverridePacket(
             int backend_address,
             int daq_board,

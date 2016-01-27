@@ -257,6 +257,82 @@ int createHitRegisterBuffer(
                      ((module & 0x03) << 0));
     return(0);
 }
+
+/*!
+ * \brief Append buffer add commands to a packet for a hit register instruction
+ *
+ * Generates the bytes to be put into the buffer for a LOAD_HIT_REGISTERS
+ * instruction.  A bitstream is generated from the module channel configs.
+ * A list of ones, the slow readout enable, or fast hit enable flags for the
+ * TRIGGER_SET, SLOW_HIT, or FAST_HIT instructions respectively, are ANDed with
+ * whether or not that channel is associated with the specified module.  The
+ * bitstream is then placed into bytes.  This generates a buffer with channel
+ * channel 0 at buffer(5)(5) down to channel 35 at buffer(0)(0).  The 1 bit
+ * rena number is placed at buffer(6)(5).  The 2 bit instruction is placed at
+ * buffer(6)(4) to buffer(6)(3).  The 2 bit module number is placed at
+ * buffer(6)(1) to buffer(6)(0).  The bytes are then appended to the packet.
+ *
+ * \param rena Specify the rena the FPGA is dealing with
+ * \param module Module on the rena the FPGA is dealing with
+ * \param register_type A hit register type from hit_register_types
+ * \param config The ModuleChannelConfig structure for the module
+ * \param packet The vector of bytes where the buffer bytes should be appended
+ *
+ * \return 0 if successful, less than otherwise
+ *         -1 if UNDEFINED_HIT is used, as it is not implemented
+ *         -2 if an invalid register type is given
+ */
+int createHitRegisterBuffer(
+        int rena,
+        int module,
+        int register_type,
+        const ModuleChannelConfig & config,
+        std::vector<char> & packet)
+{
+    std::vector<bool> bitstream(36, 0);
+    if (register_type == DaqControl::TRIGGER_SET) {
+        bitstream[config.comH0.channel_number] = true;
+        bitstream[config.comL0.channel_number] = true;
+        bitstream[config.comH1.channel_number] = true;
+        bitstream[config.comL1.channel_number] = true;
+        bitstream[config.spatA.channel_number] = true;
+        bitstream[config.spatB.channel_number] = true;
+        bitstream[config.spatC.channel_number] = true;
+        bitstream[config.spatD.channel_number] = true;
+    } else if (register_type == DaqControl::SLOW_HIT) {
+        bitstream[config.comH0.channel_number] = config.comH0.slow_hit_readout;
+        bitstream[config.comL0.channel_number] = config.comL0.slow_hit_readout;
+        bitstream[config.comH1.channel_number] = config.comH1.slow_hit_readout;
+        bitstream[config.comL1.channel_number] = config.comL1.slow_hit_readout;
+        bitstream[config.spatA.channel_number] = config.spatA.slow_hit_readout;
+        bitstream[config.spatB.channel_number] = config.spatB.slow_hit_readout;
+        bitstream[config.spatC.channel_number] = config.spatC.slow_hit_readout;
+        bitstream[config.spatD.channel_number] = config.spatD.slow_hit_readout;
+    } else if (register_type == DaqControl::FAST_HIT) {
+        bitstream[config.comH0.channel_number] = config.comH0.fast_hit_readout;
+        bitstream[config.comL0.channel_number] = config.comL0.fast_hit_readout;
+        bitstream[config.comH1.channel_number] = config.comH1.fast_hit_readout;
+        bitstream[config.comL1.channel_number] = config.comL1.fast_hit_readout;
+        bitstream[config.spatA.channel_number] = config.spatA.fast_hit_readout;
+        bitstream[config.spatB.channel_number] = config.spatB.fast_hit_readout;
+        bitstream[config.spatC.channel_number] = config.spatC.fast_hit_readout;
+        bitstream[config.spatD.channel_number] = config.spatD.fast_hit_readout;
+    } else if (register_type == DaqControl::UNDEFINED_HIT) {
+        return(-1);
+    } else {
+        return(-2);
+    }
+    std::vector<uint8_t> buffer_vals =
+            Util::BoolVec2ByteVec(bitstream, 6, true);
+    for (size_t ii = 0; ii < buffer_vals.size(); ii++) {
+        packet.push_back(DaqControl::ADD_TO_BUFFER | buffer_vals[ii]);
+    }
+    packet.push_back(DaqControl::ADD_TO_BUFFER |
+                     ((rena & 0x01) << 5) |
+                     ((register_type & 0x03) << 3) |
+                     ((module & 0x03) << 0));
+    return(0);
+}
 }
 
 /*!
@@ -386,6 +462,50 @@ int DaqControl::createHitRegisterPacket(
     packet.push_back(DaqControl::RESET_BUFFER);
     if (createHitRegisterBuffer(
                 rena, module, register_type, configs, packet) < 0) {
+        return(-1);
+    }
+    packet.push_back(createExecuteInstruction(
+            DaqControl::LOAD_HIT_REGISTERS, fpga));
+    packet.push_back(DaqControl::END_PACKET);
+    return(0);
+}
+
+/*!
+ * \brief Append a command to program a rena channel's settings
+ *
+ * Appends a packet to the given vector to program the hit registers of the
+ * FPGA.  This tells the FPGA which channels are associated with each module
+ * (TRIGGER_SET) and which channels should be readout if it triggers (SLOW_HIT,
+ * FAST_HIT).  It uses createHitRegisterBuffer to generate all of the bytes
+ * to put information into the FPGA buffers.
+ *
+ * \param backend_address The address of the backend board to be addressed
+ * \param daq_board The daq board on the backend board to be addressed
+ * \param fpga The frontend fpga to be programmed
+ * \param rena The rena number the fpga is being programmed for
+ * \param module The module for which the rena is being programmed
+ * \param register_type A hit register type from hit_register_types
+ * \param configs Vector of channel settings used to program the fpga
+ * \param packet vector where the bytes are appended
+ *
+ * \return 0 on success, less than otherwise
+ *         -1 if createHitRegisterBuffer fails
+ */
+int DaqControl::createHitRegisterPacket(
+        int backend_address,
+        int daq_board,
+        int fpga,
+        int rena,
+        int module,
+        int register_type,
+        const ModuleChannelConfig & config,
+        std::vector<char> & packet)
+{
+    packet.push_back(DaqControl::START_PACKET);
+    packet.push_back(createAddress(backend_address, daq_board));
+    packet.push_back(DaqControl::RESET_BUFFER);
+    if (createHitRegisterBuffer(
+                rena, module, register_type, config, packet) < 0) {
         return(-1);
     }
     packet.push_back(createExecuteInstruction(
