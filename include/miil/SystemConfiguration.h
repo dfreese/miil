@@ -145,6 +145,8 @@ struct RenaChannelConfig {
     bool vref;
     ///! The module number local to the rena the channel is associated with
     int module;
+    ///! The channel number local to the rena to which the channel is associated
+    int channel_number;
 };
 
 /*!

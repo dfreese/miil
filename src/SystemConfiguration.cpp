@@ -2545,9 +2545,13 @@ int SystemConfiguration::createChannelMap() {
                             std::vector<RenaChannelConfig*> & rena_channel_map =
                                     channel_map[p][c][d][r];
 
+                            module_config.spatD.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.spatD;
+                            module_config.spatC.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.spatC;
+                            module_config.spatB.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.spatB;
+                            module_config.spatA.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.spatA;
                         }
                         for (int m = 0; m < modules_per_rena; m++) {
@@ -2560,9 +2564,13 @@ int SystemConfiguration::createChannelMap() {
                             std::vector<RenaChannelConfig*> & rena_channel_map =
                                     channel_map[p][c][d][r];
 
+                            module_config.comH0.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.comH0;
+                            module_config.comL0.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.comL0;
+                            module_config.comH1.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.comH1;
+                            module_config.comL1.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.comL1;
                         }
                     } else {
@@ -2577,9 +2585,13 @@ int SystemConfiguration::createChannelMap() {
                             std::vector<RenaChannelConfig*> & rena_channel_map =
                                     channel_map[p][c][d][r];
 
+                            module_config.comH0.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.comH0;
+                            module_config.comL0.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.comL0;
+                            module_config.comH1.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.comH1;
+                            module_config.comL1.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.comL1;
                         }
                         for (int m = 0; m < modules_per_rena; m++) {
@@ -2592,9 +2604,13 @@ int SystemConfiguration::createChannelMap() {
                             std::vector<RenaChannelConfig*> & rena_channel_map =
                                     channel_map[p][c][d][r];
 
+                            module_config.spatA.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.spatA;
+                            module_config.spatB.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.spatB;
+                            module_config.spatC.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.spatC;
+                            module_config.spatD.channel_number = channel;
                             rena_channel_map[channel++] = &module_config.spatD;
                         }
                     }
