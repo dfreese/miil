@@ -485,7 +485,7 @@ int DaqControl::createHitRegisterPacket(
  * \param rena The rena number the fpga is being programmed for
  * \param module The module for which the rena is being programmed
  * \param register_type A hit register type from hit_register_types
- * \param configs Vector of channel settings used to program the fpga
+ * \param config The ModuleChannelConfig for the module
  * \param packet vector where the bytes are appended
  *
  * \return 0 on success, less than otherwise
