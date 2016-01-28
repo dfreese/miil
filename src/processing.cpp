@@ -177,7 +177,7 @@ float FineCalc(short u, short v, float u_cent, float v_cent, float uv_period_ns)
 int GetCrystalID(
         float x,
         float y,
-        const CrystalCalibration * const apd_cals)
+        const std::vector<CrystalCalibration> & apd_cals)
 {
     double min(__DBL_MAX__);
     int crystal_id(-1);
@@ -225,12 +225,12 @@ int RawEventToEventCal(
       return(-5);
     }
 
-    ModulePedestals const * const module_pedestals =
-            & system_config->pedestals[rawevent.panel][rawevent.cartridge]
+    const ModulePedestals & module_pedestals =
+            system_config->pedestals[rawevent.panel][rawevent.cartridge]
                      [rawevent.daq][rawevent.rena][rawevent.module];
 
-    ModuleChannelConfig const * const module_config =
-            & system_config->module_configs[rawevent.panel][rawevent.cartridge]
+    const ModuleChannelConfig & module_config =
+            system_config->module_configs[rawevent.panel][rawevent.cartridge]
                                            [fin][module].channel_settings;
 
 
@@ -238,25 +238,25 @@ int RawEventToEventCal(
     // Greater in this case is less than, because the common signals go negative
     // i.e. start (zero) at roughly 3000 and max out at roughly 1000 or so.
     int apd = 0;
-    short primary_common = rawevent.com0h - module_pedestals->com0h;
-    short secondary_common = rawevent.com1h - module_pedestals->com1h;
+    short primary_common = rawevent.com0h - module_pedestals.com0h;
+    short secondary_common = rawevent.com1h - module_pedestals.com1h;
     if (primary_common > secondary_common) {
         apd = 1;
         swap(primary_common, secondary_common);
     }
-    if (primary_common > module_config->hit_threshold) {
+    if (primary_common > module_config.hit_threshold) {
         return(-1);
     }
-    if (secondary_common < module_config->double_trigger_threshold) {
+    if (secondary_common < module_config.double_trigger_threshold) {
         return(-2);
     }
 
     event.ct = rawevent.ct;
 
-    float a = (float) rawevent.a - module_pedestals->a;
-    float b = (float) rawevent.b - module_pedestals->b;
-    float c = (float) rawevent.c - module_pedestals->c;
-    float d = (float) rawevent.d - module_pedestals->d;
+    float a = (float) rawevent.a - module_pedestals.a;
+    float b = (float) rawevent.b - module_pedestals.b;
+    float c = (float) rawevent.c - module_pedestals.c;
+    float d = (float) rawevent.d - module_pedestals.d;
 
 
     event.spat_total = a + b + c + d;
@@ -266,20 +266,20 @@ int RawEventToEventCal(
         event.y *= -1;
         event.ft = FineCalc(rawevent.u1h,
                             rawevent.v1h,
-                            module_pedestals->u1h,
-                            module_pedestals->v1h,
+                            module_pedestals.u1h,
+                            module_pedestals.v1h,
                             system_config->uv_period_ns);
     } else {
         event.ft = FineCalc(rawevent.u0h,
                             rawevent.v0h,
-                            module_pedestals->u0h,
-                            module_pedestals->v0h,
+                            module_pedestals.u0h,
+                            module_pedestals.v0h,
                             system_config->uv_period_ns);
     }
 
-    CrystalCalibration const * const apd_cals =
+    const std::vector<CrystalCalibration> & apd_cals =
             system_config->calibration[rawevent.panel][rawevent.cartridge]
-                                      [fin][module][apd].data();
+                                      [fin][module][apd];
 
     int crystal = GetCrystalID(event.x, event.y, apd_cals);
 
@@ -287,16 +287,16 @@ int RawEventToEventCal(
         return(-3);
     }
 
-    CrystalCalibration const * const crystal_cal = & apd_cals[crystal];
+    const CrystalCalibration & crystal_cal = apd_cals[crystal];
 
-    if (!crystal_cal->use) {
+    if (!crystal_cal.use) {
         return(-4);
     }
 
     if (rawevent.panel == 0) {
-        event.ft -= crystal_cal->time_offset;
+        event.ft -= crystal_cal.time_offset;
     } else if (rawevent.panel == 1) {
-        event.ft += crystal_cal->time_offset;
+        event.ft += crystal_cal.time_offset;
     }
     // Ensure that the fine timestamp is wrapped correctly
     while (event.ft < 0) {
@@ -315,7 +315,7 @@ int RawEventToEventCal(
     event.daq = rawevent.daq;
     event.rena = rawevent.rena;
 
-    event.E = event.spat_total / crystal_cal->gain_spat * 511;
+    event.E = event.spat_total / crystal_cal.gain_spat * 511;
 
     return(apd);
 }
