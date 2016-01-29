@@ -15,17 +15,26 @@
  */
 struct ModulePedestals {
     float a;
+    float a_stderr;
     float b;
+    float b_stderr;
     float c;
+    float c_stderr;
     float d;
+    float d_stderr;
     float com0;
+    float com0_stderr;
     float com1;
+    float com1_stderr;
     float com0h;
+    float com0h_stderr;
     float com1h;
+    float com1h_stderr;
     float u0h;
     float v0h;
     float u1h;
     float v1h;
+    int events;
 };
 
 /*!
@@ -348,6 +357,7 @@ public:
     int load(const std::string & filename);
 
     int loadPedestals(const std::string & filename);
+    int writePedestals(const std::string & filename);
     int loadUVCenters(const std::string & filename);
     int loadCalibration(const std::string & filename);
     int loadTimeCalibration(const std::string & filename);

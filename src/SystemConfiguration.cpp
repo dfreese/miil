@@ -9,6 +9,7 @@
 #include <cmath>
 #include <jsoncpp/json/json.h>
 #include <cassert>
+#include <iomanip>
 
 // Anonymous Namespace for helper functions to keep them local to object file
 namespace {
@@ -2034,21 +2035,21 @@ int SystemConfiguration::load(const std::string & filename) {
  *     - The PCDRM id for the line (i.e. "P0C1D13M2")
  *     - The number of events that were factored into the pedestal calculation
  *     - The Spatial A Channel Pedestal Value
- *     - The Spatial A Channel Pedestal RMS Value
+ *     - The Spatial A Channel Pedestal Standard Error
  *     - The Spatial B Channel Pedestal Value
- *     - The Spatial B Channel Pedestal RMS Value
+ *     - The Spatial B Channel Pedestal Standard Error
  *     - The Spatial C Channel Pedestal Value
- *     - The Spatial C Channel Pedestal RMS Value
+ *     - The Spatial C Channel Pedestal Standard Error
  *     - The Spatial D Channel Pedestal Value
- *     - The Spatial D Channel Pedestal RMS Value
+ *     - The Spatial D Channel Pedestal Standard Error
  *     - The PSAPD 0 Low Gain Common Channel Pedestal Value
- *     - The PSAPD 0 Low Gain Common Channel Pedestal RMS Value
+ *     - The PSAPD 0 Low Gain Common Channel Pedestal Standard Error
  *     - The PSAPD 0 High Gain Common Channel Pedestal Value
- *     - The PSAPD 0 High Gain Common Channel Pedestal RMS Value
+ *     - The PSAPD 0 High Gain Common Channel Pedestal Standard Error
  *     - The PSAPD 1 Low Gain Common Channel Pedestal Value
- *     - The PSAPD 1 Low Gain Common Channel Pedestal RMS Value
+ *     - The PSAPD 1 Low Gain Common Channel Pedestal Standard Error
  *     - The PSAPD 1 High Gain Common Channel Pedestal Value
- *     - The PSAPD 1 High Gain Common Channel Pedestal RMS Value
+ *     - The PSAPD 1 High Gain Common Channel Pedestal Standard Error
  *
  * \param filename The name of the file to be loaded.
  *
@@ -2109,41 +2110,44 @@ int SystemConfiguration::loadPedestals(const std::string & filename) {
         {
             return(-5);
         }
+
+        ModulePedestals & pedestal =
+                pedestals[panel][cartridge][daq][rena][module];
+        pedestal.events = events;
+
         for (int ii = 0; ii < 8; ii++) {
             float channel_pedestal_value;
             if ((line_stream >> channel_pedestal_value).fail()) {
                 return(-6);
-            } else {
-                if (ii == 0) {
-                    pedestals[panel][cartridge][daq][rena][module].a =
-                            channel_pedestal_value;
-                } else if (ii == 1) {
-                    pedestals[panel][cartridge][daq][rena][module].b =
-                            channel_pedestal_value;
-                } else if (ii == 2) {
-                    pedestals[panel][cartridge][daq][rena][module].c =
-                            channel_pedestal_value;
-                } else if (ii == 3) {
-                    pedestals[panel][cartridge][daq][rena][module].d =
-                            channel_pedestal_value;
-                } else if (ii == 4) {
-                    pedestals[panel][cartridge][daq][rena][module].com0 =
-                            channel_pedestal_value;
-                } else if (ii == 5) {
-                    pedestals[panel][cartridge][daq][rena][module].com0h =
-                            channel_pedestal_value;
-                } else if (ii == 6) {
-                    pedestals[panel][cartridge][daq][rena][module].com1 =
-                            channel_pedestal_value;
-                } else if (ii == 7) {
-                    pedestals[panel][cartridge][daq][rena][module].com1h =
-                            channel_pedestal_value;
-                }
             }
-
-            float channel_pedestal_rms;
-            if ((line_stream >> channel_pedestal_rms).fail()) {
+            float channel_pedestal_stderr;
+            if ((line_stream >> channel_pedestal_stderr).fail()) {
                 return(-7);
+            }
+            if (ii == 0) {
+                pedestal.a = channel_pedestal_value;
+                pedestal.a_stderr = channel_pedestal_stderr;
+            } else if (ii == 1) {
+                pedestal.b = channel_pedestal_value;
+                pedestal.b_stderr = channel_pedestal_stderr;
+            } else if (ii == 2) {
+                pedestal.c = channel_pedestal_value;
+                pedestal.c_stderr = channel_pedestal_stderr;
+            } else if (ii == 3) {
+                pedestal.d = channel_pedestal_value;
+                pedestal.d_stderr = channel_pedestal_stderr;
+            } else if (ii == 4) {
+                pedestal.com0 = channel_pedestal_value;
+                pedestal.com0_stderr = channel_pedestal_stderr;
+            } else if (ii == 5) {
+                pedestal.com0h = channel_pedestal_value;
+                pedestal.com0h_stderr = channel_pedestal_stderr;
+            } else if (ii == 6) {
+                pedestal.com1 = channel_pedestal_value;
+                pedestal.com1_stderr = channel_pedestal_stderr;
+            } else if (ii == 7) {
+                pedestal.com1h = channel_pedestal_value;
+                pedestal.com1h_stderr = channel_pedestal_stderr;
             }
         }
     }
@@ -2158,6 +2162,115 @@ int SystemConfiguration::loadPedestals(const std::string & filename) {
         return(-8);
     }
     pedestals_loaded_flag = true;
+    return(0);
+}
+
+/*!
+ * \brief Writes the pedestal values from the system configuration into a file
+ *
+ * Takes the pedestal values in an array of ModulePedestals objects and writes
+ * them to a file.  This creates a file of lines
+ * with the following columns:
+ *     - The PCDRM id for the line (i.e. "P0C1D13M2")
+ *     - The number of events that were factored into the pedestal calculation
+ *     - The Spatial A Channel Pedestal Value
+ *     - The Spatial A Channel Pedestal Standard Error
+ *     - The Spatial B Channel Pedestal Value
+ *     - The Spatial B Channel Pedestal Standard Error
+ *     - The Spatial C Channel Pedestal Value
+ *     - The Spatial C Channel Pedestal Standard Error
+ *     - The Spatial D Channel Pedestal Value
+ *     - The Spatial D Channel Pedestal Standard Error
+ *     - The PSAPD 0 Low Gain Common Channel Pedestal Value
+ *     - The PSAPD 0 Low Gain Common Channel Pedestal Standard Error
+ *     - The PSAPD 0 High Gain Common Channel Pedestal Value
+ *     - The PSAPD 0 High Gain Common Channel Pedestal Standard Error
+ *     - The PSAPD 1 Low Gain Common Channel Pedestal Value
+ *     - The PSAPD 1 Low Gain Common Channel Pedestal Standard Error
+ *     - The PSAPD 1 High Gain Common Channel Pedestal Value
+ *     - The PSAPD 1 High Gain Common Channel Pedestal Standard Error
+ *
+ * \param filename The name of the file to be loaded.
+ *
+ * \returns 0 if successful, less than otherwise
+ *         -1 if file could not be opened
+ *         -2 if there was a failure during writing
+ */
+int SystemConfiguration::writePedestals(const std::string & filename) {
+    std::ofstream file_stream;
+    file_stream.open(filename.c_str());
+
+    if (!file_stream) {
+        return(-1);
+    }
+
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int d = 0; d < daqs_per_cartridge; d++) {
+                for (int r = 0; r < renas_per_daq; r++) {
+                    for (int m = 0; m < modules_per_rena; m++) {
+                        // Fall back to old convention listing the number of
+                        // renas per cartridge
+                        int rena_for_cart = r + d * renas_per_daq;
+                        ModulePedestals & pedestal = pedestals[p][c][d][r][m];
+                        // Write out the name of the module assuming there can
+                        // never be more than 999 renas or 9 modules (hardwired
+                        // for 4).
+                        file_stream << std::setfill('0')
+                                    << "P" << std::setw(1) << p
+                                    << "C" << std::setw(1) << c
+                                    << "R" << std::setw(3) << rena_for_cart
+                                    << "M" << std::setw(1) << m;
+
+                        file_stream << std::setfill(' ') << std::setw(9)
+                                    << pedestal.events;
+
+
+                        for (int ii = 0; ii < 8; ii++) {
+                            float channel_pedestal_value;
+                            float channel_pedestal_stderr;
+                            if (ii == 0) {
+                                channel_pedestal_value = pedestal.a;
+                                channel_pedestal_stderr = pedestal.a_stderr;
+                            } else if (ii == 1) {
+                                channel_pedestal_value = pedestal.b;
+                                channel_pedestal_stderr = pedestal.b_stderr;
+                            } else if (ii == 2) {
+                                channel_pedestal_value = pedestal.c;
+                                channel_pedestal_stderr = pedestal.c_stderr;
+                            } else if (ii == 3) {
+                                channel_pedestal_value = pedestal.d;
+                                channel_pedestal_stderr = pedestal.d_stderr;
+                            } else if (ii == 4) {
+                                channel_pedestal_value = pedestal.com0;
+                                channel_pedestal_stderr = pedestal.com0_stderr;
+                            } else if (ii == 5) {
+                                channel_pedestal_value = pedestal.com0h;
+                                channel_pedestal_stderr = pedestal.com0h_stderr;
+                            } else if (ii == 6) {
+                                channel_pedestal_value = pedestal.com1;
+                                channel_pedestal_stderr = pedestal.com1_stderr;
+                            } else if (ii == 7) {
+                                channel_pedestal_value = pedestal.com1h;
+                                channel_pedestal_stderr = pedestal.com1h_stderr;
+                            }
+                            file_stream << std::setprecision(0)
+                                        << std::fixed << std::setw(7);
+                            file_stream << channel_pedestal_value;
+                            file_stream << std::setprecision(2)
+                                        << std::fixed << std::setw(8);
+                            file_stream << channel_pedestal_stderr;
+                        }
+                        file_stream << std::endl;
+                    }
+                }
+            }
+        }
+    }
+    if (file_stream.fail()) {
+        return(-2);
+    }
+    file_stream.close();
     return(0);
 }
 
