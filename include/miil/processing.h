@@ -19,6 +19,14 @@ int RawEventToEventCal(
         EventCal & event,
         SystemConfiguration const * const system_config);
 
+int CalculateXYandEnergy(
+        const EventRaw & rawevent,
+        SystemConfiguration const * const system_config,
+        float & x,
+        float & y,
+        float & energy,
+        int & apd);
+
 bool InEnergyWindow(const EventCal & event, float low, float high);
 
 float EventCalTimeDiff(

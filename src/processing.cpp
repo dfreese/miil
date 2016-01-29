@@ -197,6 +197,81 @@ int GetCrystalID(
 }
 
 /*!
+ * \brief Calculates the x, y, and energy for an event
+ *
+ * For use when a full calibration is not necessary, and only some pedestal
+ * corrected processing is needed.
+ *
+ * \param rawevent The non-pedestal corrected event decoded from the bitstream
+ * \param system_config Pointer to the system configuration to be used
+ * \param x where the x flood position is returned
+ * \param x where the y flood position is returned
+ * \param x where the energy (sum of spatials) is returned
+ * \param apd where the apd is returned
+ *
+ * \return 0 on success, less than zero otherwise
+ *     - -1 if the event is below the hit threshold for the module
+ *     - -2 if the other apd is above the double trigger threshold
+ *     - -3 if the conversion from PCDRM to PCFM indexing fails
+ *     - -4 if the pedestals are not loaded
+ */
+int CalculateXYandEnergy(
+        const EventRaw & rawevent,
+        SystemConfiguration const * const system_config,
+        float & x,
+        float & y,
+        float & energy,
+        int & apd)
+{
+    if (!system_config->pedestalsLoaded()) {
+        return(-4);
+    }
+    int module = 0;
+    int fin = 0;
+    if (system_config->convertPCDRMtoPCFM(rawevent.panel, rawevent.cartridge,
+                                          rawevent.daq, rawevent.rena,
+                                          rawevent.module, fin, module) < 0)
+    {
+      return(-3);
+    }
+
+    const ModulePedestals & module_pedestals =
+            system_config->pedestals[rawevent.panel][rawevent.cartridge]
+                     [rawevent.daq][rawevent.rena][rawevent.module];
+
+    const ModuleChannelConfig & module_config =
+            system_config->module_configs[rawevent.panel][rawevent.cartridge]
+                                           [fin][module].channel_settings;
+
+
+    // Assume APD 0, unless the signal is greater on the APD 1 common channels.
+    // Greater in this case is less than, because the common signals go negative
+    // i.e. start (zero) at roughly 3000 and max out at roughly 1000 or so.
+    apd = 0;
+    short primary_common = rawevent.com0h - module_pedestals.com0h;
+    short secondary_common = rawevent.com1h - module_pedestals.com1h;
+    if (primary_common > secondary_common) {
+        apd = 1;
+        swap(primary_common, secondary_common);
+    }
+    if (primary_common > module_config.hit_threshold) {
+        return(-1);
+    }
+    if (secondary_common < module_config.double_trigger_threshold) {
+        return(-2);
+    }
+    float a = (float) rawevent.a - module_pedestals.a;
+    float b = (float) rawevent.b - module_pedestals.b;
+    float c = (float) rawevent.c - module_pedestals.c;
+    float d = (float) rawevent.d - module_pedestals.d;
+
+    energy = a + b + c + d;
+    x = (c + d - (b + a)) / (energy);
+    y = (a + d - (b + c)) / (energy);
+    return(0);
+}
+
+/*!
  * \brief Converts a Rena event into a calibrated Event using the system config
  *
  *
