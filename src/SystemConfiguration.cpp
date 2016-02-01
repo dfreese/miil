@@ -1740,6 +1740,8 @@ int SystemConfiguration::load(const std::string & filename) {
     resizePCArray(this, cartridge_configs);
     resizePCFArray(this, fin_configs);
     resizePCDFArray(this, fpga_configs);
+    resizePCDRMArray(this, pedestals);
+    resizePCFMAXArray(this, calibration);
 
     // Load in the HV Floating Board Settings
     if (loadHvFloatingBoardSettings(this, root) < 0) {
