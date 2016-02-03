@@ -210,10 +210,14 @@ std::string Util::buildSplitFilename(
     } else {
         ss << "_" << std::setfill('0') << std::setw(width) << counter;
     }
-    std::string value =
-            filename.substr(0,filename.find_last_of('.')) +
-            ss.str() +
-            filename.substr(filename.find_last_of('.'));
+    size_t pos = filename.find_last_of('.');
+
+    std::string value;
+    if (pos == std::string::npos) {
+        value = filename.substr(0, pos) + ss.str();
+    } else {
+        value = filename.substr(0, pos) + ss.str() + filename.substr(pos);
+    }
     return(value);
 }
 
