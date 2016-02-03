@@ -194,14 +194,27 @@ void Util::clearFile(std::string filename) {
  *
  * \param filename The base filename that will have the number added
  * \param counter The number that will be added into the filename
+ * \param width The number of digits to represent the number with, filled with
+ *        0s.  Anything less than 1 is represented by as many as necessary.
  *
  * \return A filename with a _# added before the last '.'
  */
-std::string Util::buildSplitFilename(std::string filename, int counter) {
+std::string Util::buildSplitFilename(
+        const std::string & filename,
+        int counter,
+        int width)
+{
     std::stringstream ss;
-    ss << filename.substr(0,filename.find_last_of('.'))
-       << "_" << counter << filename.substr(filename.find_last_of('.'));
-    return(ss.str());
+    if (width < 1) {
+        ss << "_" << counter;
+    } else {
+        ss << "_" << std::setfill('0') << std::setw(width) << counter;
+    }
+    std::string value =
+            filename.substr(0,filename.find_last_of('.')) +
+            ss.str() +
+            filename.substr(filename.find_last_of('.'));
+    return(value);
 }
 
 /*! \brief Returns a filename with the file number removed

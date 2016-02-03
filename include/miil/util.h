@@ -12,7 +12,10 @@ namespace Util {
     std::vector<bool> int2BoolVec(int input,unsigned int numBits);
     int boolVec2Int(const std::vector<bool> &input);
     void clearFile(std::string filename);
-    std::string buildSplitFilename(std::string filename, int counter);
+    std::string buildSplitFilename(
+            const std::string & filename,
+            int counter,
+            int width = -1);
     int removeSplitFilename(
             const std::string & filename,
             std::string & base_filename);
