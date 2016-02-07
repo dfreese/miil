@@ -159,7 +159,7 @@ public:
      * \param container a std library container with insert() and end()
      */
     template <typename Container>
-    void copy(Container & ret) {
+    void try_copy(Container & ret) {
         if (lock.try_lock()) {
             ret.insert(ret.end(), buffer.begin(), buffer.end());
             lock.unlock();
