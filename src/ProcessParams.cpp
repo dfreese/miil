@@ -158,10 +158,6 @@ int ProcessParams::HandleData(bool write_out_remaining_cal_data) {
             // Write out to the end of the full file
             write_to_position = info.current_index + bytes_left;
         }
-        // Increment the counter anyways, since we split files based on the
-        // number of received bytes only, not the size of the decoded or
-        // calibrated files.
-        current_file_size += bytes_to_write;
     }
 
     // Declare iterator so that it can be used for writing at the end.  This
@@ -253,6 +249,12 @@ int ProcessParams::HandleData(bool write_out_remaining_cal_data) {
     }
 
     if (control->write_data_flag) {
+        if (split_files_flag) {
+            // Increment the counter anyways, since we split files based on the
+            // number of received bytes only, not the size of the decoded or
+            // calibrated files.
+            current_file_size += bytes_to_write;
+        }
         if (write_raw_data_flag) {
             std::copy(
                     buffer_process_side.begin() + info.current_index,
