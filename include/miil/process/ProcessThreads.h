@@ -3,15 +3,16 @@
 
 #include <thread>
 #include <string>
+#include <vector>
 
 class ProcessParams;
 class ProcessControl;
 
 class ProcessThreads {
-    ProcessParams * const process_params;
+    std::vector<ProcessParams *> process_params_vec;
     ProcessControl * const control;
-    std::thread read_sockets_thread;
-    std::thread process_data_thread;
+    std::vector<std::thread> read_sockets_threads;
+    std::vector<std::thread> process_data_threads;
     bool is_running;
     void stopProcessing(bool end_acquisition);
     void startProcessing();
@@ -19,14 +20,13 @@ class ProcessThreads {
     void startReceiving();
 
 public:
-    ProcessThreads(
-            ProcessParams * const process_params_ptr,
-            ProcessControl * const control_ptr);
+    ProcessThreads(ProcessControl * const control_ptr);
+    void addParams(ProcessParams * const process_params_ptr);
     void start();
     void stop(bool end_acquisition);
-    void setRawFilename(const std::string & filename);
-    void setDecodeFilename(const std::string & filename);
-    void setCalibratedFilename(const std::string & filename);
+    void setRawFilename(const std::string & filename, int index);
+    void setDecodeFilename(const std::string & filename, int index);
+    void setCalibratedFilename(const std::string & filename, int index);
     bool isRunning() const;
 };
 
