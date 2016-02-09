@@ -139,6 +139,8 @@ int ProcessParams::HandleData(bool write_out_remaining_cal_data) {
             buffer_process_side.begin() + info.current_index,
             buffer_process_side.end());
 
+    info.bytes_transferred += bytes_to_write;
+
     size_t bytes_left = file_size_max - current_file_size;
     size_t write_to_position = buffer_process_side.size();
 
@@ -326,8 +328,8 @@ int ProcessParams::ProcessData() {
         HandleData(true);
         // Clear out any incomplete packets left hanging in the queue.
         buffer_process_side.clear();
+        updateProcessInfo();
     }
-    updateProcessInfo();
     files_reset_flag = false;
     return(0);
 }
@@ -406,7 +408,7 @@ int ProcessParams::ReadWriteSockets() {
 }
 
 void ProcessParams::updateProcessInfo() {
-    if(lock_locked_info.try_lock()) {
+    if (lock_locked_info.try_lock()) {
         locked_info = info;
         lock_locked_info.unlock();
     }
@@ -417,6 +419,11 @@ ProcessInfo ProcessParams::getProcessInfo() {
     ProcessInfo local_copy = locked_info;
     lock_locked_info.unlock();
     return(local_copy);
+}
+
+void ProcessParams::resetProcessInfo() {
+    info.reset();
+    locked_info = info;
 }
 
 int ProcessParams::ResetFiles() {

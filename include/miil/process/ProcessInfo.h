@@ -10,8 +10,10 @@ class ProcessInfo {
     friend class ProcessParams;
 public:
     ProcessInfo();
+    void reset();
 
     long bytes_received;
+    long bytes_transferred;
     long bytes_processed;
     long decoded_events_processed;
     long accepted_decode;

@@ -29,6 +29,14 @@ void ProcessThreads::stopProcessing(bool end_acquisition) {
 }
 
 void ProcessThreads::startProcessing() {
+    // If the control->end_of_acquisiton_flag is still true from a previous
+    // call of stopProcessing, then clear all of the process info.
+    if (control->end_of_acquisiton_flag) {
+        for (size_t ii = 0; ii < process_params_vec.size(); ii++) {
+            ProcessParams * process_params = process_params_vec[ii];
+            process_params->resetProcessInfo();
+        }
+    }
     control->process_data_flag = true;
     control->end_of_acquisiton_flag = false;
     for (size_t ii = 0; ii < process_params_vec.size(); ii++) {

@@ -77,6 +77,7 @@ public:
     void setDecodeFilename(const std::string & filename);
     void setCalibratedFilename(const std::string & filename);
     ProcessInfo getProcessInfo();
+    void resetProcessInfo();
     BoundedBuffer<char> raw_storage;
     BoundedBuffer<EventRaw> decoded_storage;
     BoundedBuffer<EventCal> calibrated_storage;
