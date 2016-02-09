@@ -109,61 +109,101 @@ void walkModulesSpatials(
                 // If the rena is odd, read out D, C, B, A
                 if (settings.spatD.slow_hit_readout) {
                     loc->d = current_value++;
+                } else {
+                    loc->d = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatD.fast_hit_readout) {
                     loc->d_u = current_value++;
                     loc->d_v = current_value++;
+                } else {
+                    loc->d_u = MAX_NO_ADC_VALUES;
+                    loc->d_v = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatC.slow_hit_readout) {
                     loc->c = current_value++;
+                } else {
+                    loc->c = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatC.fast_hit_readout) {
                     loc->c_u = current_value++;
                     loc->c_v = current_value++;
+                } else {
+                    loc->c_u = MAX_NO_ADC_VALUES;
+                    loc->c_v = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatB.slow_hit_readout) {
                     loc->b = current_value++;
+                } else {
+                    loc->b = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatB.fast_hit_readout) {
                     loc->b_u = current_value++;
                     loc->b_v = current_value++;
+                } else {
+                    loc->b_u = MAX_NO_ADC_VALUES;
+                    loc->b_v = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatA.slow_hit_readout) {
                     loc->a = current_value++;
+                } else {
+                    loc->a = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatA.fast_hit_readout) {
                     loc->a_u = current_value++;
                     loc->a_v = current_value++;
+                } else {
+                    loc->a_u = MAX_NO_ADC_VALUES;
+                    loc->a_v = MAX_NO_ADC_VALUES;
                 }
             } else {
                 // If the rena is even, read out A, B, C, D
                 if (settings.spatA.slow_hit_readout) {
                     loc->a = current_value++;
+                } else {
+                    loc->a = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatA.fast_hit_readout) {
                     loc->a_u = current_value++;
                     loc->a_v = current_value++;
+                } else {
+                    loc->a_u = MAX_NO_ADC_VALUES;
+                    loc->a_v = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatB.slow_hit_readout) {
                     loc->b = current_value++;
+                } else {
+                    loc->b = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatB.fast_hit_readout) {
                     loc->b_u = current_value++;
                     loc->b_v = current_value++;
+                } else {
+                    loc->b_u = MAX_NO_ADC_VALUES;
+                    loc->b_v = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatC.slow_hit_readout) {
                     loc->c = current_value++;
+                } else {
+                    loc->c = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatC.fast_hit_readout) {
                     loc->c_u = current_value++;
                     loc->c_v = current_value++;
+                } else {
+                    loc->c_u = MAX_NO_ADC_VALUES;
+                    loc->c_v = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatD.slow_hit_readout) {
                     loc->d = current_value++;
+                } else {
+                    loc->d = MAX_NO_ADC_VALUES;
                 }
                 if (settings.spatD.fast_hit_readout) {
                     loc->d_u = current_value++;
                     loc->d_v = current_value++;
+                } else {
+                    loc->d_u = MAX_NO_ADC_VALUES;
+                    loc->d_v = MAX_NO_ADC_VALUES;
                 }
             }
         }
@@ -224,31 +264,51 @@ void walkModulesCommons(
             loc->triggered = true;
             if (settings.comH0.slow_hit_readout) {
                 loc->com0h = current_value++;
+            } else {
+                loc->com0h = MAX_NO_ADC_VALUES;
             }
             if (settings.comH0.fast_hit_readout) {
                 loc->u0h = current_value++;
                 loc->v0h = current_value++;
+            } else {
+                loc->u0h = MAX_NO_ADC_VALUES;
+                loc->v0h = MAX_NO_ADC_VALUES;
             }
             if (settings.comL0.slow_hit_readout) {
                 loc->com0 = current_value++;
+            } else {
+                loc->com0 = MAX_NO_ADC_VALUES;
             }
             if (settings.comL0.fast_hit_readout) {
                 loc->u0 = current_value++;
                 loc->v0 = current_value++;
+            } else {
+                loc->u0 = MAX_NO_ADC_VALUES;
+                loc->v0 = MAX_NO_ADC_VALUES;
             }
             if (settings.comH1.slow_hit_readout) {
                 loc->com1h = current_value++;
+            } else {
+                loc->com1h = MAX_NO_ADC_VALUES;
             }
             if (settings.comH1.fast_hit_readout) {
                 loc->u1h = current_value++;
                 loc->v1h = current_value++;
+            } else {
+                loc->u1h = MAX_NO_ADC_VALUES;
+                loc->v1h = MAX_NO_ADC_VALUES;
             }
             if (settings.comL1.slow_hit_readout) {
                 loc->com1 = current_value++;
+            } else {
+                loc->com1 = MAX_NO_ADC_VALUES;
             }
             if (settings.comL1.fast_hit_readout) {
                 loc->u1 = current_value++;
                 loc->v1 = current_value++;
+            } else {
+                loc->u1 = MAX_NO_ADC_VALUES;
+                loc->v1 = MAX_NO_ADC_VALUES;
             }
         }
     }
