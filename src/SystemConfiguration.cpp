@@ -580,6 +580,53 @@ void resizePCDRMArray(
 }
 
 /*!
+ * \brief Resize a PCD array to the proper size
+ *
+ * For arrays indexed Panel, Cartridge, DAQ_Board.
+ *
+ * \param config The system configuration to be used as reference
+ * \param vect The vector to be resized.
+ */
+template<class T>
+void resizePCDArray(
+        SystemConfiguration const * const config,
+        std::vector<std::vector<std::vector<T> > > & vect)
+{
+    vect.resize(config->panels_per_system);
+    for (int p = 0; p < config->panels_per_system; p++) {
+        vect[p].resize(config->cartridges_per_panel);
+        for (int c = 0; c < config->cartridges_per_panel; c++) {
+            vect[p][c].resize(config->daqs_per_cartridge);
+        }
+    }
+}
+
+/*!
+ * \brief Resize a PCDR array to the proper size
+ *
+ * For arrays indexed Panel, Cartridge, DAQ_Board, Rena.
+ *
+ * \param config The system configuration to be used as reference
+ * \param vect The vector to be resized.
+ */
+template<class T>
+void resizePCDRArray(
+        SystemConfiguration const * const config,
+        std::vector<std::vector<std::vector<std::vector<T> > > > & vect)
+{
+    vect.resize(config->panels_per_system);
+    for (int p = 0; p < config->panels_per_system; p++) {
+        vect[p].resize(config->cartridges_per_panel);
+        for (int c = 0; c < config->cartridges_per_panel; c++) {
+            vect[p][c].resize(config->daqs_per_cartridge);
+            for (int d = 0; d < config->daqs_per_cartridge; d++) {
+                vect[p][c][d].resize(config->renas_per_daq);
+            }
+        }
+    }
+}
+
+/*!
  * \brief Resize a PCDRM array to the proper size
  *
  * For arrays indexed Panel, Cartridge, DAQ_Board, Rena, Channel.
@@ -1210,6 +1257,9 @@ int pullJsonChannelSettings(
         const Json::Value & ref_object,
         Json::Value & dest_object)
 {
+    if (ref_object == Json::nullValue) {
+        return(0);
+    }
     const Json::Value::Members members = ref_object.getMemberNames();
     for (size_t ii = 0; ii < members.size(); ii++) {
         const std::string & member = members[ii];
@@ -1246,6 +1296,9 @@ int loadJsonChannelSettings(
         ModuleChannelConfig & module_config,
         const Json::Value & ref_object)
 {
+    if (ref_object == Json::nullValue) {
+        return(0);
+    }
     const Json::Value::Members members = ref_object.getMemberNames();
 
     Json::Value module_json;
@@ -1310,7 +1363,7 @@ int loadJsonChannelSettings(
 }
 
 /*!
- * \brief Load a Modules Rena Channel Settings Configuration from Json Object
+ * \brief Loads Slow Control Module Information from Json Object
  *
  * Takes a module settings json object and searches for:
  *     -"name"
@@ -1324,32 +1377,21 @@ int loadJsonChannelSettings(
  *     -"module_test_resistor"
  * The values are put into a ModuleConfig object.  Config object can be
  * modified if an error occurs.  A ModuleChannelConfig object previously set can
- * also be given to this function to have more specific settings changed.  This
- * is used to set rena settings for individual fins, modules, panels, etc.
- * require_all should be set to false to do this.  Can optionally require all of
- * the settings for a module to be given, except for the channel settings.
- * Relies on checkAndLoadChannelSettings to load the ModuleChannelConfig within
- * the ModuleConfig object.
+ * also be given to this function to have more specific settings changed.
  *
  * The function was not made public to keep the jsoncpp header local to the
  * object file.
  *
  * \param module_config The configuration object to be modified
- * \param default_channel_config the module channel settings to start with
  * \param module_json The Json object to be searched
- * \param require_non_channel_settings return error if the
- * \param require_all If true, return an error if not all of the objects are
- *        found.
+ * \param require_all Return an error if not all of the objects are found.
  *
  * \return 0 is successful, less than otherwise
- *        -1 if not all of the required non-channel related objects are found
- *        -2 if checkAndLoadChannelSettings errors out
+ *        -1 if not all of the required objects are found
  */
-int loadModuleSettings(
+int loadModuleInformation(
     ModuleConfig & module_config,
-    const ModuleChannelConfig & default_channel_config,
     const Json::Value & module_json,
-    bool require_non_channel_settings = true,
     bool require_all = false)
 {
     int not_found = 0;
@@ -1403,21 +1445,9 @@ int loadModuleSettings(
     } else {
         not_found++;
     }
-    if ((require_all || require_non_channel_settings) && (not_found > 0)) {
+    if (require_all && (not_found > 0)) {
         return(-1);
     }
-    // Set the module to the default
-    module_config.channel_settings = default_channel_config;
-    // And then load
-    int check_status = checkAndLoadChannelSettings(
-            module_config.channel_settings,
-            module_json,
-            require_all);
-
-    if (check_status < 0) {
-        return(-2);
-    }
-
     return(0);
 }
 
@@ -1690,6 +1720,292 @@ int SystemConfiguration::convertPCFMtoPCDRM(
     return(0);
 }
 
+namespace {
+int initDefaultChannelSettings(SystemConfiguration * const config) {
+    for (int p = 0; p < config->panels_per_system; p++) {
+        for (int c = 0; c < config->cartridges_per_panel; c++) {
+            for (int f = 0; f < config->fins_per_cartridge; f++) {
+                for (int m = 0; m < config->modules_per_fin; m++) {
+                    int module_for_rena;
+                    int rena;
+                    int daq;
+                    config->convertPCFMtoPCDRM(
+                            p, c, f, m, daq, rena, module_for_rena);
+                    ModuleConfig & module_config =
+                            config->module_configs[p][c][f][m];
+                    ModuleChannelConfig & module_channel_settings =
+                            module_config.channel_settings;
+                    // Set to the default first.
+                    module_channel_settings =
+                            config->system_default_channel_settings;
+
+                    // Set the module value for each of the channels in the
+                    // module so that it can be used by the hit register config
+                    module_channel_settings.comH0.module = module_for_rena;
+                    module_channel_settings.comH1.module = module_for_rena;
+                    module_channel_settings.comL0.module = module_for_rena;
+                    module_channel_settings.comL1.module = module_for_rena;
+                    module_channel_settings.spatA.module = module_for_rena;
+                    module_channel_settings.spatB.module = module_for_rena;
+                    module_channel_settings.spatC.module = module_for_rena;
+                    module_channel_settings.spatD.module = module_for_rena;
+                }
+            }
+        }
+    }
+    return(0);
+}
+
+int applyIndividualChannelSettings(
+        SystemConfiguration * const config,
+        Json::Value & root)
+{
+    std::vector<Json::Value> p_channel_json(config->panels_per_system);
+
+    std::vector<std::vector<Json::Value> > pc_channel_json;
+    resizePCArray(config, pc_channel_json);
+
+    std::vector<std::vector<std::vector<Json::Value> > > pcd_channel_json;
+    resizePCDArray(config, pcd_channel_json);
+
+    std::vector<std::vector<std::vector<
+            std::vector<Json::Value> > > > pcdr_channel_json;
+    resizePCDRArray(config, pcdr_channel_json);
+
+    std::vector<std::vector<std::vector<
+            std::vector<std::vector<Json::Value> > > > > pcdrm_channel_json;
+    resizePCDRMArray(config, pcdrm_channel_json);
+
+    std::vector<std::vector<std::vector<Json::Value> > > pcf_channel_json;
+    resizePCFArray(config, pcf_channel_json);
+
+    std::vector<std::vector<std::vector<std::vector<Json::Value> > > >
+            pcfm_channel_json;
+    resizePCFMArray(config, pcfm_channel_json);
+
+    // Gather diffs for the channel settings at each level of the json file.
+    // Settings can be embedded at any level in the file where they remain
+    // consistent with their parent.
+    for (int p = 0; p < config->panels_per_system; p++) {
+        std::stringstream panel_ss;
+        panel_ss << "P" << p;
+        std::string panel_name = panel_ss.str();
+        Json::Value panel_json = root[panel_name];
+        pullJsonChannelSettings(
+                root[panel_name],
+                p_channel_json[p]);
+
+        for (int c = 0; c < config->cartridges_per_panel; c++) {
+            std::stringstream cartridge_ss;
+            cartridge_ss << "P" << p << "C" << c;
+            std::string cartridge_name = cartridge_ss.str();
+            Json::Value cartridge_json = panel_json[cartridge_name];
+            pullJsonChannelSettings(
+                    root[cartridge_name],
+                    pc_channel_json[p][c]);
+            pullJsonChannelSettings(
+                    panel_json[cartridge_name],
+                    pc_channel_json[p][c]);
+
+            for (int f = 0; f < config->fins_per_cartridge; f++) {
+                std::stringstream fin_ss;
+                fin_ss << "P" << p << "C" << c << "F" << f;
+                std::string fin_name = fin_ss.str();
+                Json::Value fin_json = cartridge_json[fin_name];
+                pullJsonChannelSettings(
+                        root[fin_name],
+                        pcf_channel_json[p][c][f]);
+                pullJsonChannelSettings(
+                        panel_json[fin_name],
+                        pcf_channel_json[p][c][f]);
+                pullJsonChannelSettings(
+                        cartridge_json[fin_name],
+                        pcf_channel_json[p][c][f]);
+
+                for (int m = 0; m < config->modules_per_fin; m++) {
+                    std::stringstream module_ss;
+                    module_ss << "P" << p << "C" << c << "F" << f << "M" << m;
+                    std::string module_name = module_ss.str();
+                    pullJsonChannelSettings(
+                            root[module_name],
+                            pcfm_channel_json[p][c][f][m]);
+                    pullJsonChannelSettings(
+                            panel_json[module_name],
+                            pcfm_channel_json[p][c][f][m]);
+                    pullJsonChannelSettings(
+                            cartridge_json[module_name],
+                            pcfm_channel_json[p][c][f][m]);
+                    pullJsonChannelSettings(
+                            fin_json[module_name],
+                            pcfm_channel_json[p][c][f][m]);
+                }
+            }
+
+            for (int d = 0; d < config->daqs_per_cartridge; d++) {
+                std::stringstream daq_ss;
+                daq_ss << "P" << p << "C" << c << "D" << d;
+                std::string daq_name = daq_ss.str();
+                Json::Value daq_json = cartridge_json[daq_name];
+                pullJsonChannelSettings(
+                        root[daq_name],
+                        pcd_channel_json[p][c][d]);
+                pullJsonChannelSettings(
+                        panel_json[daq_name],
+                        pcd_channel_json[p][c][d]);
+                pullJsonChannelSettings(
+                        cartridge_json[daq_name],
+                        pcd_channel_json[p][c][d]);
+
+                for (int r = 0; r < config->renas_per_daq; r++) {
+                    std::stringstream rena_ss;
+                    rena_ss << "P" << p << "C" << c << "D" << d << "R" << r;
+                    std::string rena_name = rena_ss.str();
+                    Json::Value rena_json = daq_json[rena_name];
+                    pullJsonChannelSettings(
+                            root[rena_name],
+                            pcdr_channel_json[p][c][d][r]);
+                    pullJsonChannelSettings(
+                            panel_json[rena_name],
+                            pcdr_channel_json[p][c][d][r]);
+                    pullJsonChannelSettings(
+                            cartridge_json[rena_name],
+                            pcdr_channel_json[p][c][d][r]);
+                    pullJsonChannelSettings(
+                            daq_json[rena_name],
+                            pcdr_channel_json[p][c][d][r]);
+
+                    for (int m = 0; m < config->modules_per_rena; m++) {
+                        std::stringstream module_ss;
+                        module_ss << "P" << p << "C" << c
+                                  << "D" << d << "R" << r
+                                  << "M" << m;
+                        std::string module_name = module_ss.str();
+                        pullJsonChannelSettings(
+                                root[module_name],
+                                pcdrm_channel_json[p][c][d][r][m]);
+                        pullJsonChannelSettings(
+                                panel_json[module_name],
+                                pcdrm_channel_json[p][c][d][r][m]);
+                        pullJsonChannelSettings(
+                                cartridge_json[module_name],
+                                pcdrm_channel_json[p][c][d][r][m]);
+                        pullJsonChannelSettings(
+                                daq_json[module_name],
+                                pcdrm_channel_json[p][c][d][r][m]);
+                        pullJsonChannelSettings(
+                                rena_json[module_name],
+                                pcdrm_channel_json[p][c][d][r][m]);
+                    }
+                }
+            }
+        }
+    }
+
+    // Apply all of the diffs gathered in the previous section in the
+    // appropriate order to reflect the hardware hierarchy.
+    for (int p = 0; p < config->panels_per_system; p++) {
+        for (int c = 0; c < config->cartridges_per_panel; c++) {
+            for (int f = 0; f < config->fins_per_cartridge; f++) {
+                for (int m = 0; m < config->modules_per_fin; m++) {
+                    int module_for_rena;
+                    int rena;
+                    int daq;
+                    config->convertPCFMtoPCDRM(
+                            p, c, f, m, daq, rena, module_for_rena);
+                    // Start building json file for the module that
+                    // represents a diff from the default.  Do this by
+                    // starting with the panel_channel_json for that
+                    // module.
+                    Json::Value module_channel_json;
+                    pullJsonChannelSettings(
+                            p_channel_json[p],
+                            module_channel_json);
+                    pullJsonChannelSettings(
+                            pc_channel_json[p][c],
+                            module_channel_json);
+                    pullJsonChannelSettings(
+                            pcd_channel_json[p][c][daq],
+                            module_channel_json);
+                    pullJsonChannelSettings(
+                            pcf_channel_json[p][c][f],
+                            module_channel_json);
+                    pullJsonChannelSettings(
+                            pcdr_channel_json[p][c][daq][rena],
+                            module_channel_json);
+                    pullJsonChannelSettings(
+                            pcfm_channel_json[p][c][f][m],
+                            module_channel_json);
+                    pullJsonChannelSettings(
+                            pcdrm_channel_json[p][c][daq][rena][module_for_rena],
+                            module_channel_json);
+
+                    ModuleConfig & module_config =
+                            config->module_configs[p][c][f][m];
+                    ModuleChannelConfig & module_channel_settings =
+                            module_config.channel_settings;
+
+                    loadJsonChannelSettings(
+                            module_channel_settings,
+                            module_channel_json);
+                }
+            }
+        }
+    }
+    return(0);
+}
+
+/*!
+ *
+ * \return - 0 on success
+ *         - -1 if load defaults fails
+ *         - -2 if load unused fails
+ *         - -3 if populatePacketSizeLookup fails
+ */
+int loadModuleSettingsFromJson(
+        SystemConfiguration * const config,
+        Json::Value & root,
+        bool load_defaults,
+        bool require_defaults,
+        bool load_unused,
+        bool require_unused,
+        bool apply_defaults,
+        bool apply_individual)
+{
+    if (load_defaults || require_defaults) {
+        int load_status = checkAndLoadChannelSettings(
+                config->system_default_channel_settings, root, true);
+        if (require_defaults && (load_status < 0)) {
+            return(-1);
+        }
+    }
+
+    if (load_unused || require_unused) {
+        int load_status = loadChannelSettings(
+                config->unused_channel_config,
+                root["channel_settings"]["Unused_Channels"],
+                true);
+        if (require_unused && (load_status < 0)) {
+            return(-2);
+        }
+    }
+    // Set the module number for the unused channel to -1 so that it is ignored
+    // in the hit registers packet creation
+    config->unused_channel_config.module = -1;
+
+    if (apply_defaults) {
+        initDefaultChannelSettings(config);
+    }
+    if (apply_individual) {
+        applyIndividualChannelSettings(config, root);
+    }
+    if (populatePacketSizeLookup(config, config->packet_size) < 0) {
+        std::cerr << "populatePacketSizeLookup failed" << std::endl;
+        return(-3);
+    }
+    return(0);
+}
+}
+
 /*!
  * \brief Load in a system configuration JSON file
  *
@@ -1748,21 +2064,6 @@ int SystemConfiguration::load(const std::string & filename) {
         std::cout << "HV Floating Board configurations not found" << std::endl;
     }
 
-    ModuleChannelConfig system_default_channel_settings;
-    if (checkAndLoadChannelSettings(system_default_channel_settings,
-                                root, true) < 0)
-    {
-        return(-3);
-    }
-    std::cout << "hit_threshold: " << system_default_channel_settings.hit_threshold << std::endl;
-
-    if (loadChannelSettings(unused_channel_config,
-                            root["channel_settings"]["Unused_Channels"],
-                            true) < 0)
-    {
-        return(-3);
-    }
-
     if (!root["uv_frequency"].isDouble()) {
         return(-18);
     }
@@ -1785,13 +2086,6 @@ int SystemConfiguration::load(const std::string & filename) {
     // Then module settings with slow control information
     // Then rena level channel settings
     // The module level channel settings
-    // TODO: write function that takes json object with channel settings and
-    // updates a ModuleChannelConfig object
-
-    std::vector<Json::Value> panel_channel_json(panels_per_system);
-    std::vector<std::vector<Json::Value> > cartridge_channel_json(
-        panels_per_system, std::vector<Json::Value>(cartridges_per_panel));
-
 
     for (int p = 0; p < panels_per_system; p++) {
         std::stringstream panel_ss;
@@ -1807,9 +2101,6 @@ int SystemConfiguration::load(const std::string & filename) {
             return(-16);
         }
         panel_configs.push_back(panel_config);
-
-        Json::Value panel_channel_json;
-        pullJsonChannelSettings(panel_json, panel_channel_json);
 
         for (int c = 0; c < cartridges_per_panel; c++) {
             std::stringstream cartridge_ss;
@@ -1829,22 +2120,6 @@ int SystemConfiguration::load(const std::string & filename) {
                 std::cerr << cartridge_name << " failed to load" << std::endl;
                 return(-8);
             }
-            Json::Value cartridge_channel_json;
-            pullJsonChannelSettings(cartridge_json, cartridge_channel_json);
-
-            std::vector<Json::Value> daq_channel_json(daqs_per_cartridge);
-            std::vector<Json::Value> fin_channel_json(fins_per_cartridge);
-            std::vector<std::vector<Json::Value> > rena_channel_json(
-                daqs_per_cartridge, std::vector<Json::Value>(renas_per_daq));
-            std::vector<std::vector<Json::Value> > fin_module_channel_json(
-                fins_per_cartridge, std::vector<Json::Value>(modules_per_fin));
-            std::vector<std::vector<std::vector<Json::Value> > >
-                    rena_module_channel_json(
-                            daqs_per_cartridge,
-                            std::vector<std::vector<Json::Value> >(
-                                    renas_per_daq,
-                                    std::vector<Json::Value>(modules_per_rena)));
-
 
             // grab and channel setting diffs from the PCDRM structure and load
             // in any slow control module information while we're at it
@@ -1856,7 +2131,6 @@ int SystemConfiguration::load(const std::string & filename) {
                 if (fin_json == Json::nullValue) {
                     continue;
                 }
-                pullJsonChannelSettings(fin_json, fin_channel_json[f]);
                 loadFinSettings(fin_configs[p][c][f], fin_json);
 
                 for (int m = 0; m < modules_per_fin; m++) {
@@ -1867,124 +2141,21 @@ int SystemConfiguration::load(const std::string & filename) {
                     if (module_json == Json::nullValue) {
                         continue;
                     }
-                    pullJsonChannelSettings(
-                            module_json, fin_module_channel_json[f][m]);
-
                     // If they are there, load in the module information for
                     // Slow control.
-                    loadModuleSettings(
-                            module_configs[p][c][f][m],
-                            system_default_channel_settings,
-                            module_json, false, false);
-                }
-            }
-
-            // grab and channel setting diffs from the PCDRM structure
-            for (int d = 0; d < daqs_per_cartridge; d++) {
-                std::stringstream daq_ss;
-                daq_ss << "P" << p << "C" << c << "D" << d;
-                std::string daq_name = daq_ss.str();
-                Json::Value daq_json = cartridge_json[daq_name];
-                if (daq_json == Json::nullValue) {
-                    continue;
-                }
-                pullJsonChannelSettings(daq_json, daq_channel_json[d]);
-
-                for (int r = 0; r < renas_per_daq; r++) {
-                    std::stringstream rena_ss;
-                    rena_ss << "P" << p << "C" << c << "D" << d << "R" << r;
-                    std::string rena_name = rena_ss.str();
-                    Json::Value rena_json = daq_json[rena_name];
-                    if (rena_json == Json::nullValue) {
-                        continue;
-                    }
-                    pullJsonChannelSettings(rena_json, rena_channel_json[d][r]);
-
-                    for (int m = 0; m < modules_per_rena; m++) {
-                        std::stringstream module_ss;
-                        module_ss << "P" << p << "C" << c
-                                  << "D" << d << "R" << r
-                                  << "M" << m;
-                        std::string module_name = module_ss.str();
-                        Json::Value module_json = rena_json[module_name];
-                        if (module_json == Json::nullValue) {
-                            continue;
-                        }
-                        pullJsonChannelSettings(
-                                module_json, rena_module_channel_json[d][r][m]);
-
-                    }
-                }
-            }
-
-            // Put the channel settings in place
-            for (int f = 0; f < fins_per_cartridge; f++) {
-                for (int m = 0; m < modules_per_fin; m++) {
-                    int module_rena;
-                    int rena;
-                    int daq;
-                    convertPCFMtoPCDRM(p, c, f, m, daq, rena, module_rena);
-                    // Start building json file for the module that
-                    // represents a diff from the default.  Do this by
-                    // starting with the panel_channel_json for that
-                    // module.
-                    Json::Value module_channel_json = panel_channel_json;
-                    pullJsonChannelSettings(
-                            cartridge_channel_json, module_channel_json);
-                    pullJsonChannelSettings(
-                            daq_channel_json[daq], module_channel_json);
-
-                    // Add in the next lower layer, which is fin.
-                    // Technically these are complementary mappings, but
-                    // we do this since a fin will represent fewer modules.
-                    pullJsonChannelSettings(
-                            fin_channel_json[f], module_channel_json);
-                    // Then add the next layer down which is the renas
-                    pullJsonChannelSettings(
-                            rena_channel_json[daq][rena], module_channel_json);
-                    // Then any settings that were in the PCFM format
-                    pullJsonChannelSettings(
-                            fin_module_channel_json[f][m],
-                            module_channel_json);
-                    pullJsonChannelSettings(
-                            rena_module_channel_json[daq][rena][module_rena],
-                            module_channel_json);
-
-                    // Set to the default first.
-                    module_configs[p][c][f][m].channel_settings =
-                            system_default_channel_settings;
-                    // Now we take these settings and convert process them
-                    // for the ModuleChannelConfig structure.
-                    loadJsonChannelSettings(
-                            module_configs[p][c][f][m].channel_settings,
-                            module_channel_json);
-
-                    // Set the module value for each of the channels in the
-                    // module so that it can be used by the hit register config
-                    module_configs[p][c][f][m].channel_settings.comH0.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.comH1.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.comL0.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.comL1.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.spatA.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.spatB.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.spatC.module =
-                            module_rena;
-                    module_configs[p][c][f][m].channel_settings.spatD.module =
-                            module_rena;
+                    loadModuleInformation(
+                            module_configs[p][c][f][m], module_json, false);
                 }
             }
         }
     }
 
-    // Set the module number for the unused channel to -1 so that it is ignored
-    // in the hit registers packet creation
-    unused_channel_config.module = -1;
+    int module_load_status = loadModuleSettingsFromJson(
+            this, root, true, true, true, true, true, true);
+    if (module_load_status < 0) {
+        std::cerr << "Loading Module Settings Failed" << std::endl;
+        return(-3);
+    }
 
     if (populateBackendAddressReverseLookup(
                 this,
@@ -1994,10 +2165,6 @@ int SystemConfiguration::load(const std::string & filename) {
     {
         std::cerr << "Invalid daq_address (must be 0-31)" << std::endl;
         return(-14);
-    }
-
-    if (populatePacketSizeLookup(this, this->packet_size) < 0) {
-        std::cerr << "populatePacketSizeLookup failed" << std::endl;
     }
 
     populateADCLocationLookup(this, this->adc_value_locations);
@@ -2026,6 +2193,51 @@ int SystemConfiguration::load(const std::string & filename) {
         }
     }
     return(0);
+}
+
+/*!
+ * \brief Update Rena Settings for the Modules from a json config file
+ *
+ *
+ * \param filename The name of the file to be loaded
+ * \param load_defaults Loads the "channel_settings" in the root as the default
+ *        module settings for the system
+ * \param require_defaults error out if load_defaults fails
+ * \param load_unused Load the "Unused_Channels" settings from
+ *        "channel_settings"
+ * \param require_unused error out if load_unused fails
+ * \param apply_defaults initialize all of the module settings to the default
+ *        config, which could be from load_defaults or previously
+ * \param apply_individual find all of the individual modifications in the file
+ *        to apply to the defaults or existing configuration
+ *
+ * \return 0 on success
+ *        - -9 on json parse failure
+ *        - the result of loadModuleSettingsFromJson otherwise
+ */
+int SystemConfiguration::loadModuleSettings(
+        const std::string & filename,
+        bool load_defaults,
+        bool require_defaults,
+        bool load_unused,
+        bool require_unused,
+        bool apply_defaults,
+        bool apply_individual)
+{
+    std::ifstream json_in(filename.c_str());
+    Json::Value root;
+    Json::Reader reader;
+    bool parsingSuccessful = reader.parse(json_in, root);
+    json_in.close();
+    if (!parsingSuccessful) {
+        std::cerr  << "Failed to parse configuration\n"
+                   << reader.getFormattedErrorMessages();
+        return(-9);
+    }
+    int load_status = loadModuleSettingsFromJson(
+            this, root, load_defaults, require_defaults, load_unused,
+            require_unused, apply_defaults, apply_individual);
+    return(load_status);
 }
 
 /*!

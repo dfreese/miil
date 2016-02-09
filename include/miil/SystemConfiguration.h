@@ -355,7 +355,14 @@ public:
     SystemConfiguration(const std::string & filename = "");
 
     int load(const std::string & filename);
-
+    int loadModuleSettings(
+            const std::string & filename,
+            bool load_defaults,
+            bool require_defaults,
+            bool load_unused,
+            bool require_unused,
+            bool apply_defaults,
+            bool apply_individual);
     int loadPedestals(const std::string & filename);
     int writePedestals(const std::string & filename);
     int loadUVCenters(const std::string & filename);
@@ -531,6 +538,9 @@ public:
 
     //! configuration for the unused channels on the RENA
     RenaChannelConfig unused_channel_config;
+
+    //! default configuration that is loaded in
+    ModuleChannelConfig system_default_channel_settings;
 
     //! The frequency of the sine wave used to generate the UV signals
     double uv_frequency;
