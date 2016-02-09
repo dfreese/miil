@@ -1973,8 +1973,10 @@ int loadModuleSettingsFromJson(
 {
     if (load_defaults || require_defaults) {
         int load_status = checkAndLoadChannelSettings(
-                config->system_default_channel_settings, root, true);
-        if (require_defaults && (load_status < 0)) {
+                config->system_default_channel_settings,
+                root,
+                require_defaults);
+        if (load_status < 0) {
             return(-1);
         }
     }
@@ -1983,8 +1985,8 @@ int loadModuleSettingsFromJson(
         int load_status = loadChannelSettings(
                 config->unused_channel_config,
                 root["channel_settings"]["Unused_Channels"],
-                true);
-        if (require_unused && (load_status < 0)) {
+                require_unused);
+        if (load_status < 0) {
             return(-2);
         }
     }
