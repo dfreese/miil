@@ -362,6 +362,7 @@ int populatePacketSizeLookup(
                     // The header for the packet is 10, so default to that
                     packet_size[p][c][d][r].resize(16, 10);
                     for (int t = 0; t < 16; t++) {
+                        packet_size[p][c][d][r][t] = 10;
                         for (int m = 0; m < config->modules_per_rena; m++) {
                             // If the module would have triggered, add in it's
                             // channels that would be read out.
@@ -2004,6 +2005,11 @@ int loadModuleSettingsFromJson(
         std::cerr << "populatePacketSizeLookup failed" << std::endl;
         return(-3);
     }
+    populateADCLocationLookup(config, config->adc_value_locations);
+
+    // Create a default channel map that can be used right away.  This can be
+    // overridden with a custom channel map later on (not implemented).
+    config->createChannelMap();
     return(0);
 }
 }
@@ -2168,12 +2174,6 @@ int SystemConfiguration::load(const std::string & filename) {
         std::cerr << "Invalid daq_address (must be 0-31)" << std::endl;
         return(-14);
     }
-
-    populateADCLocationLookup(this, this->adc_value_locations);
-
-    // Create a default channel map that can be used right away.  This can be
-    // overridden with a custom channel map later on (not implemented).
-    createChannelMap();
 
     // Verify full round trip conversion on the mapping.  Should be in a test
     // case, but this will do for now.
