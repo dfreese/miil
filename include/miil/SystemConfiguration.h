@@ -15,21 +15,21 @@
  */
 struct ModulePedestals {
     float a;
-    float a_stderr;
+    float a_std;
     float b;
-    float b_stderr;
+    float b_std;
     float c;
-    float c_stderr;
+    float c_std;
     float d;
-    float d_stderr;
+    float d_std;
     float com0;
-    float com0_stderr;
+    float com0_std;
     float com1;
-    float com1_stderr;
+    float com1_std;
     float com0h;
-    float com0h_stderr;
+    float com0h_std;
     float com1h;
-    float com1h_stderr;
+    float com1h_std;
     float u0h;
     float v0h;
     float u1h;

@@ -2122,34 +2122,34 @@ int SystemConfiguration::loadPedestals(const std::string & filename) {
             if ((line_stream >> channel_pedestal_value).fail()) {
                 return(-6);
             }
-            float channel_pedestal_stderr;
-            if ((line_stream >> channel_pedestal_stderr).fail()) {
+            float channel_pedestal_std;
+            if ((line_stream >> channel_pedestal_std).fail()) {
                 return(-7);
             }
             if (ii == 0) {
                 pedestal.a = channel_pedestal_value;
-                pedestal.a_stderr = channel_pedestal_stderr;
+                pedestal.a_std = channel_pedestal_std;
             } else if (ii == 1) {
                 pedestal.b = channel_pedestal_value;
-                pedestal.b_stderr = channel_pedestal_stderr;
+                pedestal.b_std = channel_pedestal_std;
             } else if (ii == 2) {
                 pedestal.c = channel_pedestal_value;
-                pedestal.c_stderr = channel_pedestal_stderr;
+                pedestal.c_std = channel_pedestal_std;
             } else if (ii == 3) {
                 pedestal.d = channel_pedestal_value;
-                pedestal.d_stderr = channel_pedestal_stderr;
+                pedestal.d_std = channel_pedestal_std;
             } else if (ii == 4) {
                 pedestal.com0 = channel_pedestal_value;
-                pedestal.com0_stderr = channel_pedestal_stderr;
+                pedestal.com0_std = channel_pedestal_std;
             } else if (ii == 5) {
                 pedestal.com0h = channel_pedestal_value;
-                pedestal.com0h_stderr = channel_pedestal_stderr;
+                pedestal.com0h_std = channel_pedestal_std;
             } else if (ii == 6) {
                 pedestal.com1 = channel_pedestal_value;
-                pedestal.com1_stderr = channel_pedestal_stderr;
+                pedestal.com1_std = channel_pedestal_std;
             } else if (ii == 7) {
                 pedestal.com1h = channel_pedestal_value;
-                pedestal.com1h_stderr = channel_pedestal_stderr;
+                pedestal.com1h_std = channel_pedestal_std;
             }
         }
     }
@@ -2230,38 +2230,38 @@ int SystemConfiguration::writePedestals(const std::string & filename) {
 
                         for (int ii = 0; ii < 8; ii++) {
                             float channel_pedestal_value;
-                            float channel_pedestal_stderr;
+                            float channel_pedestal_std;
                             if (ii == 0) {
                                 channel_pedestal_value = pedestal.a;
-                                channel_pedestal_stderr = pedestal.a_stderr;
+                                channel_pedestal_std = pedestal.a_std;
                             } else if (ii == 1) {
                                 channel_pedestal_value = pedestal.b;
-                                channel_pedestal_stderr = pedestal.b_stderr;
+                                channel_pedestal_std = pedestal.b_std;
                             } else if (ii == 2) {
                                 channel_pedestal_value = pedestal.c;
-                                channel_pedestal_stderr = pedestal.c_stderr;
+                                channel_pedestal_std = pedestal.c_std;
                             } else if (ii == 3) {
                                 channel_pedestal_value = pedestal.d;
-                                channel_pedestal_stderr = pedestal.d_stderr;
+                                channel_pedestal_std = pedestal.d_std;
                             } else if (ii == 4) {
                                 channel_pedestal_value = pedestal.com0;
-                                channel_pedestal_stderr = pedestal.com0_stderr;
+                                channel_pedestal_std = pedestal.com0_std;
                             } else if (ii == 5) {
                                 channel_pedestal_value = pedestal.com0h;
-                                channel_pedestal_stderr = pedestal.com0h_stderr;
+                                channel_pedestal_std = pedestal.com0h_std;
                             } else if (ii == 6) {
                                 channel_pedestal_value = pedestal.com1;
-                                channel_pedestal_stderr = pedestal.com1_stderr;
+                                channel_pedestal_std = pedestal.com1_std;
                             } else if (ii == 7) {
                                 channel_pedestal_value = pedestal.com1h;
-                                channel_pedestal_stderr = pedestal.com1h_stderr;
+                                channel_pedestal_std = pedestal.com1h_std;
                             }
                             file_stream << std::setprecision(0)
                                         << std::fixed << std::setw(7);
                             file_stream << channel_pedestal_value;
                             file_stream << std::setprecision(2)
                                         << std::fixed << std::setw(8);
-                            file_stream << channel_pedestal_stderr;
+                            file_stream << channel_pedestal_std;
                         }
                         file_stream << std::endl;
                     }
