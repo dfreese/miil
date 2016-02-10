@@ -20,6 +20,7 @@ int ProcessParams::no_instances = 0;
 namespace {
 atomic_bool increment_filename = ATOMIC_VAR_INIT(false);
 atomic_int no_threads_waiting = ATOMIC_VAR_INIT(0);
+std::mutex mtx;
 condition_variable cv_thread_arrived;
 }
 
@@ -298,14 +299,19 @@ int ProcessParams::HandleData(bool write_out_remaining_cal_data) {
         file_count++;
         SetupFiles();
 
-        // Synchronize threads to make sure there is no data race to the
-        // increment_filename section.
+        // Synchronize threads so that they all start on the next file
+        // simultaneously.
         no_threads_waiting++;
-        while (no_threads_waiting < no_instances && no_threads_waiting > 0) {
+        if (no_threads_waiting < no_instances) {
+            std::unique_lock<std::mutex> lck(mtx);
+            cv_thread_arrived.wait(lck);
+        } else {
+            std::unique_lock<std::mutex> lck(mtx);
+            // All of the threads have arrived, reset and exit.
+            no_threads_waiting = 0;
+            increment_filename = false;
+            cv_thread_arrived.notify_all();
         }
-        // All of the threads have arrived, reset and exit.
-        no_threads_waiting = 0;
-        increment_filename = false;
     }
 
     // This will clear out the process side buffer up through what we have
