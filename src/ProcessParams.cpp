@@ -11,6 +11,7 @@
 #include <sstream>
 #include <cassert>
 #include <atomic>
+#include <condition_variable>
 
 using namespace std;
 
@@ -19,6 +20,7 @@ int ProcessParams::no_instances = 0;
 namespace {
 atomic_bool increment_filename = ATOMIC_VAR_INIT(false);
 atomic_int no_threads_waiting = ATOMIC_VAR_INIT(0);
+condition_variable cv_thread_arrived;
 }
 
 ProcessParams::ProcessParams(
@@ -299,7 +301,7 @@ int ProcessParams::HandleData(bool write_out_remaining_cal_data) {
         // Synchronize threads to make sure there is no data race to the
         // increment_filename section.
         no_threads_waiting++;
-        while (no_threads_waiting < no_instances) {
+        while (no_threads_waiting < no_instances && no_threads_waiting > 0) {
         }
         // All of the threads have arrived, reset and exit.
         no_threads_waiting = 0;
