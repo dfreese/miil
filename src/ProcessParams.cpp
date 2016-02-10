@@ -4,7 +4,7 @@
 #include <miil/SystemConfiguration.h>
 #include <miil/sorting.h>
 #include <miil/ethernet.h>
-#include <miil/processing.h>
+#include <miil/process/processing.h>
 #include <miil/util.h>
 #include <miil/process/ProcessControl.h>
 #include <iomanip>

@@ -1,6 +1,6 @@
 
 HEADERS += \
-    ../include/miil/processing.h \
+    ../include/miil/process/processing.h \
     ../include/miil/process/ProcessControl.h \
     ../include/miil/process/ProcessInfo.h \
     ../include/miil/process/ProcessParams.h \
