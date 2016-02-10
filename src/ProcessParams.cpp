@@ -329,6 +329,7 @@ int ProcessParams::ProcessData() {
         // Clear out any incomplete packets left hanging in the queue.
         buffer_process_side.clear();
         updateProcessInfo();
+        current_file_size = 0;
     }
     files_reset_flag = false;
     return(0);
