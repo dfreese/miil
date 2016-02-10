@@ -113,17 +113,19 @@ int HybridSocket::send(const std::vector<char> & data) {
 }
 
 int HybridSocket::recv(std::vector<char> & data) {
-    struct pcap_pkthdr header;    /* The header that pcap gives us */
-    const u_char *packet;        /* The actual packet */
-    packet = pcap_next((pcap_t*) handle, &header);
-    if (packet != NULL) {
-        int bytes = 0;
-        for (size_t ii = UDP_HEADER_LENGTH; ii < header.caplen; ii++) {
-            data.push_back(*(packet + ii));
-            bytes++;
+    if (is_open) {
+        struct pcap_pkthdr header;    /* The header that pcap gives us */
+        const u_char *packet;        /* The actual packet */
+        packet = pcap_next((pcap_t*) handle, &header);
+        if (packet != NULL) {
+            int bytes = 0;
+            for (size_t ii = UDP_HEADER_LENGTH; ii < header.caplen; ii++) {
+                data.push_back(*(packet + ii));
+                bytes++;
+            }
+            return(bytes);
+        } else {
+            return(-1);
         }
-        return(bytes);
-    } else {
-        return(-1);
     }
 }
