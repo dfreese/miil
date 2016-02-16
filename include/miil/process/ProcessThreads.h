@@ -17,12 +17,12 @@ class ProcessThreads {
     void stopProcessing(bool end_acquisition);
     void startProcessing();
     void stopReceiving();
-    void startReceiving();
+    void startReceiving(bool single_thread = false);
 
 public:
     ProcessThreads(ProcessControl * const control_ptr);
     void addParams(ProcessParams * const process_params_ptr);
-    void start();
+    void start(bool single_thread = false);
     void stop(bool end_acquisition);
     void setRawFilename(const std::string & filename, int index);
     void setDecodeFilename(const std::string & filename, int index);

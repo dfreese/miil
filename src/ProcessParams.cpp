@@ -367,11 +367,16 @@ int ProcessParams::ReadWriteSockets() {
         if (status > 0) {
             info.recv_calls_normal++;
             info.bytes_received += status;
+            info.bytes_transferred += status;
         } else if (status == 0) {
             info.recv_calls_zero++;
         } else {
             info.recv_calls_error++;
         }
+
+        raw_storage.try_insert(
+                buffer_receive_side.begin(), buffer_receive_side.end());
+
         size_t bytes_to_write = buffer_receive_side.size();
         size_t bytes_left = file_size_max - current_file_size;
 
@@ -389,8 +394,14 @@ int ProcessParams::ReadWriteSockets() {
             current_file_size += bytes_to_write;
         }
 
-        raw_output_file.write((char*) buffer_receive_side.data(), bytes_to_write);
-        info.written_raw_bytes += bytes_to_write;
+        if (control->write_data_flag) {
+            raw_output_file.write(
+                    (char*) buffer_receive_side.data(), bytes_to_write);
+            info.written_raw_bytes += bytes_to_write;
+            if (split_files_flag) {
+                current_file_size += bytes_to_write;
+            }
+        }
 
         if (increment_filename) {
             if (write_raw_data_flag) {
@@ -409,10 +420,12 @@ int ProcessParams::ReadWriteSockets() {
             increment_filename = false;
         }
         buffer_receive_side.clear();
-
         updateProcessInfo();
     }
-    buffer_transfer.insert(buffer_receive_side);
+    file_count = 0;
+    current_file_size = 0;
+    updateProcessInfo();
+    files_reset_flag = false;
     return(0);
 }
 

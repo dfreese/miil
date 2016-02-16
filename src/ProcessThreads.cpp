@@ -58,11 +58,15 @@ void ProcessThreads::stopReceiving() {
     }
 }
 
-void ProcessThreads::startReceiving() {
+void ProcessThreads::startReceiving(bool single_thread) {
     control->read_sockets_flag = true;
     for (size_t ii = 0; ii < process_params_vec.size(); ii++) {
         ProcessParams * process_params = process_params_vec[ii];
-        thread swap_thread(&ProcessParams::ReadSockets, process_params);
+        auto function = &ProcessParams::ReadSockets;
+        if (single_thread) {
+            function = &ProcessParams::ReadWriteSockets;
+        }
+        thread swap_thread(function, process_params);
         read_sockets_threads[ii].swap(swap_thread);
         if (swap_thread.joinable()) {
             swap_thread.join();
@@ -70,9 +74,11 @@ void ProcessThreads::startReceiving() {
     }
 }
 
-void ProcessThreads::start() {
-    startProcessing();
-    startReceiving();
+void ProcessThreads::start(bool single_thread) {
+    if (!single_thread) {
+        startProcessing();
+    }
+    startReceiving(single_thread);
     is_running = true;
 }
 
