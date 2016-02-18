@@ -552,6 +552,50 @@ public:
     //! The period calculated as the inverse of ct_frequency in nanoseconds
     double ct_period_ns;
 
+    template<typename T>
+    void resizeArrayPCFMA(
+        std::vector<std::vector<std::vector<
+                std::vector<std::vector<T> > > > > & vect) const
+    {
+        vect.resize(panels_per_system);
+        for (int p = 0; p < panels_per_system; p++) {
+            vect[p].resize(cartridges_per_panel);
+            for (int c = 0; c < cartridges_per_panel; c++) {
+                vect[p][c].resize(fins_per_cartridge);
+                for (int f = 0; f < fins_per_cartridge; f++) {
+                    vect[p][c][f].resize(modules_per_fin);
+                    for (int m = 0; m < modules_per_fin; m++) {
+                        vect[p][c][f][m].resize(apds_per_module);
+                    }
+                }
+            }
+        }
+    }
+
+    template<typename T>
+    void resizeArrayPCDRMA(
+        std::vector<std::vector<std::vector<
+                std::vector<std::vector<std::vector<T> > > > > > & vect,
+        const T & value = T()) const
+    {
+        vect.resize(panels_per_system);
+        for (int p = 0; p < panels_per_system; p++) {
+            vect[p].resize(cartridges_per_panel);
+            for (int c = 0; c < cartridges_per_panel; c++) {
+                vect[p][c].resize(daqs_per_cartridge);
+                for (int d = 0; d < daqs_per_cartridge; d++) {
+                    vect[p][c][d].resize(renas_per_daq);
+                    for (int r = 0; r < renas_per_daq; r++) {
+                        vect[p][c][d][r].resize(modules_per_rena);
+                        for (int m = 0; m < modules_per_rena; m++) {
+                            vect[p][c][d][r][m].resize(apds_per_module, value);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 private:
     bool backend_address_valid[32];
     int backend_address_panel_lookup[32];
