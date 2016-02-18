@@ -61,7 +61,13 @@ ProcessParams::ProcessParams(
     no_instances++;
 }
 
-int ProcessParams::DecodeBuffer(size_t write_to_position) {
+int ProcessParams::DecodeBuffer(
+        size_t write_to_position,
+        deque<char> & buffer_process_side,
+        vector<EventRaw> & decoded_data,
+        ProcessInfo & info,
+        SystemConfiguration const * const system_config)
+{
     assert(write_to_position <= buffer_process_side.size());
     for (size_t ii = info.current_index;
          ii < write_to_position;
@@ -105,7 +111,33 @@ int ProcessParams::DecodeBuffer(size_t write_to_position) {
     return(0);
 }
 
-int ProcessParams::ClearProcessedData() {
+int ProcessParams::DecodeBuffer(
+        deque<char> & buffer_process_side,
+        vector<EventRaw> & decoded_data,
+        ProcessInfo & info,
+        SystemConfiguration const * const system_config)
+{
+    return(ProcessParams::DecodeBuffer(
+            buffer_process_side.size(),
+            buffer_process_side,
+            decoded_data,
+            info,
+            system_config));
+}
+
+int ProcessParams::DecodeBuffer(size_t write_to_position) {
+    return(ProcessParams::DecodeBuffer(
+            write_to_position,
+            this->buffer_process_side,
+            this->decoded_data,
+            this->info,
+            this->system_config));
+}
+
+int ProcessParams::ClearProcessedData(
+        deque<char> & buffer_process_side,
+        ProcessInfo & info)
+{
     // If the loop exits with a packet found, delete up to the start of
     // the packet.  If not, then delete all of the data.  Either way the next
     // loop should start reading at the point new data will be added to the
@@ -122,6 +154,11 @@ int ProcessParams::ClearProcessedData() {
     info.current_index =
             buffer_process_side.size();
     return(0);
+}
+
+int ProcessParams::ClearProcessedData() {
+    return(ProcessParams::ClearProcessedData(
+            this->buffer_process_side, this->info));
 }
 
 // The functions that should be run during the loop of ProcessData as well as at

@@ -81,6 +81,21 @@ public:
     BoundedBuffer<char> raw_storage;
     BoundedBuffer<EventRaw> decoded_storage;
     BoundedBuffer<EventCal> calibrated_storage;
+
+    static int DecodeBuffer(
+            size_t write_to_position,
+            std::deque<char> & buffer_process_side,
+            std::vector<EventRaw> & decoded_data,
+            ProcessInfo & info,
+            SystemConfiguration const * const system_config);
+    static int DecodeBuffer(
+            std::deque<char> & buffer_process_side,
+            std::vector<EventRaw> & decoded_data,
+            ProcessInfo & info,
+            SystemConfiguration const * const system_config);
+    static int ClearProcessedData(
+            std::deque<char> & buffer_process_side,
+            ProcessInfo & info);
 };
 
 #endif // PROCESS_PARAMS_H
