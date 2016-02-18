@@ -554,8 +554,9 @@ public:
 
     template<typename T>
     void resizeArrayPCFMA(
-        std::vector<std::vector<std::vector<
-                std::vector<std::vector<T> > > > > & vect) const
+            std::vector<std::vector<std::vector<
+                    std::vector<std::vector<T> > > > > & vect,
+            const T & value = T()) const
     {
         vect.resize(panels_per_system);
         for (int p = 0; p < panels_per_system; p++) {
@@ -565,7 +566,7 @@ public:
                 for (int f = 0; f < fins_per_cartridge; f++) {
                     vect[p][c][f].resize(modules_per_fin);
                     for (int m = 0; m < modules_per_fin; m++) {
-                        vect[p][c][f][m].resize(apds_per_module);
+                        vect[p][c][f][m].resize(apds_per_module, value);
                     }
                 }
             }
