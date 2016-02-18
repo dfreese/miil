@@ -205,9 +205,11 @@ int GetCrystalID(
  * \param rawevent The non-pedestal corrected event decoded from the bitstream
  * \param system_config Pointer to the system configuration to be used
  * \param x where the x flood position is returned
- * \param x where the y flood position is returned
- * \param x where the energy (sum of spatials) is returned
+ * \param y where the y flood position is returned
+ * \param energy where the energy (sum of spatials) is returned
  * \param apd where the apd is returned
+ * \param module where the module local to the fin is stored
+ * \param fin where the fin is stored
  *
  * \return 0 on success, less than zero otherwise
  *     - -1 if the event is below the hit threshold for the module
@@ -221,13 +223,14 @@ int CalculateXYandEnergy(
         float & x,
         float & y,
         float & energy,
-        int & apd)
+        int & apd,
+        int & module,
+        int & fin)
 {
     if (!system_config->pedestalsLoaded()) {
         return(-4);
     }
-    int module = 0;
-    int fin = 0;
+
     if (system_config->convertPCDRMtoPCFM(rawevent.panel, rawevent.cartridge,
                                           rawevent.daq, rawevent.rena,
                                           rawevent.module, fin, module) < 0)
@@ -269,6 +272,38 @@ int CalculateXYandEnergy(
     x = (c + d - (b + a)) / (energy);
     y = (a + d - (b + c)) / (energy);
     return(0);
+}
+
+/*!
+ * Overload of CalculateXYandEnergy where module and fin values are ignored.
+ */
+int CalculateXYandEnergy(
+        const EventRaw & rawevent,
+        SystemConfiguration const * const system_config,
+        float & x,
+        float & y,
+        float & energy,
+        int & apd)
+{
+    int module, fin;
+    return(CalculateXYandEnergy(
+               rawevent, system_config, x, y, energy, apd, module, fin));
+}
+
+/*!
+ * Overload of CalculateXYandEnergy where apd, module, and fin values are
+ * ignored.
+ */
+int CalculateXYandEnergy(
+        const EventRaw & rawevent,
+        SystemConfiguration const * const system_config,
+        float & x,
+        float & y,
+        float & energy)
+{
+    int apd, module, fin;
+    return(CalculateXYandEnergy(
+               rawevent, system_config, x, y, energy, apd, module, fin));
 }
 
 /*!

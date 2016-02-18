@@ -25,7 +25,24 @@ int CalculateXYandEnergy(
         float & x,
         float & y,
         float & energy,
+        int & apd,
+        int & module,
+        int &fin);
+
+int CalculateXYandEnergy(
+        const EventRaw & rawevent,
+        SystemConfiguration const * const system_config,
+        float & x,
+        float & y,
+        float & energy,
         int & apd);
+
+int CalculateXYandEnergy(
+        const EventRaw & rawevent,
+        SystemConfiguration const * const system_config,
+        float & x,
+        float & y,
+        float & energy);
 
 bool InEnergyWindow(const EventCal & event, float low, float high);
 
