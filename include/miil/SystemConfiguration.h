@@ -366,6 +366,7 @@ public:
     int loadPedestals(const std::string & filename);
     int writePedestals(const std::string & filename);
     int loadUVCenters(const std::string & filename);
+    int writeUVCenters(const std::string filename);
     int loadCalibration(const std::string & filename);
     int loadTimeCalibration(const std::string & filename);
 

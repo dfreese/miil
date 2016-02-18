@@ -2638,6 +2638,52 @@ int SystemConfiguration::loadUVCenters(const std::string &filename) {
 }
 
 /*!
+ * \brief Write a uv centers value file from the system configuration
+ *
+ * Takes the uv centers values from the pedestals array and writes them to a
+ * file.  Each line has two numbers of 1 digit of precision and fixed (decimal)
+ * output.  The columns are:
+ *     - u value of the circle center
+ *     - v value of the circle center
+ * The lines are assumed to be listed in C index order, and indexed by panel,
+ * cartridge, fin, module, psapd.
+ *
+ * \param filename The name of the file to be written.
+ *
+ * \returns 0 if successful, less than otherwise
+ *         -1 if file could not be opened
+ */
+int SystemConfiguration::writeUVCenters(const std::string filename) {
+    std::ofstream output(filename.c_str());
+    if (!output.good()) {
+        return(-1);
+    }
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int f = 0; f < fins_per_cartridge; f++) {
+                for (int m = 0; m < modules_per_fin; m++) {
+                    int daq = 0;
+                    int rena = 0;
+                    int module = 0;
+                    convertPCFMtoPCDRM(p, c, f, m, daq, rena, module);
+                    for (int a = 0; a < apds_per_module; a++) {
+                        float u = pedestals[p][c][daq][rena][module].u0h;
+                        float v = pedestals[p][c][daq][rena][module].v0h;
+                        if (a == 1) {
+                            u = pedestals[p][c][daq][rena][module].u1h;
+                            v = pedestals[p][c][daq][rena][module].v1h;
+                        }
+                        output << std::fixed << std::setprecision(1)
+                               << u << " " << v << "\n";
+                    }
+                }
+            }
+        }
+    }
+    return(0);
+}
+
+/*!
  * \brief Load a calibration value file into the system configuration
  *
  * Takes a calibration value file and loads the values into the calibration
