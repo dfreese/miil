@@ -2,3 +2,5 @@ Makefile
 lib/
 build/
 doc/
+
+*.pro.user
