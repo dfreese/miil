@@ -190,6 +190,18 @@ struct ModuleChannelConfig {
      * All of the RenaChannelConfig.off_by_module flags to be set.
      */
     bool off;
+    void setModuleOff(bool off_status) {
+        off = off_status;
+        comL0.off_by_module = off_status;
+        comL1.off_by_module = off_status;
+        comH0.off_by_module = off_status;
+        comH1.off_by_module = off_status;
+        spatA.off_by_module = off_status;
+        spatB.off_by_module = off_status;
+        spatC.off_by_module = off_status;
+        spatD.off_by_module = off_status;
+    }
+
     RenaChannelConfig comL0;
     RenaChannelConfig comL1;
     RenaChannelConfig comH0;

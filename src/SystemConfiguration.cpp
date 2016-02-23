@@ -1214,16 +1214,7 @@ int loadModuleChannelSettings(
         not_found++;
     }
     if (module_channel_settings.isMember("off")) {
-        bool off_value = module_channel_settings["off"].asBool();
-        module_config.off = off_value;
-        module_config.comH0.off_by_module = off_value;
-        module_config.comH1.off_by_module = off_value;
-        module_config.comL0.off_by_module = off_value;
-        module_config.comL1.off_by_module = off_value;
-        module_config.spatA.off_by_module = off_value;
-        module_config.spatB.off_by_module = off_value;
-        module_config.spatC.off_by_module = off_value;
-        module_config.spatD.off_by_module = off_value;
+        module_config.setModuleOff(module_channel_settings["off"].asBool());
     } else {
         not_found++;
     }
