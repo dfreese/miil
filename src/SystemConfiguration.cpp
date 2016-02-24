@@ -2129,7 +2129,6 @@ int SystemConfiguration::load(const std::string & filename) {
 
     // Load in the HV Floating Board Settings
     if (loadHvFloatingBoardSettings(this, root) < 0) {
-        std::cout << "HV Floating Board configurations not found" << std::endl;
     }
 
     if (!root["uv_frequency"].isDouble()) {
