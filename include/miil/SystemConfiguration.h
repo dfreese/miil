@@ -132,7 +132,7 @@ struct ADCValueLocation {
  */
 struct RenaChannelConfig {
     int fast_daq_threshold;
-    //! The channel readout flag is used on the FPGA, not on the Rena
+    ///! The channel readout flag is used on the FPGA, not on the Rena
     bool fast_hit_readout;
     bool fast_powerdown;
     bool fast_trig_enable;
@@ -147,31 +147,15 @@ struct RenaChannelConfig {
     bool powerdown;
     int shaping_time;
     int slow_daq_threshold;
-    //! The channel readout flag is used on the FPGA, not on the Rena
+    ///! The channel readout flag is used on the FPGA, not on the Rena
     bool slow_hit_readout;
     bool slow_trig_enable;
     bool test_enable;
     bool vref;
-    //! The module number local to the rena the channel is associated with
+    ///! The module number local to the rena the channel is associated with
     int module;
-    //! The channel number local to the rena to which the channel is associated
+    ///! The channel number local to the rena to which the channel is associated
     int channel_number;
-    /*!
-     * An override setting to turn off the channel, and tells DaqControl to make
-     * the following overrides:
-     *      - powerdown        = 1
-     *      - fast_powerdown   = 1
-     *      - fast_hit_readout = 0
-     *      - slow_hit_readout = 0
-     *      - fast_trig_enable = 0
-     *      - slow_trig_enable = 0
-     */
-    bool off;
-    /*!
-     * An override setting to turn off the channel.  This is set by the module
-     * channel config and overrides the individual channel off setting.
-     */
-    bool off_by_module;
 };
 
 /*!
@@ -185,11 +169,6 @@ struct RenaChannelConfig {
 struct ModuleChannelConfig {
     int hit_threshold;
     int double_trigger_threshold;
-    /*!
-     * An override setting to turn off all the channels.  Setting this causes
-     * All of the RenaChannelConfig.off_by_module flags to be set.
-     */
-    bool off;
     RenaChannelConfig comL0;
     RenaChannelConfig comL1;
     RenaChannelConfig comH0;

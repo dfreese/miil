@@ -101,20 +101,12 @@ int createSettingsBitstream(
 {
     bitstream.push_back(settings.feedback_resistor);
     bitstream.push_back(settings.test_enable);
-    if (settings.off || settings.off_by_module) {
-        bitstream.push_back(true);
-    } else {
-        bitstream.push_back(settings.fast_powerdown);
-    }
+    bitstream.push_back(settings.fast_powerdown);
     bitstream.push_back(settings.feedback_type);
     // Add two least significant bits
     std::vector<bool> add = Util::int2BoolVec(settings.gain, 2);
     bitstream.insert(bitstream.end(), add.begin(), add.end());
-    if (settings.off || settings.off_by_module) {
-        bitstream.push_back(true);
-    } else {
-        bitstream.push_back(settings.powerdown);
-    }
+    bitstream.push_back(settings.powerdown);
     bitstream.push_back(settings.pole_zero_enable);
     bitstream.push_back(settings.feedback_cap);
     bitstream.push_back(settings.vref);
@@ -127,13 +119,8 @@ int createSettingsBitstream(
     bitstream.push_back(settings.polarity);
     add = Util::int2BoolVec(settings.slow_daq_threshold, 8);
     bitstream.insert(bitstream.end(), add.begin(), add.end());
-    if (settings.off || settings.off_by_module) {
-        bitstream.push_back(false);
-        bitstream.push_back(false);
-    } else {
-        bitstream.push_back(settings.fast_trig_enable);
-        bitstream.push_back(settings.slow_trig_enable);
-    }
+    bitstream.push_back(settings.fast_trig_enable);
+    bitstream.push_back(settings.slow_trig_enable);
     bitstream.push_back(settings.follower);
     return(0);
 }
@@ -313,61 +300,23 @@ int createHitRegisterBuffer(
         bitstream[config.spatC.channel_number] = true;
         bitstream[config.spatD.channel_number] = true;
     } else if (register_type == DaqControl::SLOW_HIT) {
-        if (config.off) {
-            bitstream[config.comH0.channel_number] = false;
-            bitstream[config.comL0.channel_number] = false;
-            bitstream[config.comH1.channel_number] = false;
-            bitstream[config.comL1.channel_number] = false;
-            bitstream[config.spatA.channel_number] = false;
-            bitstream[config.spatB.channel_number] = false;
-            bitstream[config.spatC.channel_number] = false;
-            bitstream[config.spatD.channel_number] = false;
-        } else {
-            bitstream[config.comH0.channel_number] =
-                    config.comH0.slow_hit_readout;
-            bitstream[config.comL0.channel_number] =
-                    config.comL0.slow_hit_readout;
-            bitstream[config.comH1.channel_number] =
-                    config.comH1.slow_hit_readout;
-            bitstream[config.comL1.channel_number] =
-                    config.comL1.slow_hit_readout;
-            bitstream[config.spatA.channel_number] =
-                    config.spatA.slow_hit_readout;
-            bitstream[config.spatB.channel_number] =
-                    config.spatB.slow_hit_readout;
-            bitstream[config.spatC.channel_number] =
-                    config.spatC.slow_hit_readout;
-            bitstream[config.spatD.channel_number] =
-                    config.spatD.slow_hit_readout;
-        }
+        bitstream[config.comH0.channel_number] = config.comH0.slow_hit_readout;
+        bitstream[config.comL0.channel_number] = config.comL0.slow_hit_readout;
+        bitstream[config.comH1.channel_number] = config.comH1.slow_hit_readout;
+        bitstream[config.comL1.channel_number] = config.comL1.slow_hit_readout;
+        bitstream[config.spatA.channel_number] = config.spatA.slow_hit_readout;
+        bitstream[config.spatB.channel_number] = config.spatB.slow_hit_readout;
+        bitstream[config.spatC.channel_number] = config.spatC.slow_hit_readout;
+        bitstream[config.spatD.channel_number] = config.spatD.slow_hit_readout;
     } else if (register_type == DaqControl::FAST_HIT) {
-        if (config.off) {
-            bitstream[config.comH0.channel_number] = false;
-            bitstream[config.comL0.channel_number] = false;
-            bitstream[config.comH1.channel_number] = false;
-            bitstream[config.comL1.channel_number] = false;
-            bitstream[config.spatA.channel_number] = false;
-            bitstream[config.spatB.channel_number] = false;
-            bitstream[config.spatC.channel_number] = false;
-            bitstream[config.spatD.channel_number] = false;
-        } else {
-            bitstream[config.comH0.channel_number] =
-                    config.comH0.fast_hit_readout;
-            bitstream[config.comL0.channel_number] =
-                    config.comL0.fast_hit_readout;
-            bitstream[config.comH1.channel_number] =
-                    config.comH1.fast_hit_readout;
-            bitstream[config.comL1.channel_number] =
-                    config.comL1.fast_hit_readout;
-            bitstream[config.spatA.channel_number] =
-                    config.spatA.fast_hit_readout;
-            bitstream[config.spatB.channel_number] =
-                    config.spatB.fast_hit_readout;
-            bitstream[config.spatC.channel_number] =
-                    config.spatC.fast_hit_readout;
-            bitstream[config.spatD.channel_number] =
-                    config.spatD.fast_hit_readout;
-        }
+        bitstream[config.comH0.channel_number] = config.comH0.fast_hit_readout;
+        bitstream[config.comL0.channel_number] = config.comL0.fast_hit_readout;
+        bitstream[config.comH1.channel_number] = config.comH1.fast_hit_readout;
+        bitstream[config.comL1.channel_number] = config.comL1.fast_hit_readout;
+        bitstream[config.spatA.channel_number] = config.spatA.fast_hit_readout;
+        bitstream[config.spatB.channel_number] = config.spatB.fast_hit_readout;
+        bitstream[config.spatC.channel_number] = config.spatC.fast_hit_readout;
+        bitstream[config.spatD.channel_number] = config.spatD.fast_hit_readout;
     } else if (register_type == DaqControl::UNDEFINED_HIT) {
         return(-1);
     } else {

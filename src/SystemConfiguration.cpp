@@ -1062,27 +1062,32 @@ int loadChannelSettings(
 {
     int not_found = 0;
     if (channel_settings.isMember("Fast_DAC")) {
-        config.fast_daq_threshold = channel_settings["Fast_DAC"].asInt();
+        config.fast_daq_threshold =
+                channel_settings["Fast_DAC"].asInt();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Fast_Hit_Readout")) {
-        config.fast_hit_readout = channel_settings["Fast_Hit_Readout"].asBool();
+        config.fast_hit_readout =
+                channel_settings["Fast_Hit_Readout"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Fast_Powerdown")) {
-        config.fast_powerdown = channel_settings["Fast_Powerdown"].asBool();
+        config.fast_powerdown =
+                channel_settings["Fast_Powerdown"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Fast_Trig_Enable")) {
-        config.fast_trig_enable = channel_settings["Fast_Trig_Enable"].asBool();
+        config.fast_trig_enable =
+                channel_settings["Fast_Trig_Enable"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Feedback_Cap")) {
-        config.feedback_cap = channel_settings["Feedback_Cap"].asBool();
+        config.feedback_cap =
+                channel_settings["Feedback_Cap"].asBool();
     } else {
         not_found++;
     }
@@ -1093,72 +1098,80 @@ int loadChannelSettings(
         not_found++;
     }
     if (channel_settings.isMember("Feedback_Type")) {
-        config.feedback_type = channel_settings["Feedback_Type"].asBool();
+        config.feedback_type =
+                channel_settings["Feedback_Type"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Fet_Size")) {
-        config.fet_size = channel_settings["Fet_Size"].asBool();
+        config.fet_size =
+                channel_settings["Fet_Size"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Follower")) {
-        config.follower = channel_settings["Follower"].asBool();
+        config.follower =
+                channel_settings["Follower"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Gain")) {
-        config.gain = channel_settings["Gain"].asInt();
+        config.gain =
+                channel_settings["Gain"].asInt();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Polarity")) {
-        config.polarity = channel_settings["Polarity"].asBool();
+        config.polarity =
+                channel_settings["Polarity"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Pole_Zero_Enable")) {
-        config.pole_zero_enable = channel_settings["Pole_Zero_Enable"].asBool();
+        config.pole_zero_enable =
+                channel_settings["Pole_Zero_Enable"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Powerdown")) {
-        config.powerdown = channel_settings["Powerdown"].asBool();
+        config.powerdown =
+                channel_settings["Powerdown"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Shaping_Time")) {
-        config.shaping_time = channel_settings["Shaping_Time"].asBool();
+        config.shaping_time =
+                channel_settings["Shaping_Time"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Slow_DAC")) {
-        config.slow_daq_threshold = channel_settings["Slow_DAC"].asInt();
+        config.slow_daq_threshold =
+                channel_settings["Slow_DAC"].asInt();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Slow_Hit_Readout")) {
-        config.slow_hit_readout = channel_settings["Slow_Hit_Readout"].asBool();
+        config.slow_hit_readout =
+                channel_settings["Slow_Hit_Readout"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Slow_Trig_Enable")) {
-        config.slow_trig_enable = channel_settings["Slow_Trig_Enable"].asBool();
+        config.slow_trig_enable =
+                channel_settings["Slow_Trig_Enable"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("Test_Enable")) {
-        config.test_enable = channel_settings["Test_Enable"].asBool();
+        config.test_enable =
+                channel_settings["Test_Enable"].asBool();
     } else {
         not_found++;
     }
     if (channel_settings.isMember("VRef")) {
-        config.vref = channel_settings["VRef"].asBool();
-    } else {
-        not_found++;
-    }
-    if (channel_settings.isMember("off")) {
-        config.off = channel_settings["off"].asBool();
+        config.vref =
+                channel_settings["VRef"].asBool();
     } else {
         not_found++;
     }
@@ -1213,21 +1226,6 @@ int loadModuleChannelSettings(
     } else {
         not_found++;
     }
-    if (module_channel_settings.isMember("off")) {
-        bool off_value = module_channel_settings["off"].asBool();
-        module_config.off = off_value;
-        module_config.comH0.off_by_module = off_value;
-        module_config.comH1.off_by_module = off_value;
-        module_config.comL0.off_by_module = off_value;
-        module_config.comL1.off_by_module = off_value;
-        module_config.spatA.off_by_module = off_value;
-        module_config.spatB.off_by_module = off_value;
-        module_config.spatC.off_by_module = off_value;
-        module_config.spatD.off_by_module = off_value;
-    } else {
-        not_found++;
-    }
-
     if (module_channel_settings.isMember("ComH_Channels")) {
         loadChannelSettings(module_config.comH0,
                             module_channel_settings["ComH_Channels"],
@@ -1347,8 +1345,6 @@ int pullJsonChannelSettings(
             copy_value = true;
         } else if (member == "double_trigger_threshold") {
             copy_value = true;
-        } else if (member == "off") {
-            copy_value = true;
         }
         if (copy_value) {
             dest_object[member] = ref_object[member];
@@ -1408,8 +1404,6 @@ int loadJsonChannelSettings(
         } else if (member == "hit_threshold") {
             module_json[member] = ref_object[member];
         } else if (member == "double_trigger_threshold") {
-            module_json[member] = ref_object[member];
-        } else if (member == "off") {
             module_json[member] = ref_object[member];
         }
     }
@@ -2135,6 +2129,7 @@ int SystemConfiguration::load(const std::string & filename) {
 
     // Load in the HV Floating Board Settings
     if (loadHvFloatingBoardSettings(this, root) < 0) {
+        std::cout << "HV Floating Board configurations not found" << std::endl;
     }
 
     if (!root["uv_frequency"].isDouble()) {
