@@ -1,4 +1,5 @@
 #include <miil/process/ProcessInfo.h>
+#include <sstream>
 
 ProcessInfo::ProcessInfo() :
     current_index(0),
@@ -55,6 +56,19 @@ void ProcessInfo::reset() {
     recv_calls_normal = 0;
     recv_calls_zero = 0;
     recv_calls_error = 0;
+}
+
+std::string ProcessInfo::getDecodeInfo()
+{
+    std::stringstream ss;
+    ss << "bytes processed : " << bytes_processed << "\n"
+       << "Accepted Packets: " << accepted_decode << "\n"
+       << "Dropped (Empty) : " << dropped_empty << "\n"
+       << "Dropped (Start) : " << dropped_start_stop << "\n"
+       << "Dropped (Trigg) : " << dropped_trigger_code << "\n"
+       << "Dropped (Size)  : " << dropped_packet_size << "\n"
+       << "Dropped (Addr)  : " << dropped_address_byte << "\n";
+    return(ss.str());
 }
 
 std::ostream& operator<<(std::ostream& os, const ProcessInfo& info) {

@@ -11,6 +11,7 @@ class ProcessInfo {
 public:
     ProcessInfo();
     void reset();
+    std::string getDecodeInfo();
 
     long bytes_received;
     long bytes_transferred;
