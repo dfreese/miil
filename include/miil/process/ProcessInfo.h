@@ -12,6 +12,7 @@ public:
     ProcessInfo();
     void reset();
     std::string getDecodeInfo();
+    std::string getCalibrateInfo();
 
     long bytes_received;
     long bytes_transferred;

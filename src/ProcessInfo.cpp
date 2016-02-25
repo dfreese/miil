@@ -71,6 +71,20 @@ std::string ProcessInfo::getDecodeInfo()
     return(ss.str());
 }
 
+std::string ProcessInfo::getCalibrateInfo()
+{
+    std::stringstream ss;
+    ss << "Events Processed: " << decoded_events_processed << "\n"
+       << "Accepted Events        : " << accepted_calibrate << "\n"
+       << "Dropped (Threshold)    : " << dropped_threshold << "\n"
+       << "Dropped (Dbl Trigger)  : " << dropped_double_trigger << "\n"
+       << "Dropped (Crystal Ident): " << dropped_crystal_id << "\n"
+       << "Dropped (Crystal Valid): " << dropped_crystal_invalid << "\n"
+       << "Dropped (Energy Gate)  : " << dropped_energy_gate << "\n";
+    return(ss.str());
+}
+
+
 std::ostream& operator<<(std::ostream& os, const ProcessInfo& info) {
     os << "bytes received: " << info.bytes_received << "\n"
        << "bytes transferred: " << info.bytes_transferred << "\n"
