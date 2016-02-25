@@ -2708,6 +2708,103 @@ int SystemConfiguration::writeUVCenters(const std::string filename) {
     return(0);
 }
 
+
+/*!
+ * \brief Load a crystal location file into the system configuration
+ *
+ * Takes a crystal location file and loads the values into the calibration
+ * array's CrystalCalibration objects.  This assumes a file of lines with the
+ * following columns separated by any number amount of whitespace:
+ *     - Boolean value indicating wether the crystal should be used or not
+ *     - x location of the crystal in the flood histogram
+ *     - y location of the crystal in the flood histogram
+ * The lines are assumed to be listed in C index order, and indexed by panel,
+ * cartridge, fin, module, psapd, crystal.
+ *
+ * \param filename The name of the file to be loaded.
+ *
+ * \returns 0 if successful, less than otherwise
+ *       - -1 if file could not be opened
+ *       - -2 if the file has more lines that expected by the system config
+ *       - -3 if parsing an individual crystal use value failed
+ *       - -4 if parsing an individual x location value failed
+ *       - -5 if parsing an individual y location value failed
+ *       - -10 if the number of lines read was not expected by the system config
+ */
+int SystemConfiguration::loadCrystalLocations(const std::string &filename) {
+    std::ifstream calibration_filestream;
+
+    calibration_filestream.open(filename.c_str());
+    if (!calibration_filestream) {
+        return(-1);
+    }
+
+    const int expected_lines(panels_per_system *
+                             cartridges_per_panel *
+                             fins_per_cartridge *
+                             modules_per_fin *
+                             apds_per_module *
+                             crystals_per_apd);
+
+    std::vector<bool> use_crystal_read(expected_lines, 0);
+    std::vector<float> crystal_x_read(expected_lines, 0);
+    std::vector<float> crystal_y_read(expected_lines, 0);
+
+    int lines(0);
+    std::string fileline;
+    while (std::getline(calibration_filestream, fileline)) {
+        if (lines >= expected_lines) {
+            return(-2);
+        }
+
+        std::stringstream line_stream(fileline);
+
+        bool use_crystal_val;
+        if((line_stream >> use_crystal_val).fail()) {
+            return(-3);
+        } else {
+            use_crystal_read[lines] = use_crystal_val;
+        }
+
+        if((line_stream >> crystal_x_read[lines]).fail()) {
+            return(-4);
+        }
+
+        if((line_stream >> crystal_y_read[lines]).fail()) {
+            return(-5);
+        }
+        lines++;
+    }
+
+    if (expected_lines != lines) {
+        return(-10);
+    }
+
+    resizePCFMAXArray(this, this->calibration);
+    int read_idx = 0;
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int f = 0; f < fins_per_cartridge; f++) {
+                for (int m = 0; m < modules_per_fin; m++) {
+                    for (int a = 0; a < apds_per_module; a++) {
+                        for (int x = 0; x < crystals_per_apd; x++) {
+                            calibration[p][c][f][m][a][x].use =
+                                    use_crystal_read[read_idx];
+                            calibration[p][c][f][m][a][x].x_loc =
+                                    crystal_x_read[read_idx];
+                            calibration[p][c][f][m][a][x].y_loc =
+                                    crystal_y_read[read_idx];
+                            read_idx++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return(0);
+}
+
+
 /*!
  * \brief Load a calibration value file into the system configuration
  *
