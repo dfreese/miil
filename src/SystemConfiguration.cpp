@@ -800,17 +800,43 @@ int loadSystemSize(
 
     // If these are not found, then asInt() will return a 0.  Check that all
     // of the settings are not zero to indicate a successful parse.
-    if (config->panels_per_system && config->cartridges_per_panel &&
+    if (!(config->panels_per_system && config->cartridges_per_panel &&
         config->daqs_per_cartridge && config->renas_per_daq &&
         config->modules_per_rena && config->fins_per_cartridge &&
         config->modules_per_fin && config->ethernets_per_panel &&
         config->hv_floating_boards_per_system &&
-        config->scmicros_per_cartridge && config->modules_per_dac)
+        config->scmicros_per_cartridge && config->modules_per_dac))
     {
-        return(0);
-    } else {
         return(-2);
     }
+
+    int modules_per_cart_pcdrm =
+            config->daqs_per_cartridge *
+            config->renas_per_daq *
+            config->modules_per_rena;
+    int modules_per_cart_pcfm =
+            config->fins_per_cartridge *
+            config->modules_per_fin;
+    // Check to see if the two mappings are compatible
+    if (modules_per_cart_pcdrm != modules_per_cart_pcfm) {
+        return(-3);
+    }
+
+    config->cartridges_per_system =
+            config->panels_per_system * config->cartridges_per_panel;
+    config->daqs_per_system =
+            config->cartridges_per_system * config->daqs_per_cartridge;
+    config->fins_per_system =
+            config->cartridges_per_system * config->fins_per_cartridge;
+    config->renas_per_system =
+            config->daqs_per_cartridge * config->renas_per_daq;
+    config->modules_per_system =
+            config->fins_per_system * config->modules_per_fin;
+    config->apds_per_system =
+            config->modules_per_system * config->apds_per_module;
+    config->crystals_per_system =
+            config->apds_per_system * config->crystals_per_apd;
+    return(0);
 }
 
 /*!

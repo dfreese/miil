@@ -474,6 +474,21 @@ public:
     //! The number of front end FPGAs on each daq board
     int fpgas_per_daq;
 
+    //! Number of cartridges in the system calculated from the system_config
+    int cartridges_per_system;
+    //! Number of daqs in the system calculated from the system_config
+    int daqs_per_system;
+    //! Number of fins in the system calculated from the system_config
+    int fins_per_system;
+    //! Number of renas in the system calculated from the system_config
+    int renas_per_system;
+    //! Number of modules in the system calculated from the system_config
+    int modules_per_system;
+    //! Number of apds in the system calculated from the system_config
+    int apds_per_system;
+    //! Number of apds in the system calculated from the system_config
+    int crystals_per_system;
+
     //! Array index by panel id holding the panel config information.
     std::vector<PanelConfig> panel_configs;
     //! Array indexed Panel, Cartridge holding the config for each cartridge.
