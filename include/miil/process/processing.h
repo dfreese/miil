@@ -29,6 +29,11 @@ int CalculateXYandEnergy(
         int & module,
         int &fin);
 
+int CalculateID(
+        EventCal & calevent,
+        const EventRaw & rawevent,
+        SystemConfiguration const * const system_config);
+
 int CalculateXYandEnergy(
         const EventRaw & rawevent,
         SystemConfiguration const * const system_config,
