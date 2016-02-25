@@ -323,8 +323,8 @@ int CalculateXYandEnergy(
  *     - -5 If the conversion from PCDRM to PCFM indexing fails
  */
 int CalculateID(
-        const EventRaw & rawevent,
         EventCal & event,
+        const EventRaw & rawevent,
         SystemConfiguration const * const system_config)
 {
     int module = 0;
