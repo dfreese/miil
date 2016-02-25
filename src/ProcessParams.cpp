@@ -111,6 +111,62 @@ int ProcessParams::DecodeBuffer(
     return(0);
 }
 
+int ProcessParams::CalibrateBuffer(
+    const vector<EventRaw> & decoded_data,
+    vector<EventCal> & calibrated_data,
+    ProcessInfo & info,
+    SystemConfiguration const * const config)
+{
+    for (size_t ii = 0;
+         ii < decoded_data.size();
+         ii++)
+    {
+        EventCal event;
+        int cal_status = RawEventToEventCal(decoded_data[ii], event, config);
+        info.decoded_events_processed++;
+        if (cal_status == 0) {
+            calibrated_data.push_back(event);
+            info.accepted_calibrate++;
+        } else if (cal_status == -1) {
+            info.dropped_threshold++;
+        } else if (cal_status == -2) {
+            info.dropped_double_trigger++;
+        } else if (cal_status == -3) {
+            info.dropped_crystal_id++;
+        } else if (cal_status == -4) {
+            info.dropped_crystal_invalid++;
+        }
+    }
+}
+
+int ProcessParams::IDBuffer(
+    const vector<EventRaw> & decoded_data,
+    vector<EventCal> & calibrated_data,
+    ProcessInfo & info,
+    SystemConfiguration const * const config)
+{
+    for (size_t ii = 0;
+         ii < decoded_data.size();
+         ii++)
+    {
+        EventCal event;
+        int cal_status = CalculateID(event, decoded_data[ii], config);
+        info.decoded_events_processed++;
+        if (cal_status == 0) {
+            calibrated_data.push_back(event);
+            info.accepted_calibrate++;
+        } else if (cal_status == -1) {
+            info.dropped_threshold++;
+        } else if (cal_status == -2) {
+            info.dropped_double_trigger++;
+        } else if (cal_status == -3) {
+            info.dropped_crystal_id++;
+        } else if (cal_status == -4) {
+            info.dropped_crystal_invalid++;
+        }
+    }
+}
+
 int ProcessParams::DecodeBuffer(
         deque<char> & buffer_process_side,
         vector<EventRaw> & decoded_data,

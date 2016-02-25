@@ -96,6 +96,16 @@ public:
     static int ClearProcessedData(
             std::deque<char> & buffer_process_side,
             ProcessInfo & info);
+    static int CalibrateBuffer(
+            const std::vector<EventRaw> & decoded_data,
+            std::vector<EventCal> & calibrated_data,
+            ProcessInfo & info,
+            SystemConfiguration const * const config);
+    static int IDBuffer(
+            const std::vector<EventRaw> & decoded_data,
+            std::vector<EventCal> & calibrated_data,
+            ProcessInfo & info,
+            SystemConfiguration const * const config);
 };
 
 #endif // PROCESS_PARAMS_H
