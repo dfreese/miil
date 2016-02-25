@@ -589,6 +589,30 @@ public:
     }
 
     template<typename T>
+    void resizeArrayPCFMAX(
+            std::vector<std::vector<std::vector<
+                    std::vector<std::vector<std::vector<T> > > > > > & vect,
+            const T & value = T()) const
+    {
+        vect.resize(panels_per_system);
+        for (int p = 0; p < panels_per_system; p++) {
+            vect[p].resize(cartridges_per_panel);
+            for (int c = 0; c < cartridges_per_panel; c++) {
+                vect[p][c].resize(fins_per_cartridge);
+                for (int f = 0; f < fins_per_cartridge; f++) {
+                    vect[p][c][f].resize(modules_per_fin);
+                    for (int m = 0; m < modules_per_fin; m++) {
+                        vect[p][c][f][m].resize(apds_per_module);
+                        for (int a = 0; a < apds_per_module; a++) {
+                            vect[p][c][f][m][a].resize(crystals_per_apd, value);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    template<typename T>
     void resizeArrayPCDRMA(
         std::vector<std::vector<std::vector<
                 std::vector<std::vector<std::vector<T> > > > > > & vect,
