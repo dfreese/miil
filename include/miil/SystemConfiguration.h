@@ -369,6 +369,7 @@ public:
     int writeUVCenters(const std::string filename);
     int loadCrystalLocations(const std::string &filename);
     int loadCalibration(const std::string & filename);
+    int writeCalibration(const std::string & filename);
     int loadTimeCalibration(const std::string & filename);
 
     int lookupPanelCartridge(

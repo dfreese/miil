@@ -2804,7 +2804,6 @@ int SystemConfiguration::loadCrystalLocations(const std::string &filename) {
     return(0);
 }
 
-
 /*!
  * \brief Load a calibration value file into the system configuration
  *
@@ -2981,6 +2980,62 @@ int SystemConfiguration::loadCalibration(const std::string &filename) {
         }
     }
     calibration_loaded_flag = true;
+    return(0);
+}
+
+/*!
+ * \brief Write out a calibration value file from the system configuration
+ *
+ * Writes a calibration value file from the calibration array's
+ * CrystalCalibration objects.  This assumes a file of lines with the
+ * following columns separated a space:
+ *     - Boolean value indicating wether the crystal should be used or not
+ *     - x location of the crystal in the flood histogram
+ *     - y location of the crystal in the flood histogram
+ *     - the photopeak position of the spatial channels in adc values
+ *     - the photopeak position of the common channel in adc values
+ *     - the energy resolution of the spatial channels in percent
+ *     - the energy resolution of the spatial channel in percent
+ * The lines are assumed to be listed in C index order, and indexed by panel,
+ * cartridge, fin, module, psapd, crystal.
+ *
+ * \param filename The name of the file to be loaded.
+ *
+ * \returns 0 if successful, less than otherwise
+ *       - -1 if file could not be opened
+ */
+int SystemConfiguration::writeCalibration(const std::string & filename) {
+    std::ofstream output(filename.c_str());
+    if (!output.good()) {
+        return(-1);
+    }
+
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int f = 0; f < fins_per_cartridge; f++) {
+                for (int m = 0; m < modules_per_fin; m++) {
+                    for (int a = 0; a < apds_per_module; a++) {
+                        for (int x = 0; x < crystals_per_apd; x++) {
+                            CrystalCalibration & crystal_cal =
+                                    calibration[p][c][f][m][a][x];
+                            if (crystal_cal.use) {
+                                output << "1 "
+                                       << crystal_cal.x_loc << " "
+                                       << crystal_cal.y_loc << " "
+                                       << crystal_cal.gain_spat << " "
+                                       << crystal_cal.gain_comm << " "
+                                       << crystal_cal.eres_spat << " "
+                                       << crystal_cal.eres_comm << "\n";
+                            } else {
+                                output << "0 0 0 0 0 0 0\n";
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+    }
     return(0);
 }
 
