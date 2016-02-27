@@ -27,6 +27,9 @@ namespace Util {
     int checkForParameters(
             const std::vector<std::string> & param,
             const std::map<std::string,std::vector<std::string> > & map);
+    int loadFilelistFile(
+            const std::string & filename,
+            std::vector<std::string> & files);
 
     template<class T>
     std::map<std::string,T> StringMapToNumber(const std::map<std::string,std::string> & val) {

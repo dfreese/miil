@@ -328,3 +328,18 @@ int Util::checkForParameters(
     }
     return(result);
 }
+
+int Util::loadFilelistFile(
+        const std::string & filename,
+        std::vector<std::string> & files)
+{
+    std::ifstream input(filename.c_str());
+    if (!input.good()) {
+        return(-1);
+    }
+    std::string line;
+    while (std::getline(input, line)) {
+        files.push_back(line);
+    }
+    return(0);
+}
