@@ -137,6 +137,7 @@ int ProcessParams::CalibrateBuffer(
             info.dropped_crystal_invalid++;
         }
     }
+    return(0);
 }
 
 int ProcessParams::IDBuffer(
@@ -165,6 +166,7 @@ int ProcessParams::IDBuffer(
             info.dropped_crystal_invalid++;
         }
     }
+    return(0);
 }
 
 int ProcessParams::DecodeBuffer(
