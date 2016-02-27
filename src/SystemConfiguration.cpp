@@ -3100,8 +3100,92 @@ int SystemConfiguration::loadTimeCalibration(const std::string &filename) {
                 for (int m = 0; m < modules_per_fin; m++) {
                     for (int a = 0; a < apds_per_module; a++) {
                         for (int x = 0; x < crystals_per_apd; x++) {
-                            calibration[p][c][f][m][a][x].time_offset =
-                                    time_offset_read[read_idx];
+                            CrystalCalibration & cal =
+                                    calibration[p][c][f][m][a][x];
+                            cal.time_offset = time_offset_read[read_idx];
+                            cal.time_offset_edep = 0;
+                            read_idx++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    time_calibration_loaded_flag = true;
+    return(0);
+}
+
+/*!
+ * \brief Load a time offset value file into the system configuration
+ *
+ * Takes a time offset value file and loads the values into the calibration
+ * array's CrystalCalibration objects's time_offset value.  This assumes a file
+ * of lines with two columns representing the offset for an individual crystal
+ * as well as the linear dependence of the offset centered at 511keV.
+ * The lines are assumed to be listed in C index order, and indexed by panel,
+ * cartridge, fin, module, psapd, crystal.
+ *
+ * \param filename The name of the file to be loaded.
+ *
+ * \returns 0 if successful, less than otherwise
+ *         -1 if file could not be opened
+ *         -2 if the file has more lines that expected by the system config
+ *         -3 if parsing an individual time offset value failed
+ *         -4 if the number of lines read was not expected by the system config
+ */
+int SystemConfiguration::loadTimeCalWithEdep(const std::string &filename) {
+    std::ifstream calibration_filestream;
+
+    calibration_filestream.open(filename.c_str());
+    if (!calibration_filestream) {
+        return(-1);
+    }
+
+    const int expected_lines(panels_per_system *
+                             cartridges_per_panel *
+                             fins_per_cartridge *
+                             modules_per_fin *
+                             apds_per_module *
+                             crystals_per_apd);
+
+    std::vector<float> time_offset_read(expected_lines, 0);
+    std::vector<float> edep_offset_read(expected_lines, 0);
+
+    int lines(0);
+    std::string fileline;
+    while (std::getline(calibration_filestream, fileline)) {
+        if (lines >= expected_lines) {
+            return(-2);
+        }
+
+        std::stringstream line_stream(fileline);
+
+        if((line_stream >> time_offset_read[lines]).fail()) {
+            return(-3);
+        }
+
+        if((line_stream >> edep_offset_read[lines]).fail()) {
+            return(-3);
+        }
+        lines++;
+    }
+
+    if (expected_lines != lines) {
+        return(-4);
+    }
+
+    resizePCFMAXArray(this, this->calibration);
+    int read_idx = 0;
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int f = 0; f < fins_per_cartridge; f++) {
+                for (int m = 0; m < modules_per_fin; m++) {
+                    for (int a = 0; a < apds_per_module; a++) {
+                        for (int x = 0; x < crystals_per_apd; x++) {
+                            CrystalCalibration & cal =
+                                    calibration[p][c][f][m][a][x];
+                            cal.time_offset = time_offset_read[read_idx];
+                            cal.time_offset_edep = edep_offset_read[read_idx];
                             read_idx++;
                         }
                     }

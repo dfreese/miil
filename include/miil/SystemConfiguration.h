@@ -50,7 +50,24 @@ struct CrystalCalibration {
     float eres_comm;
     float x_loc;
     float y_loc;
+    //! A DC offset term to the fine timestamp calculated for the event
     float time_offset;
+    /*!
+     * The energy dependence of the time of the event.  Is a linear fit
+     * centered around 511keV.
+     */
+    float time_offset_edep;
+    CrystalCalibration() :
+        use(false),
+        gain_spat(0),
+        gain_comm(0),
+        eres_spat(0),
+        eres_comm(0),
+        x_loc(0),
+        y_loc(0),
+        time_offset(0),
+        time_offset_edep(0)
+    {}
 };
 
 /*!
@@ -371,6 +388,7 @@ public:
     int loadCalibration(const std::string & filename);
     int writeCalibration(const std::string & filename);
     int loadTimeCalibration(const std::string & filename);
+    int loadTimeCalWithEdep(const std::string &filename);
 
     int lookupPanelCartridge(
             int backend_address,

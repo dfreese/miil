@@ -5,6 +5,7 @@
 #include <vector>
 #include <miil/EventRaw.h>
 #include <miil/EventCal.h>
+#include <miil/EventCoinc.h>
 
 class SystemConfiguration;
 
@@ -65,5 +66,10 @@ bool EventCalLessThan(
 
 bool EventCalLessThanOnlyCt(const EventCal & arg1, const EventCal & arg2);
 
+EventCoinc MakeCoinc(
+        const EventCal & event_left,
+        const EventCal & event_right,
+        float uv_period_ns,
+        float ct_period_n);
 
 #endif // PROCESSING_H

@@ -85,7 +85,7 @@ int DecodePacketByteStream(
     long timestamp = 0;
     for (int ii = 3; ii < 9; ii++) {
         timestamp = (timestamp << 7);
-        timestamp += long((*(begin + ii) & 0x7F));
+        timestamp += long(*(begin + ii) & 0x7F);
     }
 
     // Remaining bytes are ADC data for each channel
@@ -508,19 +508,6 @@ int RawEventToEventCal(
         return(-4);
     }
 
-    if (rawevent.panel == 0) {
-        event.ft -= crystal_cal.time_offset;
-    } else if (rawevent.panel == 1) {
-        event.ft += crystal_cal.time_offset;
-    }
-    // Ensure that the fine timestamp is wrapped correctly
-    while (event.ft < 0) {
-        event.ft += system_config->uv_period_ns;
-    }
-    while (event.ft >= system_config->uv_period_ns) {
-        event.ft -= system_config->uv_period_ns;
-    }
-
     event.panel = rawevent.panel;
     event.cartridge = rawevent.cartridge;
     event.fin = fin;
@@ -531,6 +518,18 @@ int RawEventToEventCal(
     event.rena = rawevent.rena;
 
     event.E = event.spat_total / crystal_cal.gain_spat * 511;
+
+    // Changed the convention from the cal_offset programs, so that we subtract
+    // from both panels, rather than adding to the right hand side.
+    event.ft -= crystal_cal.time_offset;
+    event.ft -= (event.E - 511.0) * crystal_cal.time_offset_edep;
+    // Ensure that the fine timestamp is wrapped correctly
+    while (event.ft < 0) {
+        event.ft += system_config->uv_period_ns;
+    }
+    while (event.ft >= system_config->uv_period_ns) {
+        event.ft -= system_config->uv_period_ns;
+    }
 
     return(apd);
 }
@@ -636,3 +635,54 @@ bool EventCalLessThanOnlyCt(const EventCal & arg1, const EventCal & arg2) {
         return(false);
     }
 }
+
+EventCoinc MakeCoinc(
+        const EventCal & event_left,
+        const EventCal & event_right,
+        float uv_period_ns,
+        float ct_period_n)
+{
+    EventCoinc event;
+    event.ct0 = event_left.ct;
+    event.dct = event_left.ct - event_right.ct;
+
+    event.ft0 = event_left.ft;
+    event.dtf = EventCalTimeDiff(event_left, event_right,
+                                 uv_period_ns, ct_period_n);
+
+    event.E0 = event_left.E;
+    event.E1 = event_right.E;
+
+    event.spat_total0 = event_left.spat_total;
+    event.spat_total1 = event_right.spat_total;
+
+    event.x0 = event_left.x;
+    event.x1 = event_right.x;
+
+    event.y0 = event_left.y;
+    event.y1 = event_right.y;
+
+    event.cartridge0 = event_left.cartridge;
+    event.cartridge1 = event_right.cartridge;
+
+    event.fin0 = event_left.fin;
+    event.fin1 = event_right.fin;
+
+    event.module0 = event_left.module;
+    event.module1 = event_right.module;
+
+    event.apd0 = event_left.apd;
+    event.apd1 = event_right.apd;
+
+    event.crystal0 = event_left.crystal;
+    event.crystal1 = event_right.crystal;
+
+    event.daq0 = event_left.daq;
+    event.daq1 = event_right.daq;
+
+    event.rena0 = event_left.rena;
+    event.rena1 = event_right.rena;
+
+    return(event);
+}
+
