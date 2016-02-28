@@ -80,6 +80,29 @@ namespace Util {
         return(0);
     }
 
+    template<typename T>
+    int readFileIntoVector(
+            const std::string & filename,
+            std::vector<T> & container,
+            size_t read_buff_size = 1048576)
+    {
+        std::ifstream file(filename.c_str(), std::ios::binary);
+        if (!file.good()) {
+            return(-1);
+        }
+
+        size_t chunk_size = read_buff_size / sizeof(T);
+        std::vector<T> chunk(chunk_size);
+
+        while (file.read((char*) chunk.data(), chunk.size()) || file.gcount()) {
+            container.insert(
+                        container.end(),
+                        chunk.begin(),
+                        chunk.begin() + file.gcount());
+        }
+        return(0);
+    }
+
 }
 
 #endif // FILE_UTILS_H_
