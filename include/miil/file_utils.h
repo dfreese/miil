@@ -71,11 +71,13 @@ namespace Util {
         size_t chunk_size = read_buff_size / sizeof(T);
         std::vector<T> chunk(chunk_size);
 
-        while (file.read((char*) chunk.data(), chunk.size()) || file.gcount()) {
+        while (file.read((char*) chunk.data(), chunk.size() * sizeof(T)) ||
+               file.gcount())
+        {
             container.insert(
                         container.end(),
                         chunk.begin(),
-                        chunk.begin() + file.gcount());
+                        chunk.begin() + (file.gcount() / sizeof(T)));
         }
         return(0);
     }
@@ -83,23 +85,22 @@ namespace Util {
     template<typename T>
     int readFileIntoVector(
             const std::string & filename,
-            std::vector<T> & container,
-            size_t read_buff_size = 1048576)
+            std::vector<T> & container)
     {
-        std::ifstream file(filename.c_str(), std::ios::binary);
-        if (!file.good()) {
+        std::ifstream input(filename.c_str(), std::ios::binary);
+        if (!input.good()) {
             return(-1);
         }
 
-        size_t chunk_size = read_buff_size / sizeof(T);
-        std::vector<T> chunk(chunk_size);
+        input.seekg(0, input.end);
+        size_t length_bytes = input.tellg();
+        size_t length_T = length_bytes / sizeof(T);
+        input.seekg(0, input.beg);
 
-        while (file.read((char*) chunk.data(), chunk.size()) || file.gcount()) {
-            container.insert(
-                        container.end(),
-                        chunk.begin(),
-                        chunk.begin() + file.gcount());
-        }
+        container.resize(length_T);
+        input.read((char*) container.data(), length_T * sizeof(T));
+        input.close();
+
         return(0);
     }
 
