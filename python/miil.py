@@ -80,7 +80,7 @@ eventcal_dtype = np.dtype([
 
 eventcoinc_dtype = np.dtype([
         ('ct0', np.int64),
-        ('dct', np.int64),
+        ('dtc', np.int64),
         ('ft0', np.float32),
         ('dtf', np.float32),
         ('E0', np.float32),
@@ -117,6 +117,12 @@ def load_decoded(filename, count = -1):
 def load_calibrated(filename, count = -1):
     fid = open(filename, 'rb')
     data = np.fromfile(fid, dtype=eventcal_dtype, count=count)
+    fid.close()
+    return data
+
+def load_coincidence(filename, count = -1):
+    fid = open(filename, 'rb')
+    data = np.fromfile(fid, dtype=eventcoinc_dtype, count=count)
     fid.close()
     return data
 
