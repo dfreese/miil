@@ -126,6 +126,27 @@ def load_coincidence(filename, count = -1):
     fid.close()
     return data
 
+def load_decoded_filelist(filename, count = -1):
+    fid = open(filename, 'r')
+    files = fid.read().splitlines()
+    fid.close()
+    data = np.hstack([load_decoded(f, count) for f in files])
+    return data
+
+def load_calib_filelist(filename, count = -1):
+    fid = open(filename, 'r')
+    files = fid.read().splitlines()
+    fid.close()
+    data = np.hstack([load_calibrated(f, count) for f in files])
+    return data
+
+def load_coinc_filelist(filename, count = -1):
+    fid = open(filename, 'r')
+    files = fid.read().splitlines()
+    fid.close()
+    data = np.hstack([load_coincidence(f, count) for f in files])
+    return data
+
 def load_pedestals(filename):
     return np.loadtxt(filename, dtype=ped_dtype)
 
