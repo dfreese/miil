@@ -72,4 +72,8 @@ EventCoinc MakeCoinc(
         float uv_period_ns,
         float ct_period_n);
 
+int TimeCalCoincEvent(
+        EventCoinc &event,
+        SystemConfiguration const * const config);
+
 #endif // PROCESSING_H

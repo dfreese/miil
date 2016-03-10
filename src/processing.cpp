@@ -686,3 +686,31 @@ EventCoinc MakeCoinc(
     return(event);
 }
 
+int TimeCalCoincEvent(
+        EventCoinc & event,
+        SystemConfiguration const * const config)
+{
+    const CrystalCalibration & cal0 =
+            config->calibration[0][event.cartridge0][event.fin0][event.module0]
+                              [event.apd0][event.crystal0];
+
+    const CrystalCalibration & cal1 =
+            config->calibration[1][event.cartridge1][event.fin1][event.module1]
+                              [event.apd1][event.crystal1];
+
+    event.ft0 -= cal0.time_offset;
+    event.dtf -= cal0.time_offset;
+    event.dtf += cal1.time_offset;
+    event.ft0 -= (event.E0 - 511.0) * cal0.time_offset_edep;
+    event.dtf -= (event.E0 - 511.0) * cal0.time_offset_edep;
+    event.dtf += (event.E1 - 511.0) * cal1.time_offset_edep;
+
+    // Ensure that the fine timestamp is wrapped correctly
+    while (event.ft0 < 0) {
+        event.ft0 += config->uv_period_ns;
+    }
+    while (event.ft0 >= config->uv_period_ns) {
+        event.ft0 -= config->uv_period_ns;
+    }
+    return(0);
+}
