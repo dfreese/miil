@@ -1,4 +1,5 @@
 import numpy as np
+import json
 
 ped_dtype = np.dtype([
         ('name', 'S32'),
@@ -33,6 +34,9 @@ cal_dtype = np.dtype([
         ('eres_spat', float),
         ('eres_comm', float)])
 
+tcal_dtype = np.dtype([
+        ('offset', float),
+        ('edep_offset', float)])
 
 eventraw_dtype = np.dtype([
         ('ct', np.int64),
@@ -152,6 +156,92 @@ def load_pedestals(filename):
 
 def load_calibration(filename):
     return np.loadtxt(filename, dtype=cal_dtype)
+
+def load_time_calibration(filename):
+    return np.loadtxt(filename, dtype=tcal_dtype)
+
+def load_system_shape_pcfmax(filename):
+    with open(filename, 'r') as f:
+        config = json.load(f)
+    system_config = config['system_config']
+    system_shape = [system_config['NUM_PANEL_PER_DEVICE'],
+                    system_config['NUM_CART_PER_PANEL'],
+                    system_config['NUM_FIN_PER_CARTRIDGE'],
+                    system_config['NUM_MODULE_PER_FIN'],
+                    2, 64,]
+    return system_shape
+
+# For Calibrated Events
+def get_global_cartridge_numbers(events, system_shape):
+    global_cartridge = events['cartridge'].astype(int) + \
+                       system_shape[1] * events['panel'].astype(int)
+    return global_cartridge
+
+def get_global_fin_number(events, system_shape):
+    global_cartridge = get_global_cartridge_number(events, system_shape)
+    global_fin = events['fin'] + system_shape[2] * global_cartridge
+    return global_fin
+
+def get_global_module_number(events, system_shape):
+    global_fin = get_global_fin_number(events, system_shape)
+    global_module = events['module'] + system_shape[3] * global_fin
+    return global_module
+
+def get_global_apd_number(events, system_shape):
+    global_module = get_global_module_number(events, system_shape)
+    global_apd = events['apd'] + system_shape[4] * global_module
+    return global_apd
+
+def get_global_crystal_number(events, system_shape):
+    global_apd = get_global_apd_number(events, system_shape)
+    global_crystal = events['crystal'] + system_shape[5] * global_apd
+    return global_crystal
+
+# For Coincidence Events
+def get_global_cartridge_numbers(events, system_shape):
+    global_cartridge0 = events['cartridge0'].astype(int)
+    global_cartridge1 = events['cartridge1'].astype(int) + system_shape[1]
+    return global_cartridge0, global_cartridge1
+
+def get_global_fin_numbers(events, system_shape):
+    global_cartridge0, global_cartridge1 = \
+            get_global_cartridge_numbers(events, system_shape)
+    global_fin0 = events['fin0'] + system_shape[2] * global_cartridge0
+    global_fin1 = events['fin1'] + system_shape[2] * global_cartridge1
+    return global_fin0, global_fin1
+
+def get_global_module_numbers(events, system_shape):
+    global_fin0, global_fin1 = get_global_fin_numbers(events, system_shape)
+    global_module0 = events['module0'] + system_shape[3] * global_fin0
+    global_module1 = events['module1'] + system_shape[3] * global_fin1
+    return global_module0, global_module1
+
+def get_global_apd_numbers(events, system_shape):
+    global_module0, global_module1 = \
+            get_global_module_numbers(events, system_shape)
+    global_apd0 = events['apd0'] + system_shape[4] * global_module0
+    global_apd1 = events['apd1'] + system_shape[4] * global_module1
+    return global_apd0, global_apd1
+
+def get_global_crystal_numbers(events, system_shape):
+    global_apd0, global_apd1 = get_global_apd_numbers(events, system_shape)
+    global_crystal0 = events['crystal0'] + system_shape[5] * global_apd0
+    global_crystal1 = events['crystal1'] + system_shape[5] * global_apd1
+    return global_crystal0, global_crystal1
+
+def tcal_coinc_events(events, tcal, system_shape):
+    idx0, idx1 = get_global_crystal_numbers(events, system_shape)
+    ft0_offset = tcal['offset'][idx0] + \
+                 tcal['edep_offset'][idx0] * (events['E0'] - 511)
+    ft1_offset = tcal['offset'][idx1] + \
+                 tcal['edep_offset'][idx1] * (events['E1'] - 511)
+    cal_events = events.copy()
+    # Not correcting ft0 right now, because we'd need to wrap it to the uv
+    # period, and I'm being lazy as to not load that in
+    # cal_events['ft0'] -= ft0_offset
+    cal_events['dtf'] -= ft0_offset
+    cal_events['dtf'] += ft1_offset
+    return cal_events
 
 def save_binary(data, filename):
     fid = open(filename, 'wb')
