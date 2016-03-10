@@ -3115,6 +3115,55 @@ int SystemConfiguration::loadTimeCalibration(const std::string &filename) {
     return(0);
 }
 
+
+/*!
+ * \brief Write a time offset value file from the system configuration
+ *
+ * Writes a time offset value file from the current calibration
+ * array's CrystalCalibration objects's time_offset values.  This creates a
+ * file with one column representing the offset for an individual crystal.
+ *
+ * The lines are assumed to be listed in C index order, and indexed by panel,
+ * cartridge, fin, module, psapd, crystal.
+ *
+ * Output for the values is a fixed format with 1 digit of precision for the
+ * dc time offset.
+ *
+ * \param filename The name of the file to be loaded.
+ *
+ * \returns
+ *      - 0 if successful
+ *      - -1 if file could not be opened
+ */
+int SystemConfiguration::writeTimeCalibration(const std::string &filename) {
+    std::ofstream output;
+
+    output.open(filename.c_str());
+    if (!output) {
+        return(-1);
+    }
+
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int f = 0; f < fins_per_cartridge; f++) {
+                for (int m = 0; m < modules_per_fin; m++) {
+                    for (int a = 0; a < apds_per_module; a++) {
+                        for (int x = 0; x < crystals_per_apd; x++) {
+                            CrystalCalibration & cal =
+                                    calibration[p][c][f][m][a][x];
+
+                            output << std::fixed << std::setprecision(1)
+                                   << cal.time_offset << "\n";
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return(0);
+}
+
+
 /*!
  * \brief Load a time offset value file into the system configuration
  *
@@ -3194,6 +3243,57 @@ int SystemConfiguration::loadTimeCalWithEdep(const std::string &filename) {
         }
     }
     time_calibration_loaded_flag = true;
+    return(0);
+}
+
+/*!
+ * \brief Write a time offset value file from the system configuration
+ *
+ * Writes a time offset value file from the current calibration
+ * array's CrystalCalibration objects's time_offset values.  This creates a
+ * file with two columns representing the offset for an individual crystal
+ * as well as the linear dependence of the offset centered at 511keV.
+ *
+ * The lines are assumed to be listed in C index order, and indexed by panel,
+ * cartridge, fin, module, psapd, crystal.
+ *
+ * Output for the values is a fixed format with 1 digit of precision for the
+ * dc time offset, and 3 digits of precision for the energy dependent time
+ * offset.
+ *
+ * \param filename The name of the file to be loaded.
+ *
+ * \returns
+ *      - 0 if successful
+ *      - -1 if file could not be opened
+ */
+int SystemConfiguration::writeTimeCalWithEdep(const std::string &filename) {
+    std::ofstream output;
+
+    output.open(filename.c_str());
+    if (!output) {
+        return(-1);
+    }
+
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int f = 0; f < fins_per_cartridge; f++) {
+                for (int m = 0; m < modules_per_fin; m++) {
+                    for (int a = 0; a < apds_per_module; a++) {
+                        for (int x = 0; x < crystals_per_apd; x++) {
+                            CrystalCalibration & cal =
+                                    calibration[p][c][f][m][a][x];
+
+                            output << std::fixed << std::setprecision(1)
+                                   << cal.time_offset << " "
+                                   << std::fixed << std::setprecision(3)
+                                   << cal.time_offset_edep << "\n";
+                        }
+                    }
+                }
+            }
+        }
+    }
     return(0);
 }
 

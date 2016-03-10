@@ -388,7 +388,9 @@ public:
     int loadCalibration(const std::string & filename);
     int writeCalibration(const std::string & filename);
     int loadTimeCalibration(const std::string & filename);
+    int writeTimeCalibration(const std::string &filename);
     int loadTimeCalWithEdep(const std::string &filename);
+    int writeTimeCalWithEdep(const std::string &filename);
 
     int lookupPanelCartridge(
             int backend_address,
