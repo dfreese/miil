@@ -260,15 +260,15 @@ def get_crystal_pos(
 
     x1 = (x_module_pitch - 8 * x_crystal_pitch) / 2 + \
          (events['module1'].astype(float) - 8) * x_module_pitch + \
-         (7 - (events['module1'].astype(float) // 8) + 0.5) * x_crystal_pitch
+         (7 - (events['crystal1'].astype(float) // 8) + 0.5) * x_crystal_pitch
 
-    y0 = - panel_sep / 2.0 - \
+    y0 = - panel_sep / 2.0 - y_apd_offset - \
          events['apd0'].astype(float) * y_apd_pitch - \
-         ((7 - (events['crystal0'].astype(float) % 8) * y_crystal_pitch) + 0.5)
+         (7 - events['crystal0'].astype(float) % 8 + 0.5) * y_crystal_pitch
 
-    y1 = + panel_sep / 2.0 - \
+    y1 = panel_sep / 2.0 + y_apd_offset + \
          events['apd1'].astype(float) * y_apd_pitch + \
-         ((7 - (events['crystal1'].astype(float) % 8) * y_crystal_pitch) + 0.5)
+         (7 - events['crystal1'].astype(float) % 8 + 0.5) * y_crystal_pitch
 
     z0 = z_pitch * (0.5 + events['fin0'].astype(float) +
                     system_shape[2] * (events['cartridge0'].astype(float) -
