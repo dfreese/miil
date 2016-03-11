@@ -590,6 +590,17 @@ public:
     double ct_period_ns;
 
     template<typename T>
+    void resizeArrayPC(
+            std::vector<std::vector<T> > & vect,
+            const T & value = T()) const
+    {
+        vect.resize(panels_per_system);
+        for (int p = 0; p < panels_per_system; p++) {
+            vect[p].resize(cartridges_per_panel, value);
+        }
+    }
+
+    template<typename T>
     void resizeArrayPCFMA(
             std::vector<std::vector<std::vector<
                     std::vector<std::vector<T> > > > > & vect,
