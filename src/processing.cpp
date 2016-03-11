@@ -271,6 +271,9 @@ int CalculateXYandEnergy(
     energy = a + b + c + d;
     x = (c + d - (b + a)) / (energy);
     y = (a + d - (b + c)) / (energy);
+    if (apd == 1) {
+        y *= -1;
+    }
     return(0);
 }
 
