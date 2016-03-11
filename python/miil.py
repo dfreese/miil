@@ -243,6 +243,42 @@ def tcal_coinc_events(events, tcal, system_shape):
     cal_events['dtf'] += ft1_offset
     return cal_events
 
+def get_crystal_pos(
+        events,
+        system_shape = [2, 3, 8, 16, 2, 64],
+        panel_sep = 64.262,
+        x_crystal_pitch = 1.0,
+        y_crystal_pitch = 1.0,
+        x_module_pitch = 0.405 * 25.4,
+        y_apd_pitch = (0.32 + 0.079) * 25.4,
+        y_apd_offset = 1.51,
+        z_pitch = 0.0565 * 25.4):
+
+    x0 = (x_module_pitch - 8 * x_crystal_pitch) / 2 + \
+         (events['module0'].astype(float) - 8) * x_module_pitch + \
+         ((events['crystal0'].astype(float) // 8) + 0.5) * x_crystal_pitch
+
+    x1 = (x_module_pitch - 8 * x_crystal_pitch) / 2 + \
+         (events['module1'].astype(float) - 8) * x_module_pitch + \
+         (7 - (events['module1'].astype(float) // 8) + 0.5) * x_crystal_pitch
+
+    y0 = - panel_sep / 2.0 - \
+         events['apd0'].astype(float) * y_apd_pitch - \
+         ((7 - (events['crystal0'].astype(float) % 8) * y_crystal_pitch) + 0.5)
+
+    y1 = + panel_sep / 2.0 - \
+         events['apd1'].astype(float) * y_apd_pitch + \
+         ((7 - (events['crystal1'].astype(float) % 8) * y_crystal_pitch) + 0.5)
+
+    z0 = z_pitch * (0.5 + events['fin0'].astype(float) +
+                    system_shape[2] * (events['cartridge0'].astype(float) -
+                                       system_shape[1] / 2.0))
+
+    z1 = z_pitch * (0.5 + events['fin1'].astype(float) +
+                    system_shape[2] * (events['cartridge1'].astype(float) -
+                                       system_shape[1] / 2.0))
+    return x0, x1, y0, y1, z0, z1
+
 def save_binary(data, filename):
     fid = open(filename, 'wb')
     data.tofile(fid)
