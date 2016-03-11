@@ -242,7 +242,7 @@ def get_global_crystal_numbers(events, system_shape):
     global_crystal1 = events['crystal1'] + system_shape[5] * global_apd1
     return global_crystal0, global_crystal1
 
-def tcal_coinc_events(events, tcal, system_shape):
+def tcal_coinc_events(events, tcal, system_shape = [2, 3, 8, 16, 2, 64]):
     idx0, idx1 = get_global_crystal_numbers(events, system_shape)
     ft0_offset = tcal['offset'][idx0] + \
                  tcal['edep_offset'][idx0] * (events['E0'] - 511)
@@ -255,6 +255,40 @@ def tcal_coinc_events(events, tcal, system_shape):
     cal_events['dtf'] -= ft0_offset
     cal_events['dtf'] += ft1_offset
     return cal_events
+
+def get_positions_cal(
+        events,
+        system_shape = [2, 3, 8, 16, 2, 64],
+        panel_sep = 64.262,
+        x_crystal_pitch = 1.0,
+        y_crystal_pitch = 1.0,
+        x_module_pitch = 0.405 * 25.4,
+        y_apd_pitch = (0.32 + 0.079) * 25.4,
+        y_apd_offset = 1.51,
+        z_pitch = 0.0565 * 25.4):
+
+
+    x = (x_module_pitch - 8 * x_crystal_pitch) / 2 + \
+        (events['module'].astype(float) - 8) * x_module_pitch
+
+    x[events['panel'] == 0] += x_crystal_pitch * \
+            ((events['crystal'][events['panel'] == 0].astype(float) // 8) + 0.5)
+
+    x[events['panel'] == 1] += x_crystal_pitch * \
+            (7 - (events['crystal'][events['panel'] == 1].astype(float) // 8) +
+             0.5)
+
+    y = panel_sep / 2.0 + y_apd_offset + \
+        events['apd'].astype(float) * y_apd_pitch + \
+        (7 - events['crystal'].astype(float) % 8 + 0.5) * y_crystal_pitch
+
+    z = z_pitch * (0.5 + events['fin'].astype(float) +
+                    system_shape[2] * (events['cartridge'].astype(float) -
+                                       system_shape[1] / 2.0))
+
+    y[events['panel'] == 0] *= -1
+
+    return x, y, z
 
 def get_crystal_pos(
         events,
