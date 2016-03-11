@@ -112,6 +112,19 @@ eventcoinc_dtype = np.dtype([
         ('flags', np.int8, (2,))],
         align=True)
 
+cudarecon_type0_dtype = np.dtype([
+        ('x0', np.float32),
+        ('y0', np.float32),
+        ('z0', np.float32),
+        ('dt', np.float32),
+        ('randoms_est', np.float32),
+        ('x1', np.float32),
+        ('y1', np.float32),
+        ('z1', np.float32),
+        ('tof_scatter_est', np.float32),
+        ('scatter_est', np.float32)],
+        align=True)
+
 def load_decoded(filename, count = -1):
     fid = open(filename, 'rb')
     data = np.fromfile(fid, dtype=eventraw_dtype, count=count)
@@ -278,6 +291,36 @@ def get_crystal_pos(
                     system_shape[2] * (events['cartridge1'].astype(float) -
                                        system_shape[1] / 2.0))
     return x0, x1, y0, y1, z0, z1
+
+def create_listmode_data(
+        events,
+        system_shape = None,
+        panel_sep = None):
+    lm_data = np.zeros(events.shape, dtype=cudarecon_type0_dtype)
+    if system_shape and panel_sep:
+        lm_data['x0'], lm_data['x1'], \
+                lm_data['y0'], lm_data['y1'],\
+                lm_data['z0'], lm_data['z1'] = \
+                get_crystal_pos(
+                        events,
+                        system_shape=system_shape,
+                        panel_sep=panel_sep)
+    elif panel_sep:
+        lm_data['x0'], lm_data['x1'], \
+                lm_data['y0'], lm_data['y1'],\
+                lm_data['z0'], lm_data['z1'] = \
+                get_crystal_pos(events, panel_sep=panel_sep)
+    elif system_shape:
+        lm_data['x0'], lm_data['x1'], \
+                lm_data['y0'], lm_data['y1'],\
+                lm_data['z0'], lm_data['z1'] = \
+                get_crystal_pos(events, system_shape=system_shape)
+    else:
+        lm_data['x0'], lm_data['x1'], \
+                lm_data['y0'], lm_data['y1'],\
+                lm_data['z0'], lm_data['z1'] = \
+                get_crystal_pos(events)
+    return lm_data
 
 def save_binary(data, filename):
     fid = open(filename, 'wb')
