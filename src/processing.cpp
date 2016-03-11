@@ -211,7 +211,8 @@ int GetCrystalID(
  * \param module where the module local to the fin is stored
  * \param fin where the fin is stored
  *
- * \return 0 on success, less than zero otherwise
+ * \return
+ *     -  0 on success
  *     - -1 if the event is below the hit threshold for the module
  *     - -2 if the other apd is above the double trigger threshold
  *     - -3 if the conversion from PCDRM to PCFM indexing fails
@@ -318,7 +319,8 @@ int CalculateXYandEnergy(
  * \param rawevent The non-pedestal corrected event decoded from the bitstream
  * \param system_config Pointer to the system configuration to be used
  *
- * \return The APD value (0 or 1) on success, less than zero otherwise
+ * \return
+ *     -  0 on success
  *     - -1 if the event is below the hit threshold for the module
  *     - -2 if the other apd is above the double trigger threshold
  *     - -3 if the crystal could not be correctly identified
@@ -411,7 +413,7 @@ int CalculateID(
         event.E = rawevent.com1;
     }
 
-    return(apd);
+    return(0);
 }
 
 /*!
@@ -422,7 +424,8 @@ int CalculateID(
  * \param event Where the calibrated event is returned
  * \param system_config Pointer to the system configuration to be used
  *
- * \return The APD value (0 or 1) on success, less than zero otherwise
+ * \return
+ *     -  0 on success
  *     - -1 if the event is below the hit threshold for the module
  *     - -2 if the other apd is above the double trigger threshold
  *     - -3 if the crystal could not be correctly identified
@@ -534,7 +537,7 @@ int RawEventToEventCal(
         event.ft -= system_config->uv_period_ns;
     }
 
-    return(apd);
+    return(0);
 }
 
 /*!
