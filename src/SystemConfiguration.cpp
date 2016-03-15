@@ -2678,7 +2678,7 @@ int SystemConfiguration::loadUVCenters(const std::string &filename) {
  * \returns 0 if successful, less than otherwise
  *         -1 if file could not be opened
  */
-int SystemConfiguration::writeUVCenters(const std::string filename) {
+int SystemConfiguration::writeUVCenters(const std::string &filename) {
     std::ofstream output(filename.c_str());
     if (!output.good()) {
         return(-1);
@@ -2708,6 +2708,127 @@ int SystemConfiguration::writeUVCenters(const std::string filename) {
     return(0);
 }
 
+/*!
+ * \brief Read a photopeak position file to the system configuration
+ *
+ * Takes the photopeak positions file and reads it into the the apd configs in
+ * the module config array.  Each line should have two numbers that can be
+ * represented as floats.  The columns are:
+ *     - spatial photopeak position
+ *     - common photopeak position
+ * The lines are assumed to be listed in C index order, and indexed by panel,
+ * cartridge, fin, module, psapd.
+ *
+ * \param filename The name of the file to be written.
+ *
+ * \returns
+ *      - 0 if successful
+ *      - -1 if file could not be opened
+ *      - -2 if the file has too many lines
+ *      - -3 if a spatial value could not be read
+ *      - -4 if a common value could not be read
+ *      - -5 if the file has too few lines
+ */
+int SystemConfiguration::loadPhotopeakPositions(const std::string &filename)
+{
+    std::ifstream photopeak_filestream;
+
+    photopeak_filestream.open(filename.c_str());
+    if (!photopeak_filestream) {
+        return(-1);
+    }
+
+    const int expected_lines(panels_per_system *
+                             cartridges_per_panel *
+                             fins_per_cartridge *
+                             modules_per_fin *
+                             apds_per_module);
+
+    std::vector<float> gain_spat_read(expected_lines, 0);
+    std::vector<float> gain_comm_read(expected_lines, 0);
+
+    int lines(0);
+    std::string fileline;
+    while (std::getline(photopeak_filestream, fileline)) {
+        if (lines >= expected_lines) {
+            return(-2);
+        }
+        std::stringstream line_stream(fileline);
+
+        if((line_stream >> gain_spat_read[lines]).fail()) {
+            return(-3);
+        }
+        if((line_stream >> gain_comm_read[lines]).fail()) {
+            return(-4);
+        }
+        lines++;
+    }
+
+    if (expected_lines != lines) {
+        return(-5);
+    }
+
+    resizePCFMArray(this, this->module_configs);
+    int read_idx = 0;
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int f = 0; f < fins_per_cartridge; f++) {
+                for (int m = 0; m < modules_per_fin; m++) {
+                    ModuleConfig & module_config = module_configs[p][c][f][m];
+                    for (int a = 0; a < apds_per_module; a++) {
+                        ApdConfig & apd_config = module_config.apd_configs[a];
+                        apd_config.gain_spat = gain_spat_read[read_idx];
+                        apd_config.gain_comm = gain_comm_read[read_idx];
+                        read_idx++;
+                    }
+                }
+            }
+        }
+    }
+    return(0);
+}
+
+/*!
+ * \brief Write a photopeak position file from the system configuration
+ *
+ * Takes the photopeak positions from the apd configs in the module config array
+ * and writes them to a file.  Each line has two numbers of 1 digit of precision
+ * and fixed (decimal) output.  The columns are:
+ *     - spatial photopeak position
+ *     - common photopeak position
+ * The lines are assumed to be listed in C index order, and indexed by panel,
+ * cartridge, fin, module, psapd.
+ *
+ * \param filename The name of the file to be written.
+ *
+ * \returns
+ *      - 0 if successful
+ *      - -1 if file could not be opened
+ */
+int SystemConfiguration::writePhotopeakPositions(const std::string &filename)
+{
+    std::ofstream pp_output(filename.c_str());
+    if (!pp_output.good()) {
+        return(-1);
+    }
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int f = 0; f < fins_per_cartridge; f++) {
+                for (int m = 0; m < modules_per_fin; m++) {
+                    ModuleConfig & module_config = module_configs[p][c][f][m];
+                    for (int a = 0; a < apds_per_module; a++) {
+                        ApdConfig apd_config = module_config.apd_configs[a];
+                        pp_output << std::fixed << std::setprecision(1)
+                                  << apd_config.gain_spat << " "
+                                  << apd_config.gain_comm << "\n";
+                    }
+                }
+            }
+        }
+    }
+    pp_output.close();
+    return(0);
+}
 
 /*!
  * \brief Load a crystal location file into the system configuration
