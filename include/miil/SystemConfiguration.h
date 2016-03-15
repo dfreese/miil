@@ -203,6 +203,16 @@ struct ModuleChannelConfig {
  */
 struct ApdConfig {
     /*!
+     * The spatial photopeak position of the apd calculated by
+     * get_apd_photopeaks.  Stored here using loadPhotopeakPositions.
+     */
+    float gain_spat;
+    /*!
+     * The common photopeak position of the apd calculated by
+     * get_apd_photopeaks.  Stored here using loadPhotopeakPositions.
+     */
+    float gain_comm;
+    /*!
      * The average common photopeak position over all of the crystals in the
      * module.  Calculated in loadCalibration.
      */
@@ -383,7 +393,9 @@ public:
     int loadPedestals(const std::string & filename);
     int writePedestals(const std::string & filename);
     int loadUVCenters(const std::string & filename);
-    int writeUVCenters(const std::string filename);
+    int writeUVCenters(const std::string &filename);
+    int loadPhotopeakPositions(const std::string & filename);
+    int writePhotopeakPositions(const std::string & filename);
     int loadCrystalLocations(const std::string &filename);
     int loadCalibration(const std::string & filename);
     int writeCalibration(const std::string & filename);
