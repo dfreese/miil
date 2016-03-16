@@ -397,6 +397,7 @@ public:
     int loadPhotopeakPositions(const std::string & filename);
     int writePhotopeakPositions(const std::string & filename);
     int loadCrystalLocations(const std::string &filename);
+    int writeCrystalLocations(const std::string &filename);
     int loadCalibration(const std::string & filename);
     int writeCalibration(const std::string & filename);
     int loadTimeCalibration(const std::string & filename);

@@ -2873,6 +2873,56 @@ int SystemConfiguration::loadCrystalLocations(const std::string &filename) {
 }
 
 /*!
+ * \brief Write a crystal location file from the system configuration
+ *
+ * Writes a crystal location file from the values in the calibration
+ * array's CrystalCalibration objects.  This is a file of lines with the
+ * following columns separated by any number amount of whitespace:
+ *     - Boolean value indicating wether the crystal should be used or not
+ *     - x location of the crystal in the flood histogram
+ *     - y location of the crystal in the flood histogram
+ * The lines are assumed to be listed in C index order, and indexed by panel,
+ * cartridge, fin, module, psapd, crystal.
+ *
+ * \param filename The name of the file to be loaded.
+ *
+ * \return
+ *       - 0 if successful
+ *       - -1 if file could not be opened
+ */
+int SystemConfiguration::writeCrystalLocations(const std::string &filename) {
+    std::ofstream output;
+
+    output.open(filename.c_str());
+    if (!output) {
+        return(-1);
+    }
+
+    for (int p = 0; p < panels_per_system; p++) {
+        for (int c = 0; c < cartridges_per_panel; c++) {
+            for (int f = 0; f < fins_per_cartridge; f++) {
+                for (int m = 0; m < modules_per_fin; m++) {
+                    for (int a = 0; a < apds_per_module; a++) {
+                        for (int x = 0; x < crystals_per_apd; x++) {
+                            const CrystalCalibration & cal =
+                                    calibration[p][c][f][m][a][x];
+                            int use_val = 0;
+                            if (cal.use) {
+                                use_val = 1;
+                            }
+                            output << use_val << " "
+                                   << cal.x_loc << " "
+                                   << cal.y_loc << "\n";
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return(0);
+}
+
+/*!
  * \brief Load a calibration value file into the system configuration
  *
  * Takes a calibration value file and loads the values into the calibration
