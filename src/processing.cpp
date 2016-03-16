@@ -196,6 +196,99 @@ int GetCrystalID(
     return(crystal_id);
 }
 
+
+/*!
+ * \brief Calculates the x, y, and energy for an event
+ *
+ * For use when a full calibration is not necessary, and only some pedestal
+ * corrected processing is needed.
+ *
+ * Places the common channel energy into the event.E
+ *
+ * \param event Where the calibrated event is returned
+ * \param rawevent The non-pedestal corrected event decoded from the bitstream
+ * \param system_config Pointer to the system configuration to be used
+ *
+ * \return
+ *     -  0 on success
+ *     - -1 if the event is below the hit threshold for the module
+ *     - -2 if the other apd is above the double trigger threshold
+ *     - -3 If the conversion from PCDRM to PCFM indexing fails
+ *     - -4 if the pedestals are not loaded
+ */
+int CalculateXYandEnergy(
+        EventCal & event,
+        const EventRaw & rawevent,
+        SystemConfiguration const * const system_config)
+{
+    if (!system_config->pedestalsLoaded()) {
+        return(-4);
+    }
+    int module = 0;
+    int fin = 0;
+    if (system_config->convertPCDRMtoPCFM(rawevent.panel, rawevent.cartridge,
+                                          rawevent.daq, rawevent.rena,
+                                          rawevent.module, fin, module) < 0)
+    {
+      return(-3);
+    }
+
+    const ModulePedestals & module_pedestals =
+            system_config->pedestals[rawevent.panel][rawevent.cartridge]
+                     [rawevent.daq][rawevent.rena][rawevent.module];
+
+    const ModuleChannelConfig & module_config =
+            system_config->module_configs[rawevent.panel][rawevent.cartridge]
+                                           [fin][module].channel_settings;
+
+
+    // Assume APD 0, unless the signal is greater on the APD 1 common channels.
+    // Greater in this case is less than, because the common signals go negative
+    // i.e. start (zero) at roughly 3000 and max out at roughly 1000 or so.
+    int apd = 0;
+    short primary_common = rawevent.com0h - module_pedestals.com0h;
+    short secondary_common = rawevent.com1h - module_pedestals.com1h;
+    if (primary_common > secondary_common) {
+        apd = 1;
+        swap(primary_common, secondary_common);
+    }
+    if (primary_common > module_config.hit_threshold) {
+        return(-1);
+    }
+    if (secondary_common < module_config.double_trigger_threshold) {
+        return(-2);
+    }
+
+    event.ct = rawevent.ct;
+
+    float a = (float) rawevent.a - module_pedestals.a;
+    float b = (float) rawevent.b - module_pedestals.b;
+    float c = (float) rawevent.c - module_pedestals.c;
+    float d = (float) rawevent.d - module_pedestals.d;
+
+
+    event.spat_total = a + b + c + d;
+    event.x = (c + d - (b + a)) / (event.spat_total);
+    event.y = (a + d - (b + c)) / (event.spat_total);
+
+    if (apd == 0) {
+        event.E = module_pedestals.com0 - rawevent.com0;
+    } else if (apd == 1) {
+        event.E = module_pedestals.com1 - rawevent.com1;
+        event.y *= -1;
+    }
+
+    event.panel = rawevent.panel;
+    event.cartridge = rawevent.cartridge;
+    event.fin = fin;
+    event.module = module;
+    event.apd = apd;
+    event.daq = rawevent.daq;
+    event.rena = rawevent.rena;
+
+    return(0);
+}
+
 /*!
  * \brief Calculates the x, y, and energy for an event
  *
@@ -228,54 +321,19 @@ int CalculateXYandEnergy(
         int & module,
         int & fin)
 {
-    if (!system_config->pedestalsLoaded()) {
-        return(-4);
+    EventCal event;
+    int status = CalculateXYandEnergy(event, rawevent, system_config);
+    if (status < 0) {
+        return(status);
     }
+    x = event.x;
+    y = event.y;
+    energy = event.spat_total;
+    apd = event.apd;
+    module = event.module;
+    fin = event.fin;
 
-    if (system_config->convertPCDRMtoPCFM(rawevent.panel, rawevent.cartridge,
-                                          rawevent.daq, rawevent.rena,
-                                          rawevent.module, fin, module) < 0)
-    {
-      return(-3);
-    }
-
-    const ModulePedestals & module_pedestals =
-            system_config->pedestals[rawevent.panel][rawevent.cartridge]
-                     [rawevent.daq][rawevent.rena][rawevent.module];
-
-    const ModuleChannelConfig & module_config =
-            system_config->module_configs[rawevent.panel][rawevent.cartridge]
-                                           [fin][module].channel_settings;
-
-
-    // Assume APD 0, unless the signal is greater on the APD 1 common channels.
-    // Greater in this case is less than, because the common signals go negative
-    // i.e. start (zero) at roughly 3000 and max out at roughly 1000 or so.
-    apd = 0;
-    short primary_common = rawevent.com0h - module_pedestals.com0h;
-    short secondary_common = rawevent.com1h - module_pedestals.com1h;
-    if (primary_common > secondary_common) {
-        apd = 1;
-        swap(primary_common, secondary_common);
-    }
-    if (primary_common > module_config.hit_threshold) {
-        return(-1);
-    }
-    if (secondary_common < module_config.double_trigger_threshold) {
-        return(-2);
-    }
-    float a = (float) rawevent.a - module_pedestals.a;
-    float b = (float) rawevent.b - module_pedestals.b;
-    float c = (float) rawevent.c - module_pedestals.c;
-    float d = (float) rawevent.d - module_pedestals.d;
-
-    energy = a + b + c + d;
-    x = (c + d - (b + a)) / (energy);
-    y = (a + d - (b + c)) / (energy);
-    if (apd == 1) {
-        y *= -1;
-    }
-    return(0);
+    return(status);
 }
 
 /*!
@@ -323,95 +381,37 @@ int CalculateXYandEnergy(
  *     -  0 on success
  *     - -1 if the event is below the hit threshold for the module
  *     - -2 if the other apd is above the double trigger threshold
- *     - -3 if the crystal could not be correctly identified
- *     - -4 if the identified crystal has been marked as invalid
- *     - -5 If the conversion from PCDRM to PCFM indexing fails
+ *     - -3 If the conversion from PCDRM to PCFM indexing fails
+ *     - -4 if the pedestals are not loaded
+ *     - -5 if the crystal could not be correctly identified
+ *     - -6 if the identified crystal has been marked as invalid
  */
 int CalculateID(
         EventCal & event,
         const EventRaw & rawevent,
         SystemConfiguration const * const system_config)
 {
-    int module = 0;
-    int fin = 0;
-    if (system_config->convertPCDRMtoPCFM(rawevent.panel, rawevent.cartridge,
-                                          rawevent.daq, rawevent.rena,
-                                          rawevent.module, fin, module) < 0)
-    {
-      return(-5);
-    }
-
-    const ModulePedestals & module_pedestals =
-            system_config->pedestals[rawevent.panel][rawevent.cartridge]
-                     [rawevent.daq][rawevent.rena][rawevent.module];
-
-    const ModuleChannelConfig & module_config =
-            system_config->module_configs[rawevent.panel][rawevent.cartridge]
-                                           [fin][module].channel_settings;
-
-
-    // Assume APD 0, unless the signal is greater on the APD 1 common channels.
-    // Greater in this case is less than, because the common signals go negative
-    // i.e. start (zero) at roughly 3000 and max out at roughly 1000 or so.
-    int apd = 0;
-    short primary_common = rawevent.com0h - module_pedestals.com0h;
-    short secondary_common = rawevent.com1h - module_pedestals.com1h;
-    if (primary_common > secondary_common) {
-        apd = 1;
-        swap(primary_common, secondary_common);
-    }
-    if (primary_common > module_config.hit_threshold) {
-        return(-1);
-    }
-    if (secondary_common < module_config.double_trigger_threshold) {
-        return(-2);
-    }
-
-    event.ct = rawevent.ct;
-
-    float a = (float) rawevent.a - module_pedestals.a;
-    float b = (float) rawevent.b - module_pedestals.b;
-    float c = (float) rawevent.c - module_pedestals.c;
-    float d = (float) rawevent.d - module_pedestals.d;
-
-
-    event.spat_total = a + b + c + d;
-    event.x = (c + d - (b + a)) / (event.spat_total);
-    event.y = (a + d - (b + c)) / (event.spat_total);
-    if (apd == 1) {
-        event.y *= -1;
+    int status = CalculateXYandEnergy(event, rawevent, system_config);
+    if (status < 0) {
+        return(status);
     }
 
     const std::vector<CrystalCalibration> & apd_cals =
-            system_config->calibration[rawevent.panel][rawevent.cartridge]
-                                      [fin][module][apd];
+            system_config->calibration[event.panel][rawevent.cartridge]
+                                      [event.fin][event.module][event.apd];
 
     int crystal = GetCrystalID(event.x, event.y, apd_cals);
 
     if (crystal < 0) {
-        return(-3);
+        return(-5);
     }
 
     const CrystalCalibration & crystal_cal = apd_cals[crystal];
 
     if (!crystal_cal.use) {
-        return(-4);
+        return(-6);
     }
-
-    event.panel = rawevent.panel;
-    event.cartridge = rawevent.cartridge;
-    event.fin = fin;
-    event.module = module;
-    event.apd = apd;
     event.crystal = crystal;
-    event.daq = rawevent.daq;
-    event.rena = rawevent.rena;
-
-    if (apd == 0) {
-        event.E = rawevent.com0;
-    } else if (apd == 1) {
-        event.E = rawevent.com1;
-    }
 
     return(0);
 }

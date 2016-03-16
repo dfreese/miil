@@ -21,6 +21,11 @@ int RawEventToEventCal(
         SystemConfiguration const * const system_config);
 
 int CalculateXYandEnergy(
+        EventCal & event,
+        const EventRaw & rawevent,
+        SystemConfiguration const * const system_config);
+
+int CalculateXYandEnergy(
         const EventRaw & rawevent,
         SystemConfiguration const * const system_config,
         float & x,

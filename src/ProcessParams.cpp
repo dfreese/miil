@@ -160,9 +160,9 @@ int ProcessParams::IDBuffer(
             info.dropped_threshold++;
         } else if (cal_status == -2) {
             info.dropped_double_trigger++;
-        } else if (cal_status == -3) {
+        } else if (cal_status == -5) {
             info.dropped_crystal_id++;
-        } else if (cal_status == -4) {
+        } else if (cal_status == -6) {
             info.dropped_crystal_invalid++;
         }
     }
