@@ -465,6 +465,8 @@ public:
         return(time_calibration_loaded_flag);
     }
 
+    bool inBoundsPCFMA(int p, int c, int f, int m, int a);
+
     //! The number of panels in the system (should always be 2)
     int panels_per_system;
     //! The number of cartridges in each panel of the system

@@ -3541,3 +3541,16 @@ int SystemConfiguration::createChannelMap() {
     }
     return(0);
 }
+
+bool SystemConfiguration::inBoundsPCFMA(int p, int c, int f, int m, int a)
+{
+    if (p < 0 || p >= panels_per_system ||
+            c < 0 || c >= cartridges_per_panel ||
+            f < 0 || f >= fins_per_cartridge ||
+            m < 0 || m >= modules_per_fin ||
+            a < 0 || a >= apds_per_module)
+    {
+        return(false);
+    }
+    return(true);
+}
