@@ -23,7 +23,9 @@ int RawEventToEventCal(
 int CalculateXYandEnergy(
         EventCal & event,
         const EventRaw & rawevent,
-        SystemConfiguration const * const system_config);
+        SystemConfiguration const * const system_config,
+        bool reject_threshold = true,
+        bool reject_double = true);
 
 int CalculateXYandEnergy(
         const EventRaw & rawevent,
@@ -33,7 +35,9 @@ int CalculateXYandEnergy(
         float & energy,
         int & apd,
         int & module,
-        int &fin);
+        int &fin,
+        bool reject_threshold = true,
+        bool reject_double = true);
 
 int CalculateID(
         EventCal & calevent,
@@ -46,14 +50,18 @@ int CalculateXYandEnergy(
         float & x,
         float & y,
         float & energy,
-        int & apd);
+        int & apd,
+        bool reject_threshold = true,
+        bool reject_double = true);
 
 int CalculateXYandEnergy(
         const EventRaw & rawevent,
         SystemConfiguration const * const system_config,
         float & x,
         float & y,
-        float & energy);
+        float & energy,
+        bool reject_threshold = true,
+        bool reject_double = true);
 
 bool InEnergyWindow(const EventCal & event, float low, float high);
 

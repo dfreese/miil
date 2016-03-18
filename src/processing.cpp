@@ -208,29 +208,29 @@ int GetCrystalID(
  * \param event Where the calibrated event is returned
  * \param rawevent The non-pedestal corrected event decoded from the bitstream
  * \param system_config Pointer to the system configuration to be used
+ * \param reject_threshold Boolean flag to reject events below threshold
+ * \param reject_double bool flag to reject double trigger events
  *
  * \return
  *     -  0 on success
  *     - -1 if the event is below the hit threshold for the module
  *     - -2 if the other apd is above the double trigger threshold
- *     - -3 If the conversion from PCDRM to PCFM indexing fails
- *     - -4 if the pedestals are not loaded
+ *     - -5 If the conversion from PCDRM to PCFM indexing fails
  */
 int CalculateXYandEnergy(
         EventCal & event,
         const EventRaw & rawevent,
-        SystemConfiguration const * const system_config)
+        SystemConfiguration const * const system_config,
+        bool reject_threshold,
+        bool reject_double)
 {
-    if (!system_config->pedestalsLoaded()) {
-        return(-4);
-    }
     int module = 0;
     int fin = 0;
     if (system_config->convertPCDRMtoPCFM(rawevent.panel, rawevent.cartridge,
                                           rawevent.daq, rawevent.rena,
                                           rawevent.module, fin, module) < 0)
     {
-      return(-3);
+      return(-5);
     }
 
     const ModulePedestals & module_pedestals =
@@ -252,10 +252,12 @@ int CalculateXYandEnergy(
         apd = 1;
         swap(primary_common, secondary_common);
     }
-    if (primary_common > module_config.hit_threshold) {
+    if (reject_threshold & (primary_common > module_config.hit_threshold)) {
         return(-1);
     }
-    if (secondary_common < module_config.double_trigger_threshold) {
+    if (reject_double &
+            (secondary_common < module_config.double_trigger_threshold))
+    {
         return(-2);
     }
 
@@ -308,8 +310,7 @@ int CalculateXYandEnergy(
  *     -  0 on success
  *     - -1 if the event is below the hit threshold for the module
  *     - -2 if the other apd is above the double trigger threshold
- *     - -3 if the conversion from PCDRM to PCFM indexing fails
- *     - -4 if the pedestals are not loaded
+ *     - -5 If the conversion from PCDRM to PCFM indexing fails
  */
 int CalculateXYandEnergy(
         const EventRaw & rawevent,
@@ -319,13 +320,15 @@ int CalculateXYandEnergy(
         float & energy,
         int & apd,
         int & module,
-        int & fin)
+        int & fin,
+        bool reject_threshold,
+        bool reject_double)
 {
     EventCal event;
-    int status = CalculateXYandEnergy(event, rawevent, system_config);
-    if (status < 0) {
-        return(status);
-    }
+    int status = CalculateXYandEnergy(
+                event, rawevent, system_config,
+                reject_threshold, reject_double);
+
     x = event.x;
     y = event.y;
     energy = event.spat_total;
@@ -345,11 +348,14 @@ int CalculateXYandEnergy(
         float & x,
         float & y,
         float & energy,
-        int & apd)
+        int & apd,
+        bool reject_threshold,
+        bool reject_double)
 {
     int module, fin;
     return(CalculateXYandEnergy(
-               rawevent, system_config, x, y, energy, apd, module, fin));
+               rawevent, system_config, x, y, energy, apd, module, fin,
+               reject_threshold, reject_double));
 }
 
 /*!
@@ -361,11 +367,14 @@ int CalculateXYandEnergy(
         SystemConfiguration const * const system_config,
         float & x,
         float & y,
-        float & energy)
+        float & energy,
+        bool reject_threshold,
+        bool reject_double)
 {
     int apd, module, fin;
     return(CalculateXYandEnergy(
-               rawevent, system_config, x, y, energy, apd, module, fin));
+               rawevent, system_config, x, y, energy, apd, module, fin,
+               reject_threshold, reject_double));
 }
 
 /*!
@@ -381,10 +390,9 @@ int CalculateXYandEnergy(
  *     -  0 on success
  *     - -1 if the event is below the hit threshold for the module
  *     - -2 if the other apd is above the double trigger threshold
- *     - -3 If the conversion from PCDRM to PCFM indexing fails
- *     - -4 if the pedestals are not loaded
- *     - -5 if the crystal could not be correctly identified
- *     - -6 if the identified crystal has been marked as invalid
+ *     - -3 if the crystal could not be correctly identified
+ *     - -4 if the identified crystal has been marked as invalid
+ *     - -5 If the conversion from PCDRM to PCFM indexing fails
  */
 int CalculateID(
         EventCal & event,
@@ -403,13 +411,13 @@ int CalculateID(
     int crystal = GetCrystalID(event.x, event.y, apd_cals);
 
     if (crystal < 0) {
-        return(-5);
+        return(-3);
     }
 
     const CrystalCalibration & crystal_cal = apd_cals[crystal];
 
     if (!crystal_cal.use) {
-        return(-6);
+        return(-4);
     }
     event.crystal = crystal;
 
