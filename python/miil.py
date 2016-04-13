@@ -25,6 +25,11 @@ uv_dtype = np.dtype([
         ('u', float),
         ('v', float)])
 
+loc_dtype = np.dtype([
+        ('use', bool),
+        ('x', float),
+        ('y', float)])
+
 cal_dtype = np.dtype([
         ('use', bool),
         ('x', float),
@@ -167,8 +172,17 @@ def load_coinc_filelist(filename, count = -1):
 def load_pedestals(filename):
     return np.loadtxt(filename, dtype=ped_dtype)
 
+def load_locations(filename):
+    return np.loadtxt(filename, dtype=loc_dtype)
+
+def write_locations(cal, filename):
+    return np.savetxt(filename, cal, '%d %0.6f %0.6f')
+
 def load_calibration(filename):
     return np.loadtxt(filename, dtype=cal_dtype)
+
+def write_calibration(cal, filename):
+    return np.savetxt(filename, cal, '%d %0.6f %0.6f %0.0f %0.0f %0.4f %0.4f')
 
 def load_time_calibration(filename):
     return np.loadtxt(filename, dtype=tcal_dtype)
@@ -185,7 +199,7 @@ def load_system_shape_pcfmax(filename):
     return system_shape
 
 # For Calibrated Events
-def get_global_cartridge_numbers(events, system_shape):
+def get_global_cartridge_number(events, system_shape):
     global_cartridge = events['cartridge'].astype(int) + \
                        system_shape[1] * events['panel'].astype(int)
     return global_cartridge
