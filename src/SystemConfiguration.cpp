@@ -3137,16 +3137,16 @@ int SystemConfiguration::writeCalibration(const std::string & filename) {
                             CrystalCalibration & crystal_cal =
                                     calibration[p][c][f][m][a][x];
                             if (crystal_cal.use) {
-                                output << "1 "
-                                       << crystal_cal.x_loc << " "
-                                       << crystal_cal.y_loc << " "
-                                       << crystal_cal.gain_spat << " "
-                                       << crystal_cal.gain_comm << " "
-                                       << crystal_cal.eres_spat << " "
-                                       << crystal_cal.eres_comm << "\n";
+                                output << "1 ";
                             } else {
-                                output << "0 0 0 0 0 0 0\n";
+                                output << "0 ";
                             }
+                            output << crystal_cal.x_loc << " "
+                                   << crystal_cal.y_loc << " "
+                                   << crystal_cal.gain_spat << " "
+                                   << crystal_cal.gain_comm << " "
+                                   << crystal_cal.eres_spat << " "
+                                   << crystal_cal.eres_comm << "\n";
 
                         }
                     }
