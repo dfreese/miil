@@ -259,8 +259,6 @@ def get_global_crystal_numbers(events, system_shape):
 def get_global_lor_number(events, system_shape):
     global_crystal0, global_crystal1 = \
             get_global_crystal_numbers(events, system_shape)
-    global_crystal0 = events['crystal0'] + system_shape[5] * global_apd0
-    global_crystal1 = events['crystal1'] + system_shape[5] * global_apd1
     no_crystals_per_panel = np.prod(system_shape[1:])
 
     return (global_crystal0 * no_crystals_per_panel) + \
