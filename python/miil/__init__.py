@@ -256,6 +256,16 @@ def get_global_crystal_numbers(events, system_shape):
     global_crystal1 = events['crystal1'] + system_shape[5] * global_apd1
     return global_crystal0, global_crystal1
 
+def get_global_lor_number(events, system_shape):
+    global_crystal0, global_crystal1 = \
+            get_global_crystal_numbers(events, system_shape)
+    global_crystal0 = events['crystal0'] + system_shape[5] * global_apd0
+    global_crystal1 = events['crystal1'] + system_shape[5] * global_apd1
+    no_crystals_per_panel = np.prod(system_shape[1:])
+
+    return (global_crystal0 * no_crystals_per_panel) + \
+           (global_crystal1 - no_crystals_per_panel)
+
 def tcal_coinc_events(events, tcal, system_shape = [2, 3, 8, 16, 2, 64]):
     idx0, idx1 = get_global_crystal_numbers(events, system_shape)
     ft0_offset = tcal['offset'][idx0] + \
@@ -269,6 +279,93 @@ def tcal_coinc_events(events, tcal, system_shape = [2, 3, 8, 16, 2, 64]):
     cal_events['dtf'] -= ft0_offset
     cal_events['dtf'] += ft1_offset
     return cal_events
+
+def force_array(x, dtype=None):
+    if np.isscalar(x):
+        x = (x,)
+    return np.asarray(x, dtype=dtype)
+
+def get_position_pcfmax(
+        panel, cartridge, fin, module, apd, crystal,
+        system_shape = [2, 3, 8, 16, 2, 64],
+        panel_sep = 64.262,
+        x_crystal_pitch = 1.0,
+        y_crystal_pitch = 1.0,
+        x_module_pitch = 0.405 * 25.4,
+        y_apd_pitch = (0.32 + 0.079) * 25.4,
+        y_apd_offset = 1.51,
+        z_pitch = 0.0565 * 25.4):
+
+    panel = force_array(panel, dtype = float)
+    cartridge = force_array(cartridge, dtype = float)
+    fin = force_array(fin, dtype = float)
+    module = force_array(module, dtype = float)
+    apd = force_array(apd, dtype = float)
+    crystal = force_array(crystal, dtype = float)
+
+    if np.any(panel >= system_shape[0]):
+        raise ValueError('panel value out of range')
+    if np.any(cartridge >= system_shape[1]):
+        raise ValueError('cartridge value out of range')
+    if np.any(fin >= system_shape[2]):
+        raise ValueError('fin value out of range')
+    if np.any(module >= system_shape[3]):
+        raise ValueError('module value out of range')
+    if np.any(apd >= system_shape[4]):
+        raise ValueError('apd value out of range')
+    if np.any(crystal >= system_shape[5]):
+        raise ValueError('crystal value out of range')
+
+    positions = np.zeros((len(panel), 3), dtype=float)
+
+    positions[:, 0] = (x_module_pitch - 8 * x_crystal_pitch) / 2 + \
+        (module - 8) * x_module_pitch
+
+    positions[panel == 0, 0] += x_crystal_pitch * \
+            ((crystal[panel == 0] // 8) + 0.5)
+
+    positions[panel == 1, 0] += x_crystal_pitch * \
+            (7 - (crystal[panel == 1] // 8) +
+             0.5)
+
+    positions[:, 1] = panel_sep / 2.0 + y_apd_offset + \
+        apd * y_apd_pitch + \
+        (7 - crystal % 8 + 0.5) * y_crystal_pitch
+
+    positions[:, 2] = z_pitch * (0.5 + fin +
+            system_shape[2] * (cartridge - system_shape[1] / 2.0))
+
+    positions[panel == 0, 1] *= -1
+
+    return positions
+
+def get_position_global_crystal(
+        global_crystal_ids,
+        system_shape = [2, 3, 8, 16, 2, 64],
+        panel_sep = 64.262,
+        x_crystal_pitch = 1.0,
+        y_crystal_pitch = 1.0,
+        x_module_pitch = 0.405 * 25.4,
+        y_apd_pitch = (0.32 + 0.079) * 25.4,
+        y_apd_offset = 1.51,
+        z_pitch = 0.0565 * 25.4):
+    if np.isscalar(global_crystal_ids):
+        global_crystal_ids = (global_crystal_ids,)
+    global_crystal_ids = np.asarray(global_crystal_ids, dtype=float)
+
+    if np.any(global_crystal_ids >= np.prod(system_shape)):
+        raise ValueError('One or more crystal ids are out of range')
+
+    panel = global_crystal_ids // np.prod(system_shape[1:])
+    cartridge = global_crystal_ids // np.prod(system_shape[2:]) % system_shape[1]
+    fin = global_crystal_ids // np.prod(system_shape[3:]) % system_shape[2]
+    module = global_crystal_ids // np.prod(system_shape[4:]) % system_shape[3]
+    apd = global_crystal_ids // np.prod(system_shape[5:]) % system_shape[4]
+    crystal = global_crystal_ids % system_shape[5]
+
+    return get_position_pcfmax(panel, cartridge, fin, module, apd, crystal,
+            system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,
+            x_module_pitch, y_apd_pitch, y_apd_offset, z_pitch)
 
 def get_positions_cal(
         events,
@@ -383,6 +480,15 @@ def correct_resets(data, threshold=1.0e3):
     data['ct'][data['ct'] < -threshold] = 1
     data['ct'] = np.cumsum(data['ct'])
     return data
+
+def save_sparse_csc(filename,array):
+    np.savez(filename,data = array.data ,indices=array.indices,
+             indptr =array.indptr, shape=array.shape )
+
+def load_sparse_csc(filename):
+    loader = np.load(filename)
+    return csc_matrix((loader['data'], loader['indices'], loader['indptr']),
+                      shape = loader['shape'])
 
 def main():
     return
