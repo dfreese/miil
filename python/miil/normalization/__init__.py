@@ -131,7 +131,7 @@ def atten_corr_crystal_pair(
         atten_coef = None):
     line_start = miil.get_position_global_crystal(crystal0)
     line_end = miil.get_position_global_crystal(crystal1)
-    return atten_corr_lines(line_start, line_end, line_weight
+    return atten_corr_lines(line_start, line_end, line_weight,
             fov_center, fov_size, atten_coef)
 
 def atten_corr_lor(
