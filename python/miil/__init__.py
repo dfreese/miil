@@ -1,5 +1,15 @@
 import numpy as np
 import json
+from scipy.sparse import csc_matrix
+
+default_system_shape = [2, 3, 8, 16, 2, 64]
+default_panel_sep = 64.262
+default_x_crystal_pitch = 1.0
+default_y_crystal_pitch = 1.0
+default_x_module_pitch = 0.405 * 25.4
+default_y_apd_pitch = (0.32 + 0.079) * 25.4
+default_y_apd_offset = 1.51
+default_z_pitch = 0.0565 * 25.4
 
 ped_dtype = np.dtype([
         ('name', 'S32'),
@@ -128,6 +138,19 @@ cudarecon_type0_dtype = np.dtype([
         ('z1', np.float32),
         ('tof_scatter_est', np.float32),
         ('scatter_est', np.float32)],
+        align=True)
+
+cudarecon_type1_dtype = np.dtype([
+        ('x0', np.float32),
+        ('y0', np.float32),
+        ('z0', np.float32),
+        ('weight', np.float32),
+        ('e0', np.float32), # Appears to be unused
+        ('x1', np.float32),
+        ('y1', np.float32),
+        ('z1', np.float32),
+        ('weight1', np.float32), # Appears to be unused
+        ('e1', np.float32)], # Appears to be unused
         align=True)
 
 def load_decoded(filename, count = -1):
@@ -264,6 +287,23 @@ def get_global_lor_number(events, system_shape):
     return (global_crystal0 * no_crystals_per_panel) + \
            (global_crystal1 - no_crystals_per_panel)
 
+def get_crystals_from_lor(lors, system_shape):
+    crystal0 = lors // np.prod(system_shape[1:])
+    crystal1 = lors % np.prod(system_shape[1:]) + np.prod(system_shape[1:])
+    return crystal0, crystal1
+
+def get_apds_from_lor(lors, system_shape):
+    crystal0, crystal1 = get_crystals_from_lor(lors, system_shape)
+    apd0 = crystal0 // system_shape[5]
+    apd1 = crystal1 // system_shape[5]
+    return apd0, apd1
+
+def get_modules_from_lor(lors, system_shape):
+    apd0, apd1 = get_apds_from_lor(lors, system_shape)
+    module0 = apd0 // system_shape[4]
+    module1 = apd1 // system_shape[4]
+    return module0, module1
+
 def tcal_coinc_events(events, tcal, system_shape = [2, 3, 8, 16, 2, 64]):
     idx0, idx1 = get_global_crystal_numbers(events, system_shape)
     ft0_offset = tcal['offset'][idx0] + \
@@ -339,14 +379,14 @@ def get_position_pcfmax(
 
 def get_position_global_crystal(
         global_crystal_ids,
-        system_shape = [2, 3, 8, 16, 2, 64],
-        panel_sep = 64.262,
-        x_crystal_pitch = 1.0,
-        y_crystal_pitch = 1.0,
-        x_module_pitch = 0.405 * 25.4,
-        y_apd_pitch = (0.32 + 0.079) * 25.4,
-        y_apd_offset = 1.51,
-        z_pitch = 0.0565 * 25.4):
+        system_shape = default_system_shape,
+        panel_sep = default_panel_sep,
+        x_crystal_pitch = default_x_crystal_pitch,
+        y_crystal_pitch = default_y_crystal_pitch,
+        x_module_pitch = default_x_module_pitch,
+        y_apd_pitch = default_y_apd_pitch,
+        y_apd_offset = default_y_apd_offset,
+        z_pitch = default_z_pitch):
     if np.isscalar(global_crystal_ids):
         global_crystal_ids = (global_crystal_ids,)
     global_crystal_ids = np.asarray(global_crystal_ids, dtype=float)
@@ -367,103 +407,98 @@ def get_position_global_crystal(
 
 def get_positions_cal(
         events,
-        system_shape = [2, 3, 8, 16, 2, 64],
-        panel_sep = 64.262,
-        x_crystal_pitch = 1.0,
-        y_crystal_pitch = 1.0,
-        x_module_pitch = 0.405 * 25.4,
-        y_apd_pitch = (0.32 + 0.079) * 25.4,
-        y_apd_offset = 1.51,
-        z_pitch = 0.0565 * 25.4):
-
-
-    x = (x_module_pitch - 8 * x_crystal_pitch) / 2 + \
-        (events['module'].astype(float) - 8) * x_module_pitch
-
-    x[events['panel'] == 0] += x_crystal_pitch * \
-            ((events['crystal'][events['panel'] == 0].astype(float) // 8) + 0.5)
-
-    x[events['panel'] == 1] += x_crystal_pitch * \
-            (7 - (events['crystal'][events['panel'] == 1].astype(float) // 8) +
-             0.5)
-
-    y = panel_sep / 2.0 + y_apd_offset + \
-        events['apd'].astype(float) * y_apd_pitch + \
-        (7 - events['crystal'].astype(float) % 8 + 0.5) * y_crystal_pitch
-
-    z = z_pitch * (0.5 + events['fin'].astype(float) +
-                    system_shape[2] * (events['cartridge'].astype(float) -
-                                       system_shape[1] / 2.0))
-
-    y[events['panel'] == 0] *= -1
-
-    return x, y, z
+        system_shape = default_system_shape,
+        panel_sep = default_panel_sep,
+        x_crystal_pitch = default_x_crystal_pitch,
+        y_crystal_pitch = default_y_crystal_pitch,
+        x_module_pitch = default_x_module_pitch,
+        y_apd_pitch = default_y_apd_pitch,
+        y_apd_offset = default_y_apd_offset,
+        z_pitch = default_z_pitch):
+    pos = get_position_pcfmax(
+            events['panel'], events['cartridge'], events['fin'],
+            events['module'], events['apd'], events['crystal'],
+            system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,
+            x_module_pitch, y_apd_pitch, y_apd_offset, z_pitch)
+    return pos
 
 def get_crystal_pos(
         events,
-        system_shape = [2, 3, 8, 16, 2, 64],
-        panel_sep = 64.262,
-        x_crystal_pitch = 1.0,
-        y_crystal_pitch = 1.0,
-        x_module_pitch = 0.405 * 25.4,
-        y_apd_pitch = (0.32 + 0.079) * 25.4,
-        y_apd_offset = 1.51,
-        z_pitch = 0.0565 * 25.4):
+        system_shape = default_system_shape,
+        panel_sep = default_panel_sep,
+        x_crystal_pitch = default_x_crystal_pitch,
+        y_crystal_pitch = default_y_crystal_pitch,
+        x_module_pitch = default_x_module_pitch,
+        y_apd_pitch = default_y_apd_pitch,
+        y_apd_offset = default_y_apd_offset,
+        z_pitch = default_z_pitch):
 
-    x0 = (x_module_pitch - 8 * x_crystal_pitch) / 2 + \
-         (events['module0'].astype(float) - 8) * x_module_pitch + \
-         ((events['crystal0'].astype(float) // 8) + 0.5) * x_crystal_pitch
+    pos0 = get_position_pcfmax(
+            0, events['cartridge0'], events['fin0'],
+            events['module0'], events['apd0'], events['crystal0'],
+            system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,
+            x_module_pitch, y_apd_pitch, y_apd_offset, z_pitch)
 
-    x1 = (x_module_pitch - 8 * x_crystal_pitch) / 2 + \
-         (events['module1'].astype(float) - 8) * x_module_pitch + \
-         (7 - (events['crystal1'].astype(float) // 8) + 0.5) * x_crystal_pitch
+    pos1 = get_position_pcfmax(
+            1, events['cartridge1'], events['fin1'],
+            events['module1'], events['apd1'], events['crystal1'],
+            system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,
+            x_module_pitch, y_apd_pitch, y_apd_offset, z_pitch)
 
-    y0 = - panel_sep / 2.0 - y_apd_offset - \
-         events['apd0'].astype(float) * y_apd_pitch - \
-         (7 - events['crystal0'].astype(float) % 8 + 0.5) * y_crystal_pitch
-
-    y1 = panel_sep / 2.0 + y_apd_offset + \
-         events['apd1'].astype(float) * y_apd_pitch + \
-         (7 - events['crystal1'].astype(float) % 8 + 0.5) * y_crystal_pitch
-
-    z0 = z_pitch * (0.5 + events['fin0'].astype(float) +
-                    system_shape[2] * (events['cartridge0'].astype(float) -
-                                       system_shape[1] / 2.0))
-
-    z1 = z_pitch * (0.5 + events['fin1'].astype(float) +
-                    system_shape[2] * (events['cartridge1'].astype(float) -
-                                       system_shape[1] / 2.0))
-    return x0, x1, y0, y1, z0, z1
+    return pos0, pos1
 
 def create_listmode_data(
         events,
-        system_shape = None,
-        panel_sep = None):
+        system_shape = default_system_shape,
+        panel_sep = default_panel_sep):
     lm_data = np.zeros(events.shape, dtype=cudarecon_type0_dtype)
-    if system_shape and panel_sep:
-        lm_data['x0'], lm_data['x1'], \
-                lm_data['y0'], lm_data['y1'],\
-                lm_data['z0'], lm_data['z1'] = \
-                get_crystal_pos(
-                        events,
-                        system_shape=system_shape,
-                        panel_sep=panel_sep)
-    elif panel_sep:
-        lm_data['x0'], lm_data['x1'], \
-                lm_data['y0'], lm_data['y1'],\
-                lm_data['z0'], lm_data['z1'] = \
-                get_crystal_pos(events, panel_sep=panel_sep)
-    elif system_shape:
-        lm_data['x0'], lm_data['x1'], \
-                lm_data['y0'], lm_data['y1'],\
-                lm_data['z0'], lm_data['z1'] = \
-                get_crystal_pos(events, system_shape=system_shape)
-    else:
-        lm_data['x0'], lm_data['x1'], \
-                lm_data['y0'], lm_data['y1'],\
-                lm_data['z0'], lm_data['z1'] = \
-                get_crystal_pos(events)
+    pos0, pos1 = get_crystal_pos(
+            events, system_shape=system_shape, panel_sep=panel_sep)
+    lm_data['x0'] = pos0[:, 0].copy()
+    lm_data['x0'] = pos0[:, 1].copy()
+    lm_data['x0'] = pos0[:, 2].copy()
+    lm_data['x1'] = pos1[:, 0].copy()
+    lm_data['y1'] = pos1[:, 1].copy()
+    lm_data['z1'] = pos1[:, 2].copy()
     return lm_data
+
+def create_listmode_from_vec(
+        vec, panel_sep = default_panel_sep,
+        system_shape = default_system_shape):
+    lm_data = np.zeros((vec.nnz,), dtype=cudarecon_type1_dtype)
+
+    crystal0, crystal1 = get_crystals_from_lor(vec.indices, system_shape)
+    line_start, line_end = get_lor_positions(vec.indices, system_shape)
+
+    lm_data['x0'] = line_start[:, 0].copy()
+    lm_data['y0'] = line_start[:, 1].copy()
+    lm_data['z0'] = line_start[:, 2].copy()
+
+    lm_data['x1'] = line_end[:, 0].copy()
+    lm_data['y1'] = line_end[:, 1].copy()
+    lm_data['z1'] = line_end[:, 2].copy()
+
+    lm_data['weight'] = vec.data.copy()
+    return lm_data
+
+def get_lor_positions(
+        lors,
+        system_shape = default_system_shape,
+        panel_sep = default_panel_sep,
+        x_crystal_pitch = default_x_crystal_pitch,
+        y_crystal_pitch = default_y_crystal_pitch,
+        x_module_pitch = default_x_module_pitch,
+        y_apd_pitch = default_y_apd_pitch,
+        y_apd_offset = default_y_apd_offset,
+        z_pitch = default_z_pitch):
+    crystal0, crystal1 = get_crystals_from_lor(lors, system_shape)
+    line_start = get_position_global_crystal(
+            crystal0, system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,
+            x_module_pitch, y_apd_pitch, y_apd_offset, z_pitch)
+    line_end = get_position_global_crystal(
+            crystal1, system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,
+            x_module_pitch, y_apd_pitch, y_apd_offset, z_pitch)
+    return line_start, line_end
 
 def save_binary(data, filename):
     fid = open(filename, 'wb')
@@ -487,6 +522,15 @@ def load_sparse_csc(filename):
     loader = np.load(filename)
     return csc_matrix((loader['data'], loader['indices'], loader['indptr']),
                       shape = loader['shape'])
+
+def create_sparse_column_vector(data, size=None):
+    shape = None
+    if size is not None:
+        shape=(int(size), 1)
+    data.sort()
+    return csc_matrix((np.ones((len(data),), dtype=float),
+                       (data.astype(int), np.zeros((len(data),), dtype=int))
+                      ), shape=shape)
 
 def main():
     return
