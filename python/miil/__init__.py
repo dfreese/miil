@@ -153,6 +153,42 @@ cudarecon_type1_dtype = np.dtype([
         ('e1', np.float32)], # Appears to be unused
         align=True)
 
+cuda_vox_file_header_dtype = np.dtype([
+        ('magic_number', np.int32),
+        ('version_number', np.int32),
+        ('size', np.int32, (3,))],
+        align=True)
+
+def load_cuda_vox(filename, return_header=False):
+    fid = open(filename, 'rb')
+    header = np.fromfile(fid, dtype=cuda_vox_file_header_dtype, count=1)[0]
+    image = np.fromfile(fid, dtype=np.float32)
+    fid.close()
+    image = np.reshape(image, (header['size'][0],
+            header['size'][2], header['size'][1]))
+    image = np.swapaxes(image, 1, 2)
+    if return_header:
+        return image, header
+    else:
+        return image
+
+def write_cuda_vox(image, filename, magic_number=65531, version_number=1):
+    header = np.zeros((1,), dtype=cuda_vox_file_header_dtype)
+    header['magic_number'] = magic_number
+    header['version_number'] = version_number
+    header['size'] = image.shape
+    with open(filename, 'wb') as fid:
+        header.tofile(fid)
+        image.swapaxes(1,2).tofile(fid)
+
+def load_amide(filename, size):
+    size_zyx = (size[2], size[1], size[0])
+    return np.fromfile(filename,
+            dtype=np.float32).reshape(size[::-1]).swapaxes(0,2)
+
+def write_amide(image, filename):
+    image.swapaxes(0,2).tofile(filename)
+
 def load_decoded(filename, count = -1):
     fid = open(filename, 'rb')
     data = np.fromfile(fid, dtype=eventraw_dtype, count=count)
@@ -501,9 +537,7 @@ def get_lor_positions(
     return line_start, line_end
 
 def save_binary(data, filename):
-    fid = open(filename, 'wb')
-    data.tofile(fid)
-    fid.close()
+    data.tofile(filename, fid)
     return
 
 def correct_resets(data, threshold=1.0e3):
