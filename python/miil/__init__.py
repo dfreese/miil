@@ -140,6 +140,15 @@ cudarecon_type0_dtype = np.dtype([
         ('scatter_est', np.float32)],
         align=True)
 
+cudarecon_type0_vec_dtype = np.dtype([
+        ('pos0', np.float32, (3,)),
+        ('dt', np.float32),
+        ('randoms_est', np.float32),
+        ('pos1', np.float32, (3,)),
+        ('tof_scatter_est', np.float32),
+        ('scatter_est', np.float32)],
+        align=True)
+
 cudarecon_type1_dtype = np.dtype([
         ('x0', np.float32),
         ('y0', np.float32),
@@ -151,6 +160,15 @@ cudarecon_type1_dtype = np.dtype([
         ('z1', np.float32),
         ('weight1', np.float32), # Appears to be unused
         ('e1', np.float32)], # Appears to be unused
+        align=True)
+
+cudarecon_type1_vec_dtype = np.dtype([
+        ('pos0', np.float32, (3,)),
+        ('weight', np.float32),
+        ('e0', np.float32),  # Appears to be unused
+        ('pos1', np.float32, (3,)),
+        ('weight1', np.float32),  # Appears to be unused
+        ('e1', np.float32)],  # Appears to be unused
         align=True)
 
 cuda_vox_file_header_dtype = np.dtype([
@@ -361,14 +379,14 @@ def force_array(x, dtype=None):
 
 def get_position_pcfmax(
         panel, cartridge, fin, module, apd, crystal,
-        system_shape = [2, 3, 8, 16, 2, 64],
-        panel_sep = 64.262,
-        x_crystal_pitch = 1.0,
-        y_crystal_pitch = 1.0,
-        x_module_pitch = 0.405 * 25.4,
-        y_apd_pitch = (0.32 + 0.079) * 25.4,
-        y_apd_offset = 1.51,
-        z_pitch = 0.0565 * 25.4):
+        system_shape = default_system_shape,
+        panel_sep = default_panel_sep,
+        x_crystal_pitch = default_x_crystal_pitch,
+        y_crystal_pitch = default_y_crystal_pitch,
+        x_module_pitch = default_x_module_pitch,
+        y_apd_pitch = default_y_apd_pitch,
+        y_apd_offset = default_y_apd_offset,
+        z_pitch = default_z_pitch):
 
     panel = force_array(panel, dtype = float)
     cartridge = force_array(cartridge, dtype = float)
@@ -487,33 +505,20 @@ def create_listmode_data(
         events,
         system_shape = default_system_shape,
         panel_sep = default_panel_sep):
-    lm_data = np.zeros(events.shape, dtype=cudarecon_type0_dtype)
-    pos0, pos1 = get_crystal_pos(
+    lm_data = np.zeros(events.shape, dtype=cudarecon_type0_vec_dtype)
+    lm_data['pos0'], lm_data['pos1'] = get_crystal_pos(
             events, system_shape=system_shape, panel_sep=panel_sep)
-    lm_data['x0'] = pos0[:, 0].copy()
-    lm_data['x0'] = pos0[:, 1].copy()
-    lm_data['x0'] = pos0[:, 2].copy()
-    lm_data['x1'] = pos1[:, 0].copy()
-    lm_data['y1'] = pos1[:, 1].copy()
-    lm_data['z1'] = pos1[:, 2].copy()
     return lm_data
 
 def create_listmode_from_vec(
         vec, panel_sep = default_panel_sep,
         system_shape = default_system_shape):
-    lm_data = np.zeros((vec.nnz,), dtype=cudarecon_type1_dtype)
+
+    lm_data = np.zeros((vec.nnz,), dtype=cudarecon_type1_vec_dtype)
 
     crystal0, crystal1 = get_crystals_from_lor(vec.indices, system_shape)
-    line_start, line_end = get_lor_positions(vec.indices, system_shape)
-
-    lm_data['x0'] = line_start[:, 0].copy()
-    lm_data['y0'] = line_start[:, 1].copy()
-    lm_data['z0'] = line_start[:, 2].copy()
-
-    lm_data['x1'] = line_end[:, 0].copy()
-    lm_data['y1'] = line_end[:, 1].copy()
-    lm_data['z1'] = line_end[:, 2].copy()
-
+    lm_data['pos0'], lm_data['pos1'] = get_lor_positions(vec.indices,
+                                                         system_shape)
     lm_data['weight'] = vec.data.copy()
     return lm_data
 
@@ -535,10 +540,6 @@ def get_lor_positions(
             crystal1, system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,
             x_module_pitch, y_apd_pitch, y_apd_offset, z_pitch)
     return line_start, line_end
-
-def save_binary(data, filename):
-    data.tofile(filename, fid)
-    return
 
 def correct_resets(data, threshold=1.0e3):
     data['ct'][1:] = np.diff(data['ct'])
