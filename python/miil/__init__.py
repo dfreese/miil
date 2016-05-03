@@ -488,13 +488,13 @@ def get_crystal_pos(
         z_pitch = default_z_pitch):
 
     pos0 = get_position_pcfmax(
-            0, events['cartridge0'], events['fin0'],
+            np.zeros(events.shape), events['cartridge0'], events['fin0'],
             events['module0'], events['apd0'], events['crystal0'],
             system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,
             x_module_pitch, y_apd_pitch, y_apd_offset, z_pitch)
 
     pos1 = get_position_pcfmax(
-            1, events['cartridge1'], events['fin1'],
+            np.ones(events.shape), events['cartridge1'], events['fin1'],
             events['module1'], events['apd1'], events['crystal1'],
             system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,
             x_module_pitch, y_apd_pitch, y_apd_offset, z_pitch)
