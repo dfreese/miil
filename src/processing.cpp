@@ -196,7 +196,6 @@ int GetCrystalID(
     return(crystal_id);
 }
 
-
 /*!
  * \brief Calculates the x, y, and energy for an event
  *
@@ -421,6 +420,56 @@ int CalculateID(
     }
     event.crystal = crystal;
 
+    return(0);
+}
+
+/*!
+ * \brief Pedestal Corrects a raw event
+ *
+ * Subtracts out the pedestals from the EventRaw event and does nothing further
+ *
+ * \param event The non-pedestal corrected event decoded from the bitstream
+ * \param system_config Pointer to the system configuration to be used
+ * \param correct_uv bool flag to correct the uv circles or not
+ *
+ * \return
+ *     -  0 on success
+ *     - -5 If the conversion from PCDRM to PCFM indexing fails
+ */
+int PedestalCorrectEventRaw(
+        EventRaw & event,
+        SystemConfiguration const * const system_config,
+        bool correct_uv)
+{
+    int module = 0;
+    int fin = 0;
+    if (system_config->convertPCDRMtoPCFM(event.panel, event.cartridge,
+                                          event.daq, event.rena,
+                                          event.module, fin, module) < 0)
+    {
+      return(-5);
+    }
+
+    const ModulePedestals & module_pedestals =
+            system_config->pedestals[event.panel][event.cartridge]
+                     [event.daq][event.rena][event.module];
+
+
+    event.com0h -= module_pedestals.com0h;
+    event.com1h -= module_pedestals.com1h;
+    event.com0 -= module_pedestals.com0;
+    event.com1 -= module_pedestals.com1;
+    event.a -= module_pedestals.a;
+    event.b -= module_pedestals.b;
+    event.c -= module_pedestals.c;
+    event.d -= module_pedestals.d;
+    
+    if (correct_uv) {
+        event.u0h -= module_pedestals.u0h;
+        event.u1h -= module_pedestals.u1h;
+        event.v0h -= module_pedestals.v0h;
+        event.v1h -= module_pedestals.v1h;
+    }
     return(0);
 }
 

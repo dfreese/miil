@@ -20,6 +20,11 @@ int RawEventToEventCal(
         EventCal & event,
         SystemConfiguration const * const system_config);
 
+int PedestalCorrectEventRaw(
+        EventRaw & event,
+        SystemConfiguration const * const system_config,
+        bool correct_uv);
+
 int CalculateXYandEnergy(
         EventCal & event,
         const EventRaw & rawevent,
