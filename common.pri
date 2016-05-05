@@ -1,5 +1,5 @@
 TEMPLATE = lib
-VERSION = 4.2.1
+VERSION = 4.2.2
 CONFIG -= qt
 CONFIG += c++11
 QMAKE_CXXFLAGS += -std=c++0x -Wall -Wextra -pedantic
