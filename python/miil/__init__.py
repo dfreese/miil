@@ -1,5 +1,6 @@
 import numpy as np
 import json
+import os
 from scipy.sparse import csc_matrix
 
 default_system_shape = [2, 3, 8, 16, 2, 64]
@@ -208,41 +209,50 @@ def write_amide(image, filename):
     image.swapaxes(0,2).tofile(filename)
 
 def load_decoded(filename, count = -1):
-    fid = open(filename, 'rb')
-    data = np.fromfile(fid, dtype=eventraw_dtype, count=count)
-    fid.close()
+    with open(filename, 'rb') as fid:
+        data = np.fromfile(fid, dtype=eventraw_dtype, count=count)
     return data
 
 def load_calibrated(filename, count = -1):
-    fid = open(filename, 'rb')
-    data = np.fromfile(fid, dtype=eventcal_dtype, count=count)
-    fid.close()
+    with open(filename, 'rb') as fid:
+        data = np.fromfile(fid, dtype=eventcal_dtype, count=count)
     return data
 
 def load_coincidence(filename, count = -1):
-    fid = open(filename, 'rb')
-    data = np.fromfile(fid, dtype=eventcoinc_dtype, count=count)
-    fid.close()
+    with open(filename, 'rb') as fid:
+        data = np.fromfile(fid, dtype=eventcoinc_dtype, count=count)
     return data
 
+def get_filenames_from_filelist(filename):
+    # Get all of the lines out of the file
+    with open(filename, 'r') as f:
+        files = f.read().splitlines()
+    # Get the directory of the filelist
+    filename_path = os.path.dirname(filename)
+
+    # Assume each line in the coinc filelist is either an absolute directory or
+    # referenced to the directory of the file.
+    full_files = []
+    for f in files:
+        if os.path.isabs(f):
+            full_files.append(f)
+        else:
+            full_files.append(filename_path + '/' + f)
+    # Now we have a list of files fully corrected relative to their filelist
+    return full_files
+
 def load_decoded_filelist(filename, count = -1):
-    fid = open(filename, 'r')
-    files = fid.read().splitlines()
-    fid.close()
+    files = get_filenames_from_filelist(filename)
     data = np.hstack([load_decoded(f, count) for f in files])
     return data
 
 def load_calib_filelist(filename, count = -1):
-    fid = open(filename, 'r')
-    files = fid.read().splitlines()
-    fid.close()
+    files = get_filenames_from_filelist(filename)
     data = np.hstack([load_calibrated(f, count) for f in files])
     return data
 
 def load_coinc_filelist(filename, count = -1):
-    fid = open(filename, 'r')
-    files = fid.read().splitlines()
-    fid.close()
+    files = get_filenames_from_filelist(filename)
     data = np.hstack([load_coincidence(f, count) for f in files])
     return data
 
