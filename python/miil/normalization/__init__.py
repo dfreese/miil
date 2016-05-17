@@ -438,6 +438,69 @@ def correct_lors(
         vec.data *= weights[crystal1]
     return vec
 
+class ScaledSymmetricArray:
+    def __init__(self, A, idx, reflect, B = None, C = None):
+        # This class will try it's best to emulate a array shape = (n,a,b,c),
+        # where A is a (m, a,b,c...) array that is called and the output of this
+        # class is D[ii, :, ...] = C * B[ii] * A[idx[ii], ::reflect[idx,0], ...]
+        self.A = np.asarray(A)
+        self.m = self.A.shape[0]
+        self.image_size = A.shape[1:]
+        self.d = len(self.image_size)
+
+        self.idx = np.asarray(idx, dtype=int)
+        self.n = self.idx.shape[0]
+        if len(self.idx.shape) != 1:
+            raise ValueError('idx is not 1d array')
+
+        self.reflect = np.asarray(reflect, dtype=int)
+        if len(self.reflect.shape) != 2:
+            raise ValueError('reflect array is not 2d')
+        if self.reflect.shape[0] != self.n:
+            raise ValueError('reflect array does not match idx array length')
+        if self.reflect.shape[1] != self.d:
+            raise ValueError('reflect array does not match A size')
+
+        if self.reflect.dtype == bool:
+            self.reflect = 2.0 * self.reflect - 1
+        if not np.all((self.reflect == 1) | (self.reflect == -1)):
+            raise ValueError('reflect not all 1s and -1, or bools')
+
+        self.setC(C)
+        self.setB(B)
+
+    def __getitem__(self, ii):
+        a_mask = [slice(None, None, a) for a in self.reflect[ii, :]]
+        return self.C * self.B[ii] * self.A[self.idx[ii], ...][a_mask]
+
+    def sum(self, axis=0):
+        if axis == 0:
+            val = np.zeros(self.image_size, dtype=np.float32)
+            for ii in range(self.n):
+                val += self.__getitem__(ii)
+            return val
+        if axis == 1:
+            val = np.zeros((self.n,))
+            for ii in range(self.n):
+                val[ii] = np.sum(self.__getitem__(ii))
+            return val
+
+    def setC(self, C=None):
+        if C is None:
+            self.C = np.ones(self.image_size)
+        else:
+            self.C = np.asarray(C)
+            if self.C.shape != self.image_size:
+                raise ValueError('Shape of C given does not match idx')
+
+    def setB(self, B=None):
+        if B is None:
+            self.B = np.ones((self.n,))
+        else:
+            self.B = np.asarray(B)
+            if self.B.shape != (self.n,):
+                raise ValueError('Shape of B given does not match idx')
+
 def main():
     return
 
