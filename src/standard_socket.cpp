@@ -53,12 +53,27 @@ int StandardSocket::Open(const std::string & if_name) {
     if (fd == -1) {
         return(ETH_ERR_SOCK);
     }
+    // Set the SO_REUSEADDR so that we don't block other programs from binding
+    // to the same port.  Should be a problem in practice, but often if there
+    // is not a correct shutdown, the port becomes blocked for quite some time.
     int val = 1;
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
     int flags = fcntl(fd, F_GETFL);
     if (fcntl(fd, F_SETFL, O_NONBLOCK | flags) < 0) {
         return(ETH_ERR_BLOCK);
     }
+
+    // Set the buffer size to net.core.rmem_max = 26214400 so that the socket
+    // doesn't drop so many UDP packets (in theory).
+    int sockbufsize = 26214400;
+    int ret = setsockopt(
+            fd, SOL_SOCKET, SO_RCVBUF,
+            (char *)&sockbufsize,  (int)sizeof(sockbufsize));
+    if (ret < 0) {
+        return(ETH_ERR_RCVBUF);
+    }
+
+    // Bind the socket to the port
     int return_val = bind(fd,
                           (struct sockaddr *)&serv_addr,
                           sizeof(serv_addr));

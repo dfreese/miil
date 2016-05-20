@@ -21,7 +21,8 @@ enum eth_error {
     ETH_ERR_BLOCK = -3,
     ETH_ERR_RX = -4,
     ETH_ERR_CLOSE = -5,
-    ETH_ERR_INTERFACE = -6
+    ETH_ERR_INTERFACE = -6,
+    ETH_ERR_RCVBUF = -7
 };
 
 class Ethernet
