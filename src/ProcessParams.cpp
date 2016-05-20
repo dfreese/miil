@@ -504,15 +504,19 @@ int ProcessParams::ReadWriteSockets() {
             }
             current_file_size = 0;
             file_count++;
-            SetupFiles();
-            // Synchronize threads to make sure there is no data race to the
-            // increment_filename section.
+            // Synchronize threads so that they all start on the next file
+            // simultaneously.
             no_threads_waiting++;
-            while (no_threads_waiting < no_instances) {
+            if (no_threads_waiting < no_instances) {
+                std::unique_lock<std::mutex> lck(mtx);
+                cv_thread_arrived.wait(lck);
+            } else {
+                std::unique_lock<std::mutex> lck(mtx);
+                // All of the threads have arrived, reset and exit.
+                no_threads_waiting = 0;
+                increment_filename = false;
+                cv_thread_arrived.notify_all();
             }
-            // All of the threads have arrived, reset and exit.
-            no_threads_waiting = 0;
-            increment_filename = false;
         }
         buffer_receive_side.clear();
         updateProcessInfo();
