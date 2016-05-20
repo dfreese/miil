@@ -140,13 +140,15 @@ int StandardSocket::send(const std::vector<char> & data) {
 int StandardSocket::recv(std::vector<char> & data) {
     char buf[DATALENGTH];
     ssize_t recv_rc(0);
-
-    if (poll(&fds, 1, timeout_ms) > 0) {
+    int poll_status = poll(&fds, 1, timeout_ms);
+    if (poll_status > 0) {
         if (fds.revents & (POLLIN)) {
             recv_rc = ::recv(fd, buf, sizeof(buf), 0);
         }
-    } else {
+    } else if (poll_status == 0){
         return(ETH_NO_ERR);
+    } else {
+        return(ETH_ERR_RX);
     }
 
     if (recv_rc < 0) {
