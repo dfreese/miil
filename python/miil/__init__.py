@@ -237,7 +237,10 @@ def get_filenames_from_filelist(filename):
         if os.path.isabs(f):
             full_files.append(f)
         else:
-            full_files.append(filename_path + '/' + f)
+            if not filename_path:
+                full_files.append(f)
+            else:
+                full_files.append(filename_path + '/' + f)
     # Now we have a list of files fully corrected relative to their filelist
     return full_files
 
