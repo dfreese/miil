@@ -320,13 +320,6 @@ struct FrontendFpgaConfig {
     bool force_trigger;
     //! Debug only, readout the triggers of individual channels not the ct
     bool read_triggers_not_timestamps;
-};
-
-/*!
- * Configuration information for the backend board that reads out four daq
- * boards.
- */
-struct BackendBoardConfig {
     //! The delay that should be applied to the coincidence logic signal input
     int input_delay;
     /*!
@@ -336,6 +329,28 @@ struct BackendBoardConfig {
     int output_delay;
     /*!
      * The length, in coarse timestamp ticks, that should be used for the board.
+     */
+    int coinc_window;
+};
+
+/*!
+ * Configuration information for the backend board that reads out four daq
+ * boards.
+ */
+struct BackendBoardConfig {
+    /*!
+     * The delay that should be applied to the coincidence logic signal input.
+     * This is used to set the respective FrontendFpgaConfigs
+     */
+    int input_delay;
+    /*!
+     * The delay that should be applied to the board's  coincidence logic
+     * output. This is used to set the respective FrontendFpgaConfigs
+     */
+    int output_delay;
+    /*!
+     * The length, in coarse timestamp ticks, that should be used for the board.
+     * This is used to set the respective FrontendFpgaConfigs
      */
     int coinc_window;
     //! Flag for if the board's ethernet port is being read out

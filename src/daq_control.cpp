@@ -677,3 +677,46 @@ int DaqControl::createCoincWindowPacket(
     packet.push_back(DaqControl::END_PACKET);
     return(0);
 }
+
+/*!
+ * \brief Append a command to program the FPGA coincidence logic
+ *
+ * Appends a packet to the given vector to set the values of the FPGA's
+ * coincidence logic.  The values that are programmed are the width of the
+ * coincidence window, the delay that the FPGA puts on its coincidence signal
+ * output (output_delay), and the how long it should hold onto events before
+ * discarding them as a single (input_delay).  Each value is 6 bits.  The
+ * coincidence window is placed in buffer(0), output delay in buffer(1), and the
+ * input delay in buffer(2).
+ *
+ * \param backend_address The address of the backend board to be addressed
+ * \param daq_board The daq board on the backend board to be addressed
+ * \param fpga The frontend fpga to be programmed
+ * \param config The front-end board configuration with the coinc window params
+ * \param packet vector where the bytes are appended
+ *
+ * \return the result createBoolEnablePacket
+ */
+int DaqControl::createCoincWindowPacket(
+        int backend_address,
+        int daq_board,
+        int fpga,
+        const FrontendFpgaConfig &config,
+        std::vector<char> &packet)
+{
+    packet.push_back(DaqControl::START_PACKET);
+    packet.push_back(createAddress(backend_address, daq_board));
+    packet.push_back(DaqControl::RESET_BUFFER);
+    packet.push_back(DaqControl::ADD_TO_BUFFER | (config.coinc_window & 0x3f));
+    packet.push_back(DaqControl::ADD_TO_BUFFER | (config.output_delay & 0x3f));
+    packet.push_back(DaqControl::ADD_TO_BUFFER | (config.input_delay & 0x3f));
+    // Pad packet with zeros so that pauls board interprets it correctly
+    for (int i = 0; i < 4; i++) {
+        packet.push_back(DaqControl::ADD_TO_BUFFER | 0x00);
+    }
+    packet.push_back(createExecuteInstruction(
+            DaqControl::SET_COINC_LOGIC, fpga));
+    packet.push_back(DaqControl::END_PACKET);
+    return(0);
+}
+

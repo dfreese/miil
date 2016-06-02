@@ -146,6 +146,13 @@ public:
             int fpga,
             const BackendBoardConfig & config,
             std::vector<char> & packet);
+
+    static int createCoincWindowPacket(
+            int backend_address,
+            int daq_board,
+            int fpga,
+            const FrontendFpgaConfig &config,
+            std::vector<char> &packet);
 };
 
 #endif // DAQ_CONTROL_H
