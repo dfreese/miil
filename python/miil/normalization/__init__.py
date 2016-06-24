@@ -1,5 +1,6 @@
 import numpy as np
 import miil
+from scipy.sparse import csc_matrix
 
 def check_and_promote_coordinates(coordinate):
     if len(coordinate.shape) == 1:
@@ -196,13 +197,21 @@ def get_crystal_distribution(
         vec, system_shape=miil.default_system_shape, weights = None):
     """
     Takes a sparse lor vector (csc_matrix) and converts into a distribution of
-    counts per crystal
+    counts per crystal.  Can also be a list of LOR ids.
     """
     no_crystals_per_system = np.prod(miil.default_system_shape)
-    crystal0, crystal1 = miil.get_crystals_from_lor(
-            vec.indices, miil.default_system_shape)
+    if type(vec) == csc_matrix:
+        crystal0, crystal1 = miil.get_crystals_from_lor(
+                vec.indices, miil.default_system_shape)
+    else:
+        crystal0, crystal1 = miil.get_crystals_from_lor(
+                vec, miil.default_system_shape)
 
-    counts = vec.data.copy()
+    if type(vec) == csc_matrix:
+        counts = vec.data.copy()
+    else:
+        counts = np.ones((len(vec),))
+
     if weights is not None:
         counts *= weights[crystal0] * weights[crystal1]
 
@@ -217,13 +226,21 @@ def get_apd_distribution(
         vec, system_shape=miil.default_system_shape, weights = None):
     """
     Takes a sparse lor vector (csc_matrix) and converts into a distribution of
-    counts per apd
+    counts per apd.  Can also be a list of LOR ids.
     """
     no_apds_per_system = np.prod(miil.default_system_shape[:-1])
-    apd0, apd1 = miil.get_apds_from_lor(
-            vec.indices, miil.default_system_shape)
+    if type(vec) == csc_matrix:
+        apd0, apd1 = miil.get_apds_from_lor(
+                vec.indices, miil.default_system_shape)
+    else:
+        apd0, apd1 = miil.get_apds_from_lor(
+                vec, miil.default_system_shape)
 
-    counts = vec.data.copy()
+    if type(vec) == csc_matrix:
+        counts = vec.data.copy()
+    else:
+        counts = np.ones((len(vec),))
+
     if weights is not None:
         counts *= weights[apd0] * weights[apd1]
 
@@ -238,13 +255,21 @@ def get_module_distribution(
         vec, system_shape=miil.default_system_shape, weights = None):
     """
     Takes a sparse lor vector (csc_matrix) and converts into a distribution of
-    counts per module
+    counts per module.  Can also be a list of LOR ids.
     """
     no_modules_per_system = np.prod(miil.default_system_shape[:-2])
-    module0, module1 = miil.get_modules_from_lor(
-            vec.indices, miil.default_system_shape)
+    if type(vec) == csc_matrix:
+        module0, module1 = miil.get_modules_from_lor(
+                vec.indices, miil.default_system_shape)
+    else:
+        module0, module1 = miil.get_modules_from_lor(
+                vec, miil.default_system_shape)
 
-    counts = vec.data.copy()
+    if type(vec) == csc_matrix:
+        counts = vec.data.copy()
+    else:
+        counts = np.ones((len(vec),))
+
     if weights is not None:
         counts *= weights[module0] * weights[module1]
 
@@ -437,6 +462,69 @@ def correct_lors(
         vec.data *= weights[crystal0]
         vec.data *= weights[crystal1]
     return vec
+
+class ScaledSymmetricArray:
+    def __init__(self, A, idx, reflect, B = None, C = None):
+        # This class will try it's best to emulate a array shape = (n,a,b,c),
+        # where A is a (m, a,b,c...) array that is called and the output of this
+        # class is D[ii, :, ...] = C * B[ii] * A[idx[ii], ::reflect[idx,0], ...]
+        self.A = np.asarray(A)
+        self.m = self.A.shape[0]
+        self.image_size = A.shape[1:]
+        self.d = len(self.image_size)
+
+        self.idx = np.asarray(idx, dtype=int)
+        self.n = self.idx.shape[0]
+        if len(self.idx.shape) != 1:
+            raise ValueError('idx is not 1d array')
+
+        self.reflect = np.asarray(reflect, dtype=int)
+        if len(self.reflect.shape) != 2:
+            raise ValueError('reflect array is not 2d')
+        if self.reflect.shape[0] != self.n:
+            raise ValueError('reflect array does not match idx array length')
+        if self.reflect.shape[1] != self.d:
+            raise ValueError('reflect array does not match A size')
+
+        if self.reflect.dtype == bool:
+            self.reflect = 2.0 * self.reflect - 1
+        if not np.all((self.reflect == 1) | (self.reflect == -1)):
+            raise ValueError('reflect not all 1s and -1, or bools')
+
+        self.setC(C)
+        self.setB(B)
+
+    def __getitem__(self, ii):
+        a_mask = [slice(None, None, a) for a in self.reflect[ii, :]]
+        return self.C * self.B[ii] * self.A[self.idx[ii], ...][a_mask]
+
+    def sum(self, axis=0):
+        if axis == 0:
+            val = np.zeros(self.image_size, dtype=np.float32)
+            for ii in range(self.n):
+                val += self.__getitem__(ii)
+            return val
+        if axis == 1:
+            val = np.zeros((self.n,))
+            for ii in range(self.n):
+                val[ii] = np.sum(self.__getitem__(ii))
+            return val
+
+    def setC(self, C=None):
+        if C is None:
+            self.C = np.ones(self.image_size)
+        else:
+            self.C = np.asarray(C)
+            if self.C.shape != self.image_size:
+                raise ValueError('Shape of C given does not match idx')
+
+    def setB(self, B=None):
+        if B is None:
+            self.B = np.ones((self.n,))
+        else:
+            self.B = np.asarray(B)
+            if self.B.shape != (self.n,):
+                raise ValueError('Shape of B given does not match idx')
 
 def main():
     return

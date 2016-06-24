@@ -289,64 +289,64 @@ def load_system_shape_pcfmax(filename):
     return system_shape
 
 # For Calibrated Events
-def get_global_cartridge_number(events, system_shape):
+def get_global_cartridge_number(events, system_shape=default_system_shape):
     global_cartridge = events['cartridge'].astype(int) + \
                        system_shape[1] * events['panel'].astype(int)
     return global_cartridge
 
-def get_global_fin_number(events, system_shape):
+def get_global_fin_number(events, system_shape=default_system_shape):
     global_cartridge = get_global_cartridge_number(events, system_shape)
     global_fin = events['fin'] + system_shape[2] * global_cartridge
     return global_fin
 
-def get_global_module_number(events, system_shape):
+def get_global_module_number(events, system_shape=default_system_shape):
     global_fin = get_global_fin_number(events, system_shape)
     global_module = events['module'] + system_shape[3] * global_fin
     return global_module
 
-def get_global_apd_number(events, system_shape):
+def get_global_apd_number(events, system_shape=default_system_shape):
     global_module = get_global_module_number(events, system_shape)
     global_apd = events['apd'] + system_shape[4] * global_module
     return global_apd
 
-def get_global_crystal_number(events, system_shape):
+def get_global_crystal_number(events, system_shape=default_system_shape):
     global_apd = get_global_apd_number(events, system_shape)
     global_crystal = events['crystal'] + system_shape[5] * global_apd
     return global_crystal
 
 # For Coincidence Events
-def get_global_cartridge_numbers(events, system_shape):
+def get_global_cartridge_numbers(events, system_shape=default_system_shape):
     global_cartridge0 = events['cartridge0'].astype(int)
     global_cartridge1 = events['cartridge1'].astype(int) + system_shape[1]
     return global_cartridge0, global_cartridge1
 
-def get_global_fin_numbers(events, system_shape):
+def get_global_fin_numbers(events, system_shape=default_system_shape):
     global_cartridge0, global_cartridge1 = \
             get_global_cartridge_numbers(events, system_shape)
     global_fin0 = events['fin0'] + system_shape[2] * global_cartridge0
     global_fin1 = events['fin1'] + system_shape[2] * global_cartridge1
     return global_fin0, global_fin1
 
-def get_global_module_numbers(events, system_shape):
+def get_global_module_numbers(events, system_shape=default_system_shape):
     global_fin0, global_fin1 = get_global_fin_numbers(events, system_shape)
     global_module0 = events['module0'] + system_shape[3] * global_fin0
     global_module1 = events['module1'] + system_shape[3] * global_fin1
     return global_module0, global_module1
 
-def get_global_apd_numbers(events, system_shape):
+def get_global_apd_numbers(events, system_shape=default_system_shape):
     global_module0, global_module1 = \
             get_global_module_numbers(events, system_shape)
     global_apd0 = events['apd0'] + system_shape[4] * global_module0
     global_apd1 = events['apd1'] + system_shape[4] * global_module1
     return global_apd0, global_apd1
 
-def get_global_crystal_numbers(events, system_shape):
+def get_global_crystal_numbers(events, system_shape=default_system_shape):
     global_apd0, global_apd1 = get_global_apd_numbers(events, system_shape)
     global_crystal0 = events['crystal0'] + system_shape[5] * global_apd0
     global_crystal1 = events['crystal1'] + system_shape[5] * global_apd1
     return global_crystal0, global_crystal1
 
-def get_global_lor_number(events, system_shape):
+def get_global_lor_number(events, system_shape=default_system_shape):
     global_crystal0, global_crystal1 = \
             get_global_crystal_numbers(events, system_shape)
     no_crystals_per_panel = np.prod(system_shape[1:])
@@ -354,24 +354,24 @@ def get_global_lor_number(events, system_shape):
     return (global_crystal0 * no_crystals_per_panel) + \
            (global_crystal1 - no_crystals_per_panel)
 
-def get_crystals_from_lor(lors, system_shape):
+def get_crystals_from_lor(lors, system_shape=default_system_shape):
     crystal0 = lors // np.prod(system_shape[1:])
     crystal1 = lors % np.prod(system_shape[1:]) + np.prod(system_shape[1:])
     return crystal0, crystal1
 
-def get_apds_from_lor(lors, system_shape):
+def get_apds_from_lor(lors, system_shape=default_system_shape):
     crystal0, crystal1 = get_crystals_from_lor(lors, system_shape)
     apd0 = crystal0 // system_shape[5]
     apd1 = crystal1 // system_shape[5]
     return apd0, apd1
 
-def get_modules_from_lor(lors, system_shape):
+def get_modules_from_lor(lors, system_shape=default_system_shape):
     apd0, apd1 = get_apds_from_lor(lors, system_shape)
     module0 = apd0 // system_shape[4]
     module1 = apd1 // system_shape[4]
     return module0, module1
 
-def tcal_coinc_events(events, tcal, system_shape = [2, 3, 8, 16, 2, 64]):
+def tcal_coinc_events(events, tcal, system_shape=default_system_shape):
     idx0, idx1 = get_global_crystal_numbers(events, system_shape)
     ft0_offset = tcal['offset'][idx0] + \
                  tcal['edep_offset'][idx0] * (events['E0'] - 511)
@@ -528,11 +528,18 @@ def create_listmode_from_vec(
         system_shape = default_system_shape):
 
     lm_data = np.zeros((vec.nnz,), dtype=cudarecon_type1_vec_dtype)
-
-    crystal0, crystal1 = get_crystals_from_lor(vec.indices, system_shape)
     lm_data['pos0'], lm_data['pos1'] = get_lor_positions(vec.indices,
-                                                         system_shape)
+                                                         system_shape,
+                                                         panel_sep)
     lm_data['weight'] = vec.data.copy()
+    return lm_data
+
+def create_listmode_from_lors(
+        lors, panel_sep = default_panel_sep,
+        system_shape = default_system_shape):
+    lm_data = np.zeros(lors.shape, dtype=cudarecon_type0_vec_dtype)
+    lm_data['pos0'], lm_data['pos1'] = get_lor_positions(
+            lors, system_shape, panel_sep)
     return lm_data
 
 def get_lor_positions(
