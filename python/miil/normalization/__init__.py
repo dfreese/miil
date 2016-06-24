@@ -1,5 +1,6 @@
 import numpy as np
 import miil
+from scipy.sparse import csc_matrix
 
 def check_and_promote_coordinates(coordinate):
     if len(coordinate.shape) == 1:
@@ -196,13 +197,21 @@ def get_crystal_distribution(
         vec, system_shape=miil.default_system_shape, weights = None):
     """
     Takes a sparse lor vector (csc_matrix) and converts into a distribution of
-    counts per crystal
+    counts per crystal.  Can also be a list of LOR ids.
     """
     no_crystals_per_system = np.prod(miil.default_system_shape)
-    crystal0, crystal1 = miil.get_crystals_from_lor(
-            vec.indices, miil.default_system_shape)
+    if type(vec) == csc_matrix:
+        crystal0, crystal1 = miil.get_crystals_from_lor(
+                vec.indices, miil.default_system_shape)
+    else:
+        crystal0, crystal1 = miil.get_crystals_from_lor(
+                vec, miil.default_system_shape)
 
-    counts = vec.data.copy()
+    if type(vec) == csc_matrix:
+        counts = vec.data.copy()
+    else:
+        counts = np.ones((len(vec),))
+
     if weights is not None:
         counts *= weights[crystal0] * weights[crystal1]
 
@@ -217,13 +226,21 @@ def get_apd_distribution(
         vec, system_shape=miil.default_system_shape, weights = None):
     """
     Takes a sparse lor vector (csc_matrix) and converts into a distribution of
-    counts per apd
+    counts per apd.  Can also be a list of LOR ids.
     """
     no_apds_per_system = np.prod(miil.default_system_shape[:-1])
-    apd0, apd1 = miil.get_apds_from_lor(
-            vec.indices, miil.default_system_shape)
+    if type(vec) == csc_matrix:
+        apd0, apd1 = miil.get_apds_from_lor(
+                vec.indices, miil.default_system_shape)
+    else:
+        apd0, apd1 = miil.get_apds_from_lor(
+                vec, miil.default_system_shape)
 
-    counts = vec.data.copy()
+    if type(vec) == csc_matrix:
+        counts = vec.data.copy()
+    else:
+        counts = np.ones((len(vec),))
+
     if weights is not None:
         counts *= weights[apd0] * weights[apd1]
 
@@ -238,13 +255,21 @@ def get_module_distribution(
         vec, system_shape=miil.default_system_shape, weights = None):
     """
     Takes a sparse lor vector (csc_matrix) and converts into a distribution of
-    counts per module
+    counts per module.  Can also be a list of LOR ids.
     """
     no_modules_per_system = np.prod(miil.default_system_shape[:-2])
-    module0, module1 = miil.get_modules_from_lor(
-            vec.indices, miil.default_system_shape)
+    if type(vec) == csc_matrix:
+        module0, module1 = miil.get_modules_from_lor(
+                vec.indices, miil.default_system_shape)
+    else:
+        module0, module1 = miil.get_modules_from_lor(
+                vec, miil.default_system_shape)
 
-    counts = vec.data.copy()
+    if type(vec) == csc_matrix:
+        counts = vec.data.copy()
+    else:
+        counts = np.ones((len(vec),))
+
     if weights is not None:
         counts *= weights[module0] * weights[module1]
 
