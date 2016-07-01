@@ -952,6 +952,70 @@ int loadCartridgeSettings(
     return(0);
 }
 
+
+/*!
+ * \brief Load Cartridge Configuration Settings from Json Object
+ *
+ * Takes a cartridge json object and searches for:
+ *     -"bias"
+ *     -"input_delay"
+ *     -"output_delay"
+ *     -"coinc_window"
+ *     -"daqboard_id"
+ *     -"ethernet_readout",
+ *     -"ethernet_port"
+ *     -"lv_power_supply_channel"
+ *     -"hv_power_supply_channel"
+ *     -"hv_floating_board_id"
+ * and puts them into a CartridgeConfig object.  Config object can be modified
+ * even with errors.
+ *
+ * The function was not made public to keep the jsoncpp header local to the
+ * object file.
+ *
+ * \param cartridge_config The configuration object to be modified
+ * \param cartridge_json The Json object to be searched
+ * \param require_all If true, return an error if not all of the objects are
+ *        found.
+ *
+ * \return 0 is successful, less than otherwise
+ *        -1 if not all of the required objects are found
+ */
+int loadFrontEndFPGASettings(
+    FrontendFpgaConfig & fpga_config,
+    const Json::Value & fpga_json,
+    bool require_all,
+    BackendBoardConfig const * const ref_config)
+{
+    if (ref_config) {
+        fpga_config.input_delay = ref_config->input_delay;
+        fpga_config.output_delay = ref_config->output_delay;
+        fpga_config.coinc_window = ref_config->coinc_window;
+    }
+
+    int not_found = 0;
+    if (fpga_json.isMember("input_delay")) {
+        fpga_config.input_delay = fpga_json["input_delay"].asInt();
+    } else {
+        not_found++;
+    }
+    if (fpga_json.isMember("output_delay")) {
+        fpga_config.output_delay = fpga_json["output_delay"].asInt();
+    } else {
+        not_found++;
+    }
+    if (fpga_json.isMember("coinc_window")) {
+        fpga_config.coinc_window = fpga_json["coinc_window"].asInt();
+    } else {
+        not_found++;
+    }
+    if (require_all && (not_found > 0)) {
+        return(-1);
+    }
+    return(0);
+}
+
+
 /*!
  * \brief Load Fin Configuration Settings from Json Object
  *
@@ -2075,6 +2139,7 @@ int loadModuleSettingsFromJson(
  *        -17 if loadFinSettings failed
  *        -18 if uv_frequency was not found or invalid
  *        -19 if ct_frequency was not found or invalid
+ *        -20 if a front end fpga load failed
  */
 int SystemConfiguration::load(const std::string & filename) {
     std::ifstream json_in(filename.c_str());
@@ -2159,6 +2224,42 @@ int SystemConfiguration::load(const std::string & filename) {
             {
                 std::cerr << cartridge_name << " failed to load" << std::endl;
                 return(-8);
+            }
+
+            // Added this in to be able to load in individual coincidence signal
+            // delays to the Front End FPGAs.
+            for (int d = 0; d < daqs_per_cartridge; d++) {
+                std::stringstream daq_ss;
+                daq_ss << "P" << p << "C" << c << "D" << d;
+                std::string daq_name = daq_ss.str();
+                Json::Value daq_json = cartridge_json[daq_name];
+                FrontendFpgaConfig ref_config;
+                int back_fgpa_load_status = loadFrontEndFPGASettings(
+                            ref_config, daq_json, false,
+                            &cartridge_configs[p][c].backend_board_config);
+                if (back_fgpa_load_status < 0) {
+                    std::cerr << daq_name << " failed to load"
+                              << std::endl;
+                    return(-20);
+                }
+
+                for (int f = 0; f < fpgas_per_daq; f++) {
+                    std::stringstream fpga_ss;
+                    fpga_ss << daq_name << "F" << f;
+                    std::string fpga_name = fpga_ss.str();
+                    Json::Value fpga_json = daq_json[fpga_name];
+                    // Setup the frontend FPGA to take all of the front end
+                    // settings found at the daq board level.
+                    fpga_configs[p][c][d][f] = ref_config;
+
+                    int fgpa_load_status = loadFrontEndFPGASettings(
+                                fpga_configs[p][c][d][f], fpga_json, false, 0);
+                    if (fgpa_load_status < 0) {
+                        std::cerr << fpga_name << " failed to load"
+                                  << std::endl;
+                        return(-20);
+                    }
+                }
             }
 
             // grab and channel setting diffs from the PCDRM structure and load
