@@ -2,6 +2,8 @@ import numpy as np
 import json
 import os
 from scipy.sparse import csc_matrix
+from scipy.optimize import curve_fit
+
 
 default_system_shape = [2, 3, 8, 16, 2, 64]
 default_panel_sep = 64.262
@@ -586,6 +588,106 @@ def create_sparse_column_vector(data, size=None):
     return csc_matrix((np.ones((len(data),), dtype=float),
                        (data.astype(int), np.zeros((len(data),), dtype=int))
                       ), shape=shape)
+
+def gauss_function(x, a, mu, sigma):
+    '''
+    Evaluate a gaussian of mean mu, std of sigma, and amplitude a at a point x.
+    Primarily used for fitting histograms.
+
+    Parameters
+    ----------
+    x : ndarray or scalar
+        Points to be evaluated
+    a : scalar
+        Amplitude of the gaussian
+    mu : scalar
+        Mean of the gaussian
+    sigma : scalar
+        Standard deviation of the gaussian
+
+    Returns
+    -------
+    val : array or scalar
+        gauss(x) = a * exp(-(x - mu)**2 / (2 * sigma**2))
+    '''
+    return a * np.exp(-(x - mu)**2.0 / (2 * sigma**2))
+
+def fit_hist_gauss(n, edges):
+    '''
+    Takes the output of a histogram and fits a gaussian function to it.
+    Scipy curve_fit is uses in combination with gauss_function to do a
+    non-linear fit.  The fit is initialize to the mean and variance of the given
+    data.
+
+    Parameters
+    ----------
+    n : ndarray
+        Array of bin values from histogramming a set of data.
+    edges : ndarray
+        Array of bin edges from histogramming a set of data.
+
+    Returns
+    -------
+    popt : array
+        Array with 3 elements [a, mu, sigma] of the optimal fit.
+
+    Examples
+    --------
+    >>> data = 1.0 + 2 * np.random.randn(1000)
+    >>> n, edges, patches = plt.hist(data)
+    >>> popt = miil.fit_hist_gauss(n, edges)
+    '''
+    # find the centers of the bins
+    centers = (edges[1:] + edges[:-1])/2.0
+    # Then do a weighted average of the centers to initialize the estimate of the mean
+    mean = np.average(centers, weights=n)
+    # Then do a weighted average to initialize the estimate of the variance
+    sigma = np.average((centers-mean)**2, weights=n)
+    p0 = [np.max(n), mean, sigma]
+    popt, pcov = curve_fit(gauss_function, centers, n, p0=p0)
+    return popt
+
+def eval_gauss_over_range(popt, n=100, range=None, edges=None):
+    '''
+    Evaluates a gaussian function over a range, traditionally from the optput of
+    fit_hist_gauss.
+
+    Parameters
+    ----------
+    popt : array
+        Array with 3 elements [a, mu, sigma] of the optimal fit.
+    n : scalar
+        number of points at which to evaluate the fit
+    range : array shape=(2,)
+        The min and max of the range over which to evaluate the fit.
+    edges : ndarray
+        Array of bin edges from histogramming a set of data.  Sets the range
+        over which the fit is calculated. Equivalent to
+        range=(edges.min(), edges.max()).
+
+    Returns
+    -------
+    x : array
+        points where the fit was evaluated
+    y : array
+        value of the fit where the it was evaluated
+
+    Examples
+    --------
+    >>> data = 1.0 + 2 * np.random.randn(1000)
+    >>> n, edges, patches = plt.hist(data)
+    >>> popt = miil.fit_hist_gauss(n, edges)
+    >>> x_fit, y_fit = eval_gauss_over_range(popt, 200, edges)
+    '''
+    if edges is not None:
+        range_min = edges.min()
+        range_max = edges.max()
+    if range is not None:
+        range_min = range[0]
+        range_max = range[1]
+    x = np.linspace(range_min, range_max, n)
+    y = gauss_function(x, *popt)
+    return x, y
 
 def main():
     return
