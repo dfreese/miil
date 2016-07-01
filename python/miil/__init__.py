@@ -677,7 +677,9 @@ def eval_gauss_over_range(popt, n=100, range=None, edges=None):
     >>> data = 1.0 + 2 * np.random.randn(1000)
     >>> n, edges, patches = plt.hist(data)
     >>> popt = miil.fit_hist_gauss(n, edges)
-    >>> x_fit, y_fit = eval_gauss_over_range(popt, 200, edges)
+    >>> x_fit, y_fit = miil.eval_gauss_over_range(popt, 200, edges=edges)
+    >>> plt.plot(x_fit, y_fit)
+    >>> plt.show()
     '''
     if edges is not None:
         range_min = edges.min()
