@@ -526,6 +526,43 @@ class ScaledSymmetricArray:
             if self.B.shape != (self.n,):
                 raise ValueError('Shape of B given does not match idx')
 
+def solid_angle_square(a, d):
+    '''
+    Calculates the solid angle of a square of side length a, a distance d away,
+    assuming the square is normal to d.
+
+    Taken from:
+    https://en.wikipedia.org/wiki/Solid_angle#Pyramid
+    '''
+    return solid_angle_rect(a, a, d)
+
+def solid_angle_rect(a, b, d):
+    '''
+    Calculates the solid angle of a rectangle of side lengths a and b, at a
+    distance d away, assuming the rectange is normal to d.
+
+    Taken from:
+    https://en.wikipedia.org/wiki/Solid_angle#Pyramid
+    '''
+    return 4 * np.arctan(a * b / (2 * d * np.sqrt(4 * d ** 2 + a ** 2 + b ** 2)))
+
+def solid_angle_triangle(a, b, c):
+    '''
+    Calculates the solid angle of an arbitrary triangle, with verticies at
+    vectors a, b, and c.
+    Taken from:
+    https://en.wikipedia.org/wiki/Solid_angle#Tetrahedron
+    '''
+    numerator = np.inner(a, np.cross(b, c))
+    norm_a = np.linalg.norm(a)
+    norm_b = np.linalg.norm(b)
+    norm_c = np.linalg.norm(c)
+    denom = norm_a * norm_b * norm_c + \
+            norm_c * np.inner(a, b) + \
+            norm_b * np.inner(a, c) + \
+            norm_a * np.inner(b, c)
+    return 2 * np.arctan(np.abs(numerator) / np.abs(denom))
+
 def main():
     return
 
