@@ -216,7 +216,7 @@ def write_cuda_vox(image, filename, magic_number=65531, version_number=1):
     header['size'] = image.shape
     with open(filename, 'wb') as fid:
         header.tofile(fid)
-        image.swapaxes(1,2).tofile(fid)
+        image.swapaxes(1,2).astype(np.float32).tofile(fid)
 
 def load_amide(filename, size):
     '''
@@ -235,7 +235,7 @@ def write_amide(image, filename):
     Writes an amide image file of size (X, Y, Z) in [z][y][x] order as float32.
     Amide format has no header information, so the image size must be known.
     '''
-    image.swapaxes(0,2).tofile(filename)
+    image.swapaxes(0,2).astype(np.float32).tofile(filename)
 
 def load_decoded(filename, count = -1):
     '''
