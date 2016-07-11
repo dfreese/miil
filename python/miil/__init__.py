@@ -181,6 +181,13 @@ cuda_vox_file_header_dtype = np.dtype([
         align=True)
 
 def load_cuda_vox(filename, return_header=False):
+    '''
+    Takes a cuda vox image file and loads it into a (X,Y,Z) shaped numpy array.
+    if return_header is True, then a header object is returned with a
+    cuda_vox_file_header_dtype.
+
+    Assumes image was written as [x][z][y] on disk as float32 values.
+    '''
     fid = open(filename, 'rb')
     header = np.fromfile(fid, dtype=cuda_vox_file_header_dtype, count=1)[0]
     image = np.fromfile(fid, dtype=np.float32)
@@ -194,6 +201,15 @@ def load_cuda_vox(filename, return_header=False):
         return image
 
 def write_cuda_vox(image, filename, magic_number=65531, version_number=1):
+    '''
+    Takes a cuda vox image in the form of a numpy array shaped (X,Y,Z) and
+    writes it to disk in the cuda vox image header format (see
+    cuda_vox_file_header_dtype).  Header defaults are based on projection
+    defaults.
+
+    Writes the image as [x][z][y] on the disk.  Values are written as
+    float32.
+    '''
     header = np.zeros((1,), dtype=cuda_vox_file_header_dtype)
     header['magic_number'] = magic_number
     header['version_number'] = version_number
@@ -203,29 +219,63 @@ def write_cuda_vox(image, filename, magic_number=65531, version_number=1):
         image.swapaxes(1,2).tofile(fid)
 
 def load_amide(filename, size):
+    '''
+    Loads an amide image file of size (X, Y, Z).
+
+    Assumes image was written as [z][y][x] on disk.  Amide format has no header
+    information, so the image size must be known.  Assumes values are written as
+    float32.
+    '''
     size_zyx = (size[2], size[1], size[0])
     return np.fromfile(filename,
             dtype=np.float32).reshape(size[::-1]).swapaxes(0,2)
 
 def write_amide(image, filename):
+    '''
+    Writes an amide image file of size (X, Y, Z) in [z][y][x] order as float32.
+    Amide format has no header information, so the image size must be known.
+    '''
     image.swapaxes(0,2).tofile(filename)
 
 def load_decoded(filename, count = -1):
+    '''
+    Load a decode file.  This is a binary file of eventraw_dtype objects.  If
+    count is -1 all events will be loaded, otherwise count events will be
+    loaded.
+    '''
     with open(filename, 'rb') as fid:
         data = np.fromfile(fid, dtype=eventraw_dtype, count=count)
     return data
 
 def load_calibrated(filename, count = -1):
+    '''
+    Load a calibrate file.  This is a binary file of eventcal_dtype objects.  If
+    count is -1 all events will be loaded, otherwise count events will be
+    loaded.
+    '''
     with open(filename, 'rb') as fid:
         data = np.fromfile(fid, dtype=eventcal_dtype, count=count)
     return data
 
 def load_coincidence(filename, count = -1):
+    '''
+    Load a calibrate file.  This is a binary file of eventcoinc_dtype objects.
+    If count is -1 all events will be loaded, otherwise count events will be
+    loaded.
+    '''
     with open(filename, 'rb') as fid:
         data = np.fromfile(fid, dtype=eventcoinc_dtype, count=count)
     return data
 
 def get_filenames_from_filelist(filename):
+    '''
+    Helper function to load in filelist.  Corrects file paths as relative to the
+    filelist if the paths that are listed are not absolute.
+
+    Takes the path of the filelist.
+
+    Returns a list of corrected filenames.
+    '''
     # Get all of the lines out of the file
     with open(filename, 'r') as f:
         files = f.read().splitlines()
@@ -247,39 +297,87 @@ def get_filenames_from_filelist(filename):
     return full_files
 
 def load_decoded_filelist(filename, count = -1):
+    '''
+    Call load_decoded for every file in the given filelist.  count decode
+    events are loaded from each file in the filelist.
+    '''
     files = get_filenames_from_filelist(filename)
     data = np.hstack([load_decoded(f, count) for f in files])
     return data
 
 def load_calib_filelist(filename, count = -1):
+    '''
+    Call load_calibrated for every file in the given filelist.  count calibrate
+    events are loaded from each file in the filelist.
+    '''
     files = get_filenames_from_filelist(filename)
     data = np.hstack([load_calibrated(f, count) for f in files])
     return data
 
 def load_coinc_filelist(filename, count = -1):
+    '''
+    Call load_coincidence for every file in the given filelist.  count coinc
+    events are loaded from each file in the filelist.
+    '''
     files = get_filenames_from_filelist(filename)
     data = np.hstack([load_coincidence(f, count) for f in files])
     return data
 
 def load_pedestals(filename):
+    '''
+    Loads a pedestal file.  Should be a text file with space separated columns
+    for each value in ped_dtype.
+    '''
     return np.loadtxt(filename, dtype=ped_dtype)
 
 def load_locations(filename):
+    '''
+    Loads a crystal location file (typically .loc).  Should be a text file with
+    space separated columns for each value in loc_dtype.
+    '''
     return np.loadtxt(filename, dtype=loc_dtype)
 
 def write_locations(cal, filename):
+    '''
+    Writes a crystal location file (typically .loc) to filename.
+    '''
     return np.savetxt(filename, cal, '%d %0.6f %0.6f')
 
 def load_calibration(filename):
+    '''
+    Loads a crystal calibraiton file (typically .cal).  Should be a text file
+    with space separated columns for each value in cal_dtype.
+    '''
     return np.loadtxt(filename, dtype=cal_dtype)
 
 def write_calibration(cal, filename):
+    '''
+    Writes a crystal calibration file (typically .cal) to filename.  Writes the
+    following columns
+
+    - use %d
+    - x %0.6f
+    - y %0.6f
+    - gain_spat %0.0f
+    - gain_comm %0.0f
+    - eres_spat %0.4f
+    - eres_comm %0.4f
+    '''
     return np.savetxt(filename, cal, '%d %0.6f %0.6f %0.0f %0.0f %0.4f %0.4f')
 
 def load_time_calibration(filename):
+    '''
+    Loads a crystal time calibraiton file (typically .tcal).  Should be a text
+    file with space separated columns for each value in tcal_dtype.
+    '''
     return np.loadtxt(filename, dtype=tcal_dtype)
 
 def load_system_shape_pcfmax(filename):
+    '''
+    From a json system configuration file, load the PCFMAX shape of the system.
+    Assumes that there are 2 apds per module and 64 crystals per apd, which is
+    fixed in hardware.
+    '''
     with open(filename, 'r') as f:
         config = json.load(f)
     system_config = config['system_config']
@@ -290,39 +388,84 @@ def load_system_shape_pcfmax(filename):
                     2, 64,]
     return system_shape
 
+def load_uv_freq(filename):
+    '''
+    From a json system configuration file, load the uv_frequency.
+    '''
+    with open(filename, 'r') as f:
+        config = json.load(f)
+    return config['uv_frequency']
+
+def load_uv_period(filename):
+    '''
+    Use load_uv_freq to calculate the uv period from a json system configuration
+    file.
+    '''
+    uv_freq = load_uv_freq(filename)
+    return 1.0 / uv_freq
+
 # For Calibrated Events
 def get_global_cartridge_number(events, system_shape=default_system_shape):
+    '''
+    Takes eventcal_dtype events and returns the global catridge number for each
+    event given system_shape.
+    '''
     global_cartridge = events['cartridge'].astype(int) + \
                        system_shape[1] * events['panel'].astype(int)
     return global_cartridge
 
 def get_global_fin_number(events, system_shape=default_system_shape):
+    '''
+    Takes eventcal_dtype events and returns the global fin number for each
+    event given system_shape.  Uses get_global_cartridge_number as a base.
+    '''
     global_cartridge = get_global_cartridge_number(events, system_shape)
     global_fin = events['fin'] + system_shape[2] * global_cartridge
     return global_fin
 
 def get_global_module_number(events, system_shape=default_system_shape):
+    '''
+    Takes eventcal_dtype events and returns the global module number for each
+    event given system_shape.  Uses get_global_fin_number as a base.
+    '''
     global_fin = get_global_fin_number(events, system_shape)
     global_module = events['module'] + system_shape[3] * global_fin
     return global_module
 
 def get_global_apd_number(events, system_shape=default_system_shape):
+    '''
+    Takes eventcal_dtype events and returns the global apd number for each
+    event given system_shape.  Uses get_global_module_number as a base.
+    '''
     global_module = get_global_module_number(events, system_shape)
     global_apd = events['apd'] + system_shape[4] * global_module
     return global_apd
 
 def get_global_crystal_number(events, system_shape=default_system_shape):
+    '''
+    Takes eventcal_dtype events and returns the global crystal number for each
+    event given system_shape.  Uses get_global_apd_number as a base.
+    '''
     global_apd = get_global_apd_number(events, system_shape)
     global_crystal = events['crystal'] + system_shape[5] * global_apd
     return global_crystal
 
 # For Coincidence Events
 def get_global_cartridge_numbers(events, system_shape=default_system_shape):
+    '''
+    Takes eventcoinc_dtype events and returns the left and right global
+    cartridge number for each event given system_shape.
+    '''
     global_cartridge0 = events['cartridge0'].astype(int)
     global_cartridge1 = events['cartridge1'].astype(int) + system_shape[1]
     return global_cartridge0, global_cartridge1
 
 def get_global_fin_numbers(events, system_shape=default_system_shape):
+    '''
+    Takes eventcoinc_dtype events and returns the left and right global
+    fin number for each event given system_shape.  Uses
+    get_global_cartridge_numbers as a base.
+    '''
     global_cartridge0, global_cartridge1 = \
             get_global_cartridge_numbers(events, system_shape)
     global_fin0 = events['fin0'] + system_shape[2] * global_cartridge0
@@ -330,12 +473,22 @@ def get_global_fin_numbers(events, system_shape=default_system_shape):
     return global_fin0, global_fin1
 
 def get_global_module_numbers(events, system_shape=default_system_shape):
+    '''
+    Takes eventcoinc_dtype events and returns the left and right global
+    module number for each event given system_shape.  Uses
+    get_global_fin_numbers as a base.
+    '''
     global_fin0, global_fin1 = get_global_fin_numbers(events, system_shape)
     global_module0 = events['module0'] + system_shape[3] * global_fin0
     global_module1 = events['module1'] + system_shape[3] * global_fin1
     return global_module0, global_module1
 
 def get_global_apd_numbers(events, system_shape=default_system_shape):
+    '''
+    Takes eventcoinc_dtype events and returns the left and right global
+    apd number for each event given system_shape.  Uses
+    get_global_module_numbers as a base.
+    '''
     global_module0, global_module1 = \
             get_global_module_numbers(events, system_shape)
     global_apd0 = events['apd0'] + system_shape[4] * global_module0
@@ -343,12 +496,24 @@ def get_global_apd_numbers(events, system_shape=default_system_shape):
     return global_apd0, global_apd1
 
 def get_global_crystal_numbers(events, system_shape=default_system_shape):
+    '''
+    Takes eventcoinc_dtype events and returns the left and right global
+    crystal number for each event given system_shape.  Uses
+    get_global_apd_numbers as a base.
+    '''
     global_apd0, global_apd1 = get_global_apd_numbers(events, system_shape)
     global_crystal0 = events['crystal0'] + system_shape[5] * global_apd0
     global_crystal1 = events['crystal1'] + system_shape[5] * global_apd1
     return global_crystal0, global_crystal1
 
 def get_global_lor_number(events, system_shape=default_system_shape):
+    '''
+    Takes eventcoinc_dtype events and returns the global lor number for each
+    event given system_shape.  Uses get_global_crystal_numbers as a base.
+    Global lor calculated as:
+        (global_crystal0 * no_crystals_per_panel) +
+        (global_crystal1 - no_crystals_per_panel)
+    '''
     global_crystal0, global_crystal1 = \
             get_global_crystal_numbers(events, system_shape)
     no_crystals_per_panel = np.prod(system_shape[1:])
@@ -357,37 +522,82 @@ def get_global_lor_number(events, system_shape=default_system_shape):
            (global_crystal1 - no_crystals_per_panel)
 
 def get_crystals_from_lor(lors, system_shape=default_system_shape):
+    '''
+    Takes an array of lor indices and returns the left and right global crystal
+    number based on the given system shape.
+    '''
     crystal0 = lors // np.prod(system_shape[1:])
     crystal1 = lors % np.prod(system_shape[1:]) + np.prod(system_shape[1:])
     return crystal0, crystal1
 
 def get_apds_from_lor(lors, system_shape=default_system_shape):
+    '''
+    Takes an array of lor indices and returns the left and right global apd
+    number based on the given system shape.  Uses get_crystals_from_lor as a
+    base for calculation.
+    '''
     crystal0, crystal1 = get_crystals_from_lor(lors, system_shape)
     apd0 = crystal0 // system_shape[5]
     apd1 = crystal1 // system_shape[5]
     return apd0, apd1
 
 def get_modules_from_lor(lors, system_shape=default_system_shape):
+    '''
+    Takes an array of lor indices and returns the left and right global module
+    number based on the given system shape.  Uses get_apds_from_lor as a base
+    for calculation.
+    '''
     apd0, apd1 = get_apds_from_lor(lors, system_shape)
     module0 = apd0 // system_shape[4]
     module1 = apd1 // system_shape[4]
     return module0, module1
 
-def tcal_coinc_events(events, tcal, system_shape=default_system_shape):
+def tcal_coinc_events(
+        events, tcal,
+        system_shape = default_system_shape,
+        uv_period_ns = 1024.41,
+        breast_daq_json_config = None):
+    '''
+    Takes an array of eventcoinc_dtype events and applies a time calibration,
+    making sure the dtf are then wrapped to the uv period in nanoseconds.  The
+    default uv period represent 980kHz in nanoseconds.
+
+    If tcal is a string, load_time_calibration will be called to load the time
+    calibration.
+
+    Returned array is a copy of the original array.
+    '''
+
+    # If tcal is a string, load in that time calibration first.
+    if type(tcal) is str:
+        tcal = load_time_calibration(filename)
+
     idx0, idx1 = get_global_crystal_numbers(events, system_shape)
     ft0_offset = tcal['offset'][idx0] + \
                  tcal['edep_offset'][idx0] * (events['E0'] - 511)
     ft1_offset = tcal['offset'][idx1] + \
                  tcal['edep_offset'][idx1] * (events['E1'] - 511)
     cal_events = events.copy()
-    # Not correcting ft0 right now, because we'd need to wrap it to the uv
-    # period, and I'm being lazy as to not load that in
-    # cal_events['ft0'] -= ft0_offset
     cal_events['dtf'] -= ft0_offset
     cal_events['dtf'] += ft1_offset
+
+    # Load in the uv_period_ns from a json file if specified.
+    if breast_daq_json_config is not None:
+        uv_period_ns = load_uv_period(breast_daq_json_config) * 1e9
+
+    # wrap all of the events to the specified uv period.
+    while np.any(cal_events['dtf'] > uv_period_ns):
+        cal_events['dtf'][cal_events['dtf'] > uv_period_ns] -= uv_period_ns
+    while np.any(cal_events['dtf'] < -uv_period_ns):
+        cal_events['dtf'][cal_events['dtf'] < -uv_period_ns] += uv_period_ns
+
     return cal_events
 
 def force_array(x, dtype=None):
+    '''
+    Helper function to force a value to be represented as a numpy array whether
+    or not it is a scalar, list, or numpy array type.
+    '''
     if np.isscalar(x):
         x = (x,)
     return np.asarray(x, dtype=dtype)
@@ -402,6 +612,9 @@ def get_position_pcfmax(
         y_apd_pitch = default_y_apd_pitch,
         y_apd_offset = default_y_apd_offset,
         z_pitch = default_z_pitch):
+    '''
+    Calculates the position of a crystal based upon it's PCFMAX number.
+    '''
 
     panel = force_array(panel, dtype = float)
     cartridge = force_array(cartridge, dtype = float)
@@ -459,8 +672,23 @@ def get_position_global_crystal(
     if np.isscalar(global_crystal_ids):
         global_crystal_ids = (global_crystal_ids,)
     global_crystal_ids = np.asarray(global_crystal_ids, dtype=float)
+    '''
+    Get the crystal position based on the global crystal id number.  Does this
+    by calling get_position_pcfmax.
 
+    Parameters
+    ----------
+    global_crystal_ids : scalar or (n,) shaped ndarray
+        Scalar or array of globabl crystal ids
+
+    Returns
+    -------
+    p : (n,3) array
+        x, y, z positions of the crystals.
+    '''
     if np.any(global_crystal_ids >= np.prod(system_shape)):
+        raise ValueError('One or more crystal ids are out of range')
+    elif np.any(global_crystal_ids < 0):
         raise ValueError('One or more crystal ids are out of range')
 
     panel = global_crystal_ids // np.prod(system_shape[1:])
@@ -484,6 +712,20 @@ def get_positions_cal(
         y_apd_pitch = default_y_apd_pitch,
         y_apd_offset = default_y_apd_offset,
         z_pitch = default_z_pitch):
+    '''
+    Get the crystal position based on the eventcal_dtype event.  Does this
+    by calling get_position_pcfmax.
+
+    Parameters
+    ----------
+    events : (n,) shaped ndarray of eventcal_dtype
+        Scalar or array of calibrated events
+
+    Returns
+    -------
+    p : (n,3) array
+        x, y, z positions of the crystals.
+    '''
     pos = get_position_pcfmax(
             events['panel'], events['cartridge'], events['fin'],
             events['module'], events['apd'], events['crystal'],
@@ -501,7 +743,22 @@ def get_crystal_pos(
         y_apd_pitch = default_y_apd_pitch,
         y_apd_offset = default_y_apd_offset,
         z_pitch = default_z_pitch):
+    '''
+    Get the left and right crystal position based on the eventcoinc_dtype event.
+    Does this by calling get_position_pcfmax.
 
+    Parameters
+    ----------
+    events : (n,) shaped ndarray of eventcoinc_dtype
+        Scalar or array of coincidence events
+
+    Returns
+    -------
+    p0 : (n,3) array
+        x, y, z positions of the left crystals.
+    p1 : (n,3) array
+        x, y, z positions of the right crystals.
+    '''
     pos0 = get_position_pcfmax(
             np.zeros(events.shape), events['cartridge0'], events['fin0'],
             events['module0'], events['apd0'], events['crystal0'],
@@ -516,34 +773,6 @@ def get_crystal_pos(
 
     return pos0, pos1
 
-def create_listmode_data(
-        events,
-        system_shape = default_system_shape,
-        panel_sep = default_panel_sep):
-    lm_data = np.zeros(events.shape, dtype=cudarecon_type0_vec_dtype)
-    lm_data['pos0'], lm_data['pos1'] = get_crystal_pos(
-            events, system_shape=system_shape, panel_sep=panel_sep)
-    return lm_data
-
-def create_listmode_from_vec(
-        vec, panel_sep = default_panel_sep,
-        system_shape = default_system_shape):
-
-    lm_data = np.zeros((vec.nnz,), dtype=cudarecon_type1_vec_dtype)
-    lm_data['pos0'], lm_data['pos1'] = get_lor_positions(vec.indices,
-                                                         system_shape,
-                                                         panel_sep)
-    lm_data['weight'] = vec.data.copy()
-    return lm_data
-
-def create_listmode_from_lors(
-        lors, panel_sep = default_panel_sep,
-        system_shape = default_system_shape):
-    lm_data = np.zeros(lors.shape, dtype=cudarecon_type0_vec_dtype)
-    lm_data['pos0'], lm_data['pos1'] = get_lor_positions(
-            lors, system_shape, panel_sep)
-    return lm_data
-
 def get_lor_positions(
         lors,
         system_shape = default_system_shape,
@@ -554,6 +783,22 @@ def get_lor_positions(
         y_apd_pitch = default_y_apd_pitch,
         y_apd_offset = default_y_apd_offset,
         z_pitch = default_z_pitch):
+    '''
+    Get the left and right crystal position based on the lor index.
+    Does this by calling get_position_pcfmax.
+
+    Parameters
+    ----------
+    lors : (n,) shaped ndarray
+        Scalar or array of lor indices
+
+    Returns
+    -------
+    p0 : (n,3) array
+        x, y, z positions of the left crystals.
+    p1 : (n,3) array
+        x, y, z positions of the right crystals.
+    '''
     crystal0, crystal1 = get_crystals_from_lor(lors, system_shape)
     line_start = get_position_global_crystal(
             crystal0, system_shape, panel_sep, x_crystal_pitch, y_crystal_pitch,
@@ -563,7 +808,108 @@ def get_lor_positions(
             x_module_pitch, y_apd_pitch, y_apd_offset, z_pitch)
     return line_start, line_end
 
+def create_listmode_data(
+        events,
+        system_shape = default_system_shape,
+        panel_sep = default_panel_sep,
+        list_type = 0):
+    '''
+    Creates an array of list mode data in either cudarecon_type0_vec_dtype or
+    cudarecon_type1_vec_dtype from eventcoinc data by calling get_crystal_pos.
+
+    Parameters
+    ----------
+    events : (n,) shaped ndarray of eventcoinc_dtype
+        Scalar or array of coincidence events
+
+    Returns
+    -------
+    events : (n,) shaped ndarray of cudarecon_type[0,1]_vec_dtype
+        Scalar or array of list mode data for cudarecon.
+    '''
+    dtype = cudarecon_type0_vec_dtype
+    if list_type == 1:
+        dtype = cudarecon_type1_vec_dtype
+
+    lm_data = np.zeros(events.shape, dtype=dtype)
+    lm_data['pos0'], lm_data['pos1'] = get_crystal_pos(
+            events, system_shape=system_shape, panel_sep=panel_sep)
+    return lm_data
+
+def create_listmode_from_vec(
+        vec, panel_sep = default_panel_sep,
+        system_shape = default_system_shape):
+    '''
+    Creates an array of list mode data in cudarecon_type1_vec_dtype from
+    a sparse column vector representing the counts on each lor.
+
+    Parameters
+    ----------
+    vec : (n,1) csc_matrix
+        sparse column matrix of lor counts
+
+    Returns
+    -------
+    events : (n,) shaped ndarray of cudarecon_type1_vec_dtype
+        Scalar or array of list mode data for cudarecon.
+    '''
+    lm_data = np.zeros((vec.nnz,), dtype=cudarecon_type1_vec_dtype)
+    lm_data['pos0'], lm_data['pos1'] = get_lor_positions(vec.indices,
+                                                         system_shape,
+                                                         panel_sep)
+    lm_data['weight'] = vec.data.copy()
+    return lm_data
+
+def create_listmode_from_lors(
+        lors,
+        panel_sep = default_panel_sep,
+        system_shape = default_system_shape,
+        list_type = 0):
+    '''
+    Creates an array of list mode data in cudarecon_type[0,1]_vec_dtype from
+    an array of lor indices.  Calls get_lor_positions.
+
+    Parameters
+    ----------
+    vec : (n,1) csc_matrix
+        sparse column matrix of lor counts
+    list_type : scalar
+        indicates cudarecon_type.  values 0 and 1 indicate
+        cudarecon_type0_vec_dtype and cudarecon_type1_vec_dtype respectively.
+
+    Returns
+    -------
+    events : (n,) shaped ndarray of cudarecon_type[0,1]_vec_dtype
+        Scalar or array of list mode data for cudarecon.
+    '''
+    dtype = cudarecon_type0_vec_dtype
+    if list_type == 1:
+        dtype = cudarecon_type1_vec_dtype
+
+    lm_data = np.zeros(lors.shape, dtype=dtype)
+    lm_data['pos0'], lm_data['pos1'] = get_lor_positions(
+            lors, system_shape, panel_sep)
+    return lm_data
+
 def correct_resets(data, threshold=1.0e3):
+    '''
+    Corrects any accidental resets in the coarse timestamp during a run of the
+    system.
+
+    Parameters
+    ----------
+    data : (n,) ndarray of eventraw_dtype or eventcal_dtype
+        Array of raw or calibrated event data
+    threshold : scalar
+        The negative jump that constitues a reset in the coarse timestamp.
+        Should be large enough as to not include events that might be out of
+        order.
+
+    Returns
+    -------
+    data : (n,) shaped ndarray of cudarecon_type[0,1]_vec_dtype
+        data array with 'ct' values corrected for resets
+    '''
     data['ct'][1:] = np.diff(data['ct'])
     # Assume that any negative should just be the next coarse timestampe tick,
     # so we set it to one, so that the ct is incremented in the cumsum step
@@ -571,16 +917,58 @@ def correct_resets(data, threshold=1.0e3):
     data['ct'] = np.cumsum(data['ct'])
     return data
 
-def save_sparse_csc(filename,array):
-    np.savez(filename,data = array.data ,indices=array.indices,
-             indptr =array.indptr, shape=array.shape )
+def save_sparse_csc(filename, array):
+    '''
+    Saves a csc_matrix to a file by writing out the individual 'data',
+    'indices', and 'indptr' arrays to a numpy zip file.
+
+    Parameters
+    ----------
+    filename : str
+        String of the file name to which to write the npz file.
+    array : csc_matrix
+        Any scipy csc_matrix
+    '''
+    np.savez(filename, data = array.data, indices=array.indices,
+             indptr = array.indptr, shape=array.shape)
 
 def load_sparse_csc(filename):
+    '''
+    Loads a csc_matrix saved by save_sparse_csc.  Assumes filename is a npz file
+    containing 'data', 'indices', and 'indptr' arrays.
+
+    Parameters
+    ----------
+    filename : str
+        String of the npz file containing the csc_matrix's arrays.
+
+    Returns
+    -------
+    data : csc_matrix
+        A csc_matrix created from the 'data', 'indices', and 'indptr' arrays.
+    '''
     loader = np.load(filename)
     return csc_matrix((loader['data'], loader['indices'], loader['indptr']),
                       shape = loader['shape'])
 
 def create_sparse_column_vector(data, size=None):
+    '''
+    Creates a sparse column vector using a scipy.csc_matrix.  Takes data to be
+    a count for that particular index.  Same indices will be summed in the
+    column vector.  The vector will be (1,size) in shape.  If size is None,
+    then the maximum index in data determines the size of the vector.  Used
+    primarily for lor indices.
+
+    Parameters
+    ----------
+    data : array
+        A list of indices.
+
+    Returns
+    -------
+    vec : (1, size) shaped csc_matrix
+        A csc_matrix created from the indices in data.
+    '''
     shape = None
     if size is not None:
         shape=(int(size), 1)
