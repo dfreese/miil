@@ -2,6 +2,35 @@ import numpy as np
 import miil
 from scipy.sparse import csc_matrix
 
+default_fov_size = np.array([
+        16.0 * miil.default_x_module_pitch,
+        miil.default_panel_sep,
+        np.prod(miil.default_system_shape[1:3]) * miil.default_z_pitch])
+
+default_fov_center = 0.0 * default_fov_size
+
+default_lyso_y_offset = \
+        miil.default_panel_sep / 2.0 + miil.default_y_apd_offset + \
+        miil.default_y_apd_pitch / 2.0 + 4.0 * miil.default_y_crystal_pitch
+default_panel1_lyso_center = np.array([0., default_lyso_y_offset, 0.])
+default_panel0_lyso_center = -1.0 * default_panel1_lyso_center
+
+default_apd0_center = \
+        miil.default_panel_sep / 2.0 + miil.default_y_apd_offset + \
+        4.0 * miil.default_y_crystal_pitch
+default_apd1_center = default_apd0_center + miil.default_y_apd_pitch
+
+default_lyso_size = np.array([
+        15.0 * miil.default_x_module_pitch + 8 * miil.default_x_crystal_pitch,
+        miil.default_y_apd_pitch + 8 * miil.default_y_crystal_pitch,
+        (np.prod(miil.default_system_shape[1:3]) - 1) * miil.default_z_pitch +
+        miil.default_z_crystal_pitch])
+
+# Volume of crystals / volume of default_lyso_size
+default_packing_frac = \
+        0.9 * 0.9 * 1 * np.prod(miil.default_system_shape[1:]) / \
+        np.prod(default_lyso_size)
+
 def check_and_promote_coordinates(coordinate):
     if len(coordinate.shape) == 1:
         coordinate = np.expand_dims(coordinate, axis=0)
@@ -9,16 +38,16 @@ def check_and_promote_coordinates(coordinate):
         raise ValueError('coordinate.shape != (n,3)')
     return coordinate.astype(float)
 
-'''
-line_start (1, 3) coordinate representing (x,y,z) start of line
-line_end (1, 3) coordinate representing (x,y,z) end of line
-voxel_centers (n, 3) coordinates representing (x,y,z) centers of voxel
-voxel_size (1, 3) coordinate representing (x,y,z) size of voxels
-
-Based primarily off of this stackoverflow response
-http://stackoverflow.com/questions/3106666/intersection-of-line-segment-with-axis-aligned-box-in-c-sharp#3115514
-'''
 def voxel_intersection_length(line_start, line_end, voxel_centers, voxel_size):
+    '''
+    line_start (1, 3) coordinate representing (x,y,z) start of line
+    line_end (1, 3) coordinate representing (x,y,z) end of line
+    voxel_centers (n, 3) coordinates representing (x,y,z) centers of voxel
+    voxel_size (1, 3) coordinate representing (x,y,z) size of voxels
+
+    Based primarily off of this stackoverflow response
+    http://stackoverflow.com/questions/3106666/intersection-of-line-segment-with-axis-aligned-box-in-c-sharp#3115514
+    '''
     line_start = check_and_promote_coordinates(line_start)
     line_end = check_and_promote_coordinates(line_end)
     voxel_centers = check_and_promote_coordinates(voxel_centers)
@@ -213,7 +242,10 @@ def get_crystal_distribution(
         counts = np.ones((len(vec),))
 
     if weights is not None:
-        counts *= weights[crystal0] * weights[crystal1]
+        if len(weights) == len(counts):
+            counts *= weights
+        else:
+            counts *= weights[crystal0] * weights[crystal1]
 
     crystal_dist = \
             np.bincount(
@@ -242,7 +274,10 @@ def get_apd_distribution(
         counts = np.ones((len(vec),))
 
     if weights is not None:
-        counts *= weights[apd0] * weights[apd1]
+        if len(weights) == len(counts):
+            counts *= weights
+        else:
+            counts *= weights[apd0] * weights[apd1]
 
     apd_dist = \
             np.bincount(
@@ -271,7 +306,10 @@ def get_module_distribution(
         counts = np.ones((len(vec),))
 
     if weights is not None:
-        counts *= weights[module0] * weights[module1]
+        if len(weights) == len(counts):
+            counts *= weights
+        else:
+            counts *= weights[module0] * weights[module1]
 
     module_dist = \
             np.bincount(
@@ -436,6 +474,52 @@ def correct_uniform_phantom_lors(
     vec.data *= np.squeeze(np.exp(lyso_atten_coef * lyso_length))
 
     return vec
+
+def uniform_phantom_nonuniform_illum_weight(
+        lors,
+        fov_center = default_fov_center,
+        fov_size = default_fov_size, ref_length = None,
+        system_shape = miil.default_system_shape):
+    # If the refence length is not specified, then assume the width of the FOV
+    # in Y.
+    if ref_length is None:
+        ref_length = fov_size[1]
+
+    line_start, line_end = miil.get_lor_positions(lors, system_shape)
+
+    fov_length = voxel_intersection_length(
+            line_start, line_end, fov_center, fov_size)
+
+    weight = fov_length / ref_length
+    return weight
+
+def lyso_length(
+        lors,
+        lyso_center0 = default_panel0_lyso_center,
+        lyso_size0 = default_lyso_size,
+        lyso_center1 = default_panel1_lyso_center,
+        lyso_size1 = default_lyso_size,
+        system_shape = miil.default_system_shape):
+    line_start, line_end = miil.get_lor_positions(lors, system_shape)
+
+    length = voxel_intersection_length(
+            line_start, line_end, lyso_center0, lyso_size0) + \
+            voxel_intersection_length(
+            line_start, line_end, lyso_center1, lyso_size1)
+    return length
+
+def lyso_atten_weight(
+        lors,
+        lyso_center0 = default_panel0_lyso_center,
+        lyso_size0 = default_lyso_size,
+        lyso_center1 = default_panel1_lyso_center,
+        lyso_size1 = default_lyso_size,
+        lyso_atten_coef =  0.087, packing_frac = default_packing_frac,
+        system_shape = miil.default_system_shape):
+    length = lyso_length(lors, lyso_center0, lyso_size0, lyso_center0,
+            lyso_size0, system_shape)
+    weight = np.exp(-lyso_atten_coef * packing_frac * length)
+    return weight
 
 def correct_lors(
         lors, fov_center, fov_size,
