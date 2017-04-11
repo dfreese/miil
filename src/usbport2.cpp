@@ -4,6 +4,7 @@
 #include <iostream>
 #include <miil/util.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 USBPort2::USBPort2() {
 }
