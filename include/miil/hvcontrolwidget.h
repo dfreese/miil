@@ -24,6 +24,10 @@ public:
             QWidget * parent = 0);
     ~HVControlWidget();
 
+signals:
+    void voltage_point(double voltage, int channel_number);
+    void current_point(double voltage, int channel_number);
+
 private:
     Ui::HVControlWidget *ui;
     HVController *hvController;

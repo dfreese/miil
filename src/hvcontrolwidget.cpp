@@ -46,6 +46,11 @@ void HVControlWidget::updateStats() {
     double current1(hvController->readCurrent1());
     double current2(hvController->readCurrent2());
 
+    emit voltage_point(voltage1, 0);
+    emit voltage_point(voltage2, 1);
+    emit current_point(current1, 0);
+    emit current_point(current2, 1);
+
     QString number;
     ui->label_u1->setText(number.setNum(voltage1));
     ui->label_u2->setText(number.setNum(voltage2));
