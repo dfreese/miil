@@ -776,7 +776,7 @@ int loadSystemSize(
     config->fins_per_system =
             config->cartridges_per_system * config->fins_per_cartridge;
     config->renas_per_system =
-            config->daqs_per_cartridge * config->renas_per_daq;
+            config->daqs_per_system * config->renas_per_daq;
     config->modules_per_system =
             config->fins_per_system * config->modules_per_fin;
     config->apds_per_system =
