@@ -3,6 +3,7 @@
 #include <sstream>
 #include <miil/usbport1.h>
 #include <stdio.h>
+#include <unistd.h>
 
 using namespace std;
 

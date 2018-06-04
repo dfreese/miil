@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iostream>
 #include <iterator>
-
+#include <unistd.h>
 #include <arpa/inet.h>
 #include <errno.h>
 #include <net/ethernet.h>

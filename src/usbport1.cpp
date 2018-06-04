@@ -2,6 +2,7 @@
  *  \brief     Set up USB1 communication
  */
 #include <miil/usbport1.h>
+#include <unistd.h>
 
 using namespace std;
 

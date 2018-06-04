@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <sstream>
 #include <pcap.h>
+#include <unistd.h>
 
 #define UDP_HEADER_LENGTH 42
 

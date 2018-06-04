@@ -1,5 +1,6 @@
 #include <miil/standard_socket.h>
 #include <errno.h>
+#include <unistd.h>
 
 StandardSocket::StandardSocket(
         const std::string & if_name,
