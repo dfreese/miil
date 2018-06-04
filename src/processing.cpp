@@ -214,6 +214,7 @@ int GetCrystalID(
  *     -  0 on success
  *     - -1 if the event is below the hit threshold for the module
  *     - -2 if the other apd is above the double trigger threshold
+ *     - -3 if the crystal will not be correctly identified
  *     - -5 If the conversion from PCDRM to PCFM indexing fails
  */
 int CalculateXYandEnergy(
@@ -269,6 +270,9 @@ int CalculateXYandEnergy(
 
 
     event.spat_total = a + b + c + d;
+    if (event.spat_total <= 0) {
+        return(-3);
+    }
     event.x = (c + d - (b + a)) / (event.spat_total);
     event.y = (a + d - (b + c)) / (event.spat_total);
 
@@ -309,6 +313,7 @@ int CalculateXYandEnergy(
  *     -  0 on success
  *     - -1 if the event is below the hit threshold for the module
  *     - -2 if the other apd is above the double trigger threshold
+ *     - -3 if the crystal will not be correctly identified
  *     - -5 If the conversion from PCDRM to PCFM indexing fails
  */
 int CalculateXYandEnergy(
@@ -538,6 +543,9 @@ int RawEventToEventCal(
 
 
     event.spat_total = a + b + c + d;
+    if (event.spat_total <= 0) {
+        return(-3);
+    }
     event.x = (c + d - (b + a)) / (event.spat_total);
     event.y = (a + d - (b + c)) / (event.spat_total);
     if (apd == 1) {
@@ -580,6 +588,9 @@ int RawEventToEventCal(
     event.daq = rawevent.daq;
     event.rena = rawevent.rena;
 
+    if (crystal_cal.gain_spat <= 0) {
+        return(-4);
+    }
     event.E = event.spat_total / crystal_cal.gain_spat * 511;
 
     // Changed the convention from the cal_offset programs, so that we subtract
@@ -587,6 +598,10 @@ int RawEventToEventCal(
     event.ft -= crystal_cal.time_offset;
     event.ft -= (event.E - 511.0) * crystal_cal.time_offset_edep;
     // Ensure that the fine timestamp is wrapped correctly
+
+    if (isnan(event.ft) || isinf(event.ft)) {
+        return(-4);
+    }
     while (event.ft < 0) {
         event.ft += system_config->uv_period_ns;
     }
