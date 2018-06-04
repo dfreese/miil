@@ -1,6 +1,5 @@
 #ifndef CALIBRATION_H
 #define CALIBRATION_H
-#include <float.h>
 
 struct TempRHCalibParams {
     float c1; ///< RH measurement DC offset
@@ -55,7 +54,11 @@ float CalculateChipTemp(float so_t, const struct TempRHCalibParams & param);
 
 float CalculateChipRH(
         float so_rh,
-        const struct TempRHCalibParams & param,
-        float temp = FLT_MAX);
+        const TempRHCalibParams& param);
+
+float CalculateChipRH(
+        float so_rh,
+        const TempRHCalibParams& param,
+        float temp);
 
 #endif /* CALIBRATION_H */

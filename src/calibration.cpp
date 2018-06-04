@@ -61,8 +61,27 @@ float CalculateChipTemp(float so_t, const struct TempRHCalibParams & param) {
 
 /*! \brief Calculate Sensirion Relative Humidity
  *
- * Returns a linear relative humidity measured from a Sensirion SHT1x chip. If
- * a temperature is given, the temperature compensated value is returned.
+ * Returns a linear relative humidity measured from a Sensirion SHT1x chip.
+ *
+ * \param so_rh The output value from the chip
+ * \param param The calibration parameters to convert the output value into RH
+ *
+ * \return The measured relative humidity
+ *
+ * \see Datasheet Pages 8 and 9
+ */
+float CalculateChipRH(
+        float so_rh,
+        const TempRHCalibParams& param)
+{
+    return param.c1 + param.c2 * so_rh  + param.c3 * so_rh * so_rh;
+}
+
+/*! \brief Calculate Sensirion Relative Humidity
+ *
+ * Returns a linear relative humidity measured from a Sensirion SHT1x chip. The
+ * temperature is used to compensate the humidity value for temperatures far
+ * from 25 Celsius.
  *
  * \param so_rh The output value from the chip
  * \param param The calibration parameters to convert the output value into RH
@@ -74,13 +93,9 @@ float CalculateChipTemp(float so_t, const struct TempRHCalibParams & param) {
  */
 float CalculateChipRH(
         float so_rh,
-        const struct TempRHCalibParams & param,
+        const TempRHCalibParams& param,
         float temp)
 {
-    float rh_linear(param.c1 + param.c2 * so_rh  + param.c3 * so_rh * so_rh);
-    if (temp == FLT_MAX) {
-        return(rh_linear);
-    } else {
-        return((temp - 25) * (param.t1 + param.t2 * so_rh) + rh_linear);
-    }
+    float rh_linear = CalculateChipRH(so_rh, param);
+    return (temp - 25) * (param.t1 + param.t2 * so_rh) + rh_linear;
 }
